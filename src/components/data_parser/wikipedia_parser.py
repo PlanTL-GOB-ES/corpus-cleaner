@@ -8,8 +8,8 @@ import xml.etree.ElementTree as ET
 class WikipediaParser(DataParser):
     def parse(self) -> Iterable[Document]:
         for chunk in os.listdir(self.path):
-            for filepath in os.listdir(os.path.join(self.path, chunk)):
-                with open(os.path.join(self.path, chunk, filepath), 'r') as f:
+            for filename in os.listdir(os.path.join(self.path, chunk)):
+                with open(os.path.join(self.path, chunk, filename), 'r', errors='ignore') as f:
                     doc_lines = []
                     doc_id = ''
                     url = ''
@@ -25,7 +25,7 @@ class WikipediaParser(DataParser):
                             url = attribs['url']
                             title = attribs['title']
                         elif parsed_line[0] == '</doc>':
-                            filename = os.path.join(chunk, filepath)
+                            filename = os.path.join(chunk, filename)
                             yield Document(content=''.join(doc_lines), id_=doc_id, url=url, title=title,
                                            filename=filename)
                             doc_lines = []
