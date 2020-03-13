@@ -1,8 +1,8 @@
 from typing import Iterable
-from src.document import Document
+from document import Document
 
 
-class Parser:
+class DataParser:
     def __init__(self, path: str):
         self.path = path
 
