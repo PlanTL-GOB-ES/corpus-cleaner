@@ -14,6 +14,10 @@ class PreFilterer:
         self.filters = []
         self._build_filters()
 
+    def _remove_tags(self, text):
+        p = re.compile('<.*?>')
+        return re.sub(p, '', text)
+
     def _build_filters(self):
         if self.length_filter > 0:
             self.filters.append(self._filter_by_length)
