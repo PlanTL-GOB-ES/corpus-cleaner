@@ -1,38 +1,58 @@
-from typing import Union, Set
+from typing import Union, Tuple, List
 from typing import Iterable
 from document import Document
 import re
-from langid.langid import LanguageIdentifier, model # fast
-
+from alphabet_detector import AlphabetDetector
+from langid.langid import LanguageIdentifier
+# TODO: Check whether in pre-filtering or later on:  from profanity_check import predict, predict_prob
 
 
 class PreFilterer:
-    def __init__(self, length_filter: int = 10, head_filter: bool = True, lang_filter: Union[Set[str], None] = None,
-                 dictionary_filter: Union[None, Set[str]] = None):
+    def __init__(self, remove_tags: bool = True, length_filter: int = 40, head_filter: bool = True,
+                 digits_filter: float = 0.1, alphanum_filter: float = 0.05, uppercase_filter: float = 0.4,
+                 alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = ('es',),
+                 lang_filter_threshold: float = 0.95, dictionary_filter: Union[None, List[str]] = None):
+        self.remove_tags = remove_tags
+        self.tags_pattern = None
         self.length_filter = length_filter
         self.head_filter = head_filter
+        self.digits_filter = digits_filter
+        self.alphanum_filter = alphanum_filter
+        self.uppercase_filter = uppercase_filter
+        self.alphabet_filter = alphabet_filter
         self.lang_filter = lang_filter
+        self.lang_id = None
+        self.lang_filter_threshold = lang_filter_threshold
         self.dictionary_filter = dictionary_filter
+        self.dictionary_filter_pattern = None
         self.filters = []
         self._build_filters()
 
     def _remove_tags(self, text):
-        p = re.compile('<.*?>')
-        return re.sub(p, '', text)
+        return re.sub(self.tags_pattern, '', text)
 
     def _build_filters(self):
+        if self.remove_tags:
+            self.tags_pattern = re.compile('<.*?>')
         if self.length_filter > 0:
             self.filters.append(self._filter_by_length)
         if self.head_filter:
             self.filters.append(self._filter_by_heads)
+        if self.digits_filter > 0:
+            self.filters.append(self._filter_by_digits)
+        if self.alphanum_filter > 0:
+            self.filters.append(self._filter_by_alphanum)
+        if self.uppercase_filter > 0:
+            self.filters.append(self._filter_by_alphanum)
+        if self.alphabet_filter is not None:
+            self.ad = AlphabetDetector()
+            self.filters.append(self._filter_by_alphabet)
         if self.lang_filter is not None:
+            self.lang_id = LanguageIdentifier.from_modelstring(model, norm_probs=True)
             self.filters.append(self._filter_by_lang)
         if self.dictionary_filter is not None:
+            self.dictionary_filter_pattern = re.compile("|".join(self.dictionary_filter))
             self.filters.append(self._filter_by_dict)
-            self._compile_dict()
-
-    def _compile_dict(self):
-        pass
 
     def _filter_by_length(self, doc: Document):
         if len(doc.content < self.length_filter):
@@ -40,78 +60,53 @@ class PreFilterer:
         return True
 
     def _filter_by_heads(self, doc: Document):
-        pass
+        if doc.heads is not None:
+            for token in ['found', '404', 'robots.txt', 'error']:
+                if re.search(token, doc.heads, re.IGNORECASE):
+                    return False
+        return True
+
+    def _filter_by_digits(self, doc: Document):
+        if sum(c.isdigit() for c in doc.content)/len(doc.content) > self.digits_filter:
+            return False
+        return True
+
+    def _filter_by_alphanum(self, doc: Document):
+        if (1 - (sum(c.isalnum() for c in doc.content)/len(doc.content))) > self.alphanum_filter:
+            return False
+        return True
+
+    def _filter_by_uppercase(self, doc: Document):
+        if sum(c.isupper() for c in doc.content)/len(doc.content) > self.uppercase_filter:
+            return False
+        return True
+
+    def _filter_by_alphabet(self, doc: Document):
+        # TODO: Check thresholds?
+        if len(self.ad.detect_alphabet(doc.content).intersection(set(self.alphabet_filter))) == 0:
+            return False
+        return True
 
     def _filter_by_lang(self, doc: Document):
-        pass
+        res = self.lang_id.classify(doc.content)
+        if res[0] in self.lang_filter and res[1] > self.lang_filter_threshold:
+            doc.language = res[0]
+            return True
+        return False
 
     def _filter_by_dict(self, doc: Document):
-        pass
+        if self.dictionary_filter_pattern.search(doc.content):
+            return False
+        return True
 
     def filter(self, documents: Iterable[Document]):
         for doc in documents:
             keep = True
             for filter_ in self.filters:
+                if self.remove_tags:
+                    doc.content = self._remove_tags(doc.content)
                 keep = filter_(doc)
                 if not keep:
                     break
             if keep:
                 yield doc
-                
-                
-    def heur_filters(self, text, thres_length=40, thres_digit=0.1, thres_alpha=0.05, 
-                     thres_upper=0.1, target_lang='es', thres_conf=0.95):
-        '''
-        Remove documents: non-Spanish
-                          short length
-                          high a ratio: 
-                                    digits,  
-                                    uppercase,
-                                    non-alphanumeric
-        Parameters
-        ----------
-        text : list of strings
-            Every element in the text is a string containing one single sentence
-        thres_length: int
-            Minimum document length to keep it.
-        thres_digit: float
-            Maximum proportion of digits in document to keep it
-        thres_alpha: float
-            Maximum proportion of alphanumeric characters in document to keep it
-        thres_upper: float
-            Maximum proportion of uppercase characters in document to keep it
-        target_lang: str
-            Language code we want to keep (es, cat, eu, etc)
-        thres_conf: float
-            Minimum language confidence to keep it
-            
-        Returns
-        -------
-        bool
-            Whether to keep document or not
-        '''
-             
-        ## Length condition
-        l = len(text)
-        if (l < thres_length):
-            return False
-        
-        ## Ratio conditions
-        # Digit ratio filter
-        if sum(c.isdigit() for c in text)/l > thres_digit:
-            return False
-        # Not alphanumeric filter
-        if (1 - (sum(c.isalnum() for c in text)/l)) > thres_alpha:
-            return False
-        # Uppercase ratio filter
-        if sum(c.isupper() for c in text)/l > thres_upper:
-            return False
-        
-        ## Language condition
-        identifier = LanguageIdentifier.from_modelstring(model, norm_probs=True)
-        my_model = identifier.classify(text)
-        if ((my_model[0] == target_lang) & 
-            (my_model[1]>thres_conf)):
-            return True
-        else:
-            return False
