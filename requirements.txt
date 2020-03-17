@@ -1,4 +1,6 @@
 chardet==3.0.4
+ftfy==5.7
 pip-autoremove==0.9.1
 regex==2020.2.20
 sentence-splitter==1.4
+wcwidth==0.1.8
