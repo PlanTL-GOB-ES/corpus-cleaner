@@ -1,7 +1,11 @@
+from typing import List
+
+
 class Document:
     def __init__(self,
                  content: str,
-                 sentences: list = [],
+                 sentences: List = [],
+                 sentences_filtered: List = [],
                  filename: str = None,
                  title: str = None,
                  url: str = None,
@@ -10,6 +14,7 @@ class Document:
                  heads: str = None):
         self.content = content
         self.sentences = sentences
+        self.sentences_filtered = sentences_filtered
         self.title = title
         self.url = url
         self.id = id_
