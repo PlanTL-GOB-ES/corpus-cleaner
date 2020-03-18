@@ -3,7 +3,7 @@ from typing import Iterable
 from document import Document
 import re
 from alphabet_detector import AlphabetDetector
-from langid.langid import LanguageIdentifier
+from langid.langid import LanguageIdentifier, model
 # TODO: Check whether in pre-filtering or later on:  from profanity_check import predict, predict_prob
 
 
