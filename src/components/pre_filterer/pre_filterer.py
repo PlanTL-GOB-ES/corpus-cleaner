@@ -55,7 +55,7 @@ class PreFilterer:
             self.filters.append(self._filter_by_dict)
 
     def _filter_by_length(self, doc: Document):
-        if len(doc.content < self.length_filter):
+        if len(doc.content) < self.length_filter:
             return False
         return True
 
@@ -100,7 +100,10 @@ class PreFilterer:
         return True
 
     def filter(self, documents: Iterable[Document]):
+        i = 0
         for doc in documents:
+            print(i)
+            i += 1
             keep = True
             for filter_ in self.filters:
                 if self.remove_tags:
@@ -110,3 +113,45 @@ class PreFilterer:
                     break
             if keep:
                 yield doc
+
+
+def test():
+    from components.data_parser.bsc_crawl_json_parser import BSCCrawlJSONParser
+    from components.data_parser.wikipedia_parser import WikipediaParser
+    from components.encoding_fixer.encoding_fixer import EncodingFixer
+    import os
+    # file_dir = os.path.join('..', '..', '..', 'test', 'bne')
+    # parser = BSCCrawlJSONParser(file_dir)
+    # documents = parser.parse()
+    # encoding = EncodingFixer()
+    # documents = encoding.fix_encoding(documents)
+    # pre_filter = PreFilterer()
+    # documents = pre_filter.filter(documents)
+    #
+    # # Show the first document
+    # for idx, doc in enumerate(documents):
+    #     print(f'DOC {idx}: {doc.content}\n')
+    #     if idx == 1:
+    #         break
+
+    file_dir = os.path.join('..', '..', '..', 'test', 'wiki')
+    parser = WikipediaParser(file_dir)
+    documents = parser.parse()
+    for doc in documents:
+        documents = [doc]
+        break
+    #documents = [list(documents)[0]]
+    encoding = EncodingFixer()
+    documents = encoding.fix_encoding(documents)
+    pre_filter = PreFilterer(lang_filter=None)
+    documents = pre_filter.filter(documents)
+
+    # Show the first document
+    for idx, doc in enumerate(documents):
+        print(f'DOC {idx}: {doc.content}\n')
+        if idx == 1:
+            break
+
+
+if __name__ == '__main__':
+    test()

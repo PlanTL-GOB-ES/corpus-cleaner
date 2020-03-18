@@ -1,6 +1,5 @@
 from document import Document
 from typing import Iterable
-from components.data_parser.bsc_crawl_json_parser import BSCCrawlJSONParser
 import sentence_splitter
 
 
@@ -23,7 +22,9 @@ def _get_sentence_splitter(language: str):
 
 
 def test():
-    file_dir = '../../../test/bne'
+    from components.data_parser.bsc_crawl_json_parser import BSCCrawlJSONParser
+    import os
+    file_dir = os.path.join('..', '..', '..', 'test', 'bne')
     # parse documents
     parser = BSCCrawlJSONParser(file_dir)
     documents_parsed = parser.parse()

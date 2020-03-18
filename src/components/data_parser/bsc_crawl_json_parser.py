@@ -26,7 +26,8 @@ class BSCCrawlJSONParser(DataParser):
 
 
 def test():
-    file_dir = '../../../test/bne'
+    import os
+    file_dir = os.path.join('..', '..', '..', 'test', 'bne')
     parser = BSCCrawlJSONParser(file_dir)
     documents = parser.parse()
 

@@ -37,7 +37,9 @@ class WikipediaParser(DataParser):
 
 
 def test():
-    parser = WikipediaParser('../../../test/wiki', encoding='utf-8')
+    import os
+    file_dir = os.path.join('..', '..', '..', 'test', 'wiki')
+    parser = WikipediaParser(file_dir, encoding='utf-8')
     documents = parser.parse()
 
     # Show the first document
