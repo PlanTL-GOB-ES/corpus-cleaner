@@ -1,7 +1,10 @@
+from typing import List
+
+
 class Document:
     def __init__(self,
                  content: str,
-                 sentences: list = [],
+                 sentences: List = [],
                  filename: str = None,
                  title: str = None,
                  url: str = None,
