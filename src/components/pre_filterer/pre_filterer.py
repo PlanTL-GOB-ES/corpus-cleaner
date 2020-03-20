@@ -4,10 +4,16 @@ from document import Document
 import re
 from alphabet_detector import AlphabetDetector
 from langid.langid import LanguageIdentifier, model
+from components.cleaner_component import CleanerComponent
+import argparse
 # TODO: Check whether in pre-filtering or later on:  from profanity_check import predict, predict_prob
 
 
-class PreFilterer:
+class PreFilterer(CleanerComponent):
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        raise NotImplementedError()
+
     def __init__(self, remove_tags: bool = True, length_filter: int = 40, head_filter: bool = True,
                  digits_filter: float = 0.1, alphanum_filter: float = 0.05, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = ('es',),

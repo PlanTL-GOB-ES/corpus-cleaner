@@ -4,6 +4,14 @@ import time
 import os
 import json
 from cleaner import Cleaner
+from components.data_parser import DataParser
+from components.document_filter import DocumentFilter
+from components.document_organizer import DocumentOrganizer
+from components.encoding_fixer import EncodingFixer
+from components.normalizer import Normalizer
+from components.pre_filterer import PreFilterer
+from components.sentence_filter import SentenceFilter
+from components.sentence_splitter import SentenceSplitter
 
 
 def clean(args: argparse.Namespace, output_dir: str, log: logging):
@@ -29,7 +37,15 @@ def main():
     parser.add_argument('--input-path', type=str, help='Input data directory')
     parser.add_argument('--input-format', type=str, help='Input data format')
     parser.add_argument('--output-format', type=str, help='Output data format')
-    # TODO: Add required options
+
+    DataParser.add_args(parser)
+    DocumentFilter.add_args(parser)
+    DocumentOrganizer.add_args(parser)
+    EncodingFixer.add_args(parser)
+    Normalizer.add_args(parser)
+    PreFilterer.add_args(parser)
+    SentenceFilter.add_args(parser)
+    SentenceSplitter.add_args(parser)
 
     args = parser.parse_args()
 

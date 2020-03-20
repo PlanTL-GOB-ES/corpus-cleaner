@@ -1,9 +1,14 @@
 from document import Document
 import ftfy
 from typing import Iterable
+from components.cleaner_component import CleanerComponent
+import argparse
 
 
-class EncodingFixer:
+class EncodingFixer(CleanerComponent):
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        raise NotImplementedError()
 
     def fix_encoding(self, documents: Iterable[Document]) -> Iterable[Document]:
         # TODO: Study defaults

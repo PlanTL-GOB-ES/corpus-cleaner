@@ -1,11 +1,17 @@
 from document import Document
 from typing import Iterable
 import sentence_splitter
+import argparse
+from components import CleanerComponent
 
 
 # The split method does not use the self parameter, meaning that the
 # implementation as method class is not necessary
-class SentenceSplitter:
+class SentenceSplitter(CleanerComponent):
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+            raise NotImplementedError()
+
     @staticmethod
     def split(documents: Iterable[Document], language: str) -> Iterable[Document]:
         splitter = _get_sentence_splitter(language)

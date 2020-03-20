@@ -1,8 +1,14 @@
 from document import Document
 from typing import Iterable, Union, Dict
+from components.cleaner_component import CleanerComponent
+import argparse
 
 
 class Normalizer:
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        raise NotImplementedError()
+
     def __init__(self, spell_check: bool = False, terminology_norm: Union[None, Dict[str, str]] = None,
                  punctuation_norm: bool = False):
         self.spell_check = spell_check

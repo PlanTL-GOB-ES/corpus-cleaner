@@ -5,9 +5,15 @@ from typing import TextIO
 import os
 from typing import List
 from pathlib import Path
+from components.cleaner_component import CleanerComponent
+import argparse
 
 
-class DataParser:
+class DataParser(CleanerComponent):
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        raise NotImplementedError
+
     def __init__(self, path: str, extensions: List[str], encoding: str = 'auto', encoding_threshold: float = 0.9,
                  error_policy: str = 'ignore'):
         self.path = path
