@@ -51,6 +51,7 @@ def test():
     # Show the first two documents
     for idx, doc in enumerate(documents_sentence_filtered):
         print(f'DOC {idx} (sentences filtered): {doc.sentences}\n')
+
         if idx == 1:
             break
 
