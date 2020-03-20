@@ -12,7 +12,7 @@ import argparse
 class DataParser(CleanerComponent):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def __init__(self, path: str, extensions: List[str], encoding: str = 'auto', encoding_threshold: float = 0.9,
                  error_policy: str = 'ignore'):
