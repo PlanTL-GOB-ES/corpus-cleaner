@@ -1,5 +1,4 @@
-from document import Document
-from typing import Iterable
+from typing import Any
 import argparse
 import logging
 from components.data_parser.data_parser import DataParser
@@ -12,7 +11,7 @@ from components.document_filter.document_filter import DocumentFilter
 from components.document_organizer.document_organizer import DocumentOrganizer
 from .components.output_formatter.output_formatter import OutputFormatter
 
-COMPONENTS_DEFAULT = (DataParser, PreFilterer, EncodingFixer,
+COMPONENTS_DEFAULT = (PreFilterer, EncodingFixer,
                       SentenceSplitterComponent, SentenceFilter, Normalizer,
                       DocumentFilter, DocumentOrganizer, OutputFormatter)
 
@@ -23,6 +22,7 @@ class Cleaner:
         self.output_dir = output_dir
         self.logger = logger
         self.components = COMPONENTS_DEFAULT
+        self.documents = None
         self.pipeline = self._create_pipeline()
 
     @staticmethod
@@ -38,8 +38,14 @@ class Cleaner:
     def _remove_component(self):
         raise NotImplementedError
 
+    def _get_documents(self):
+        parser = DataParser(**vars(self.args))
+        self.documents = parser.apply(self.documents)
+
     def _create_pipeline(self):
         return (component(**vars(self.args)) for component in self.components)
 
-    def clean(self, documents: Iterable[Document]) -> Iterable[Document]:
-        return (component.apply(documents) for component in self.pipeline)
+    def clean(self) -> Any:
+        documents = self.documents
+        for component in self.pipeline:
+            documents = component.apply(documents)
