@@ -31,7 +31,8 @@ class SentenceSplitterComponent(CleanerComponent):
     def _get_sentence_splitter(self):
         return sentence_splitter.SentenceSplitter(language=self.language)
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document],
+                                                                         Iterable[Iterable[Document], None]]:
         return self._split(documents)
 
 
