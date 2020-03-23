@@ -2,9 +2,15 @@ from document import Document
 from typing import Iterable
 from components.data_parser.bsc_crawl_json_parser import BSCCrawlJSONParser
 from components.sentence_splitter._sentence_splitter import _SentenceSplitter
+from components.cleaner_component import CleanerComponent
+import argparse
 
 
-class SentenceFilter:
+class SentenceFilter(CleanerComponent):
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        raise NotImplementedError()
+
     def __init__(self, max_char_len: int, profanity_check: bool = True):
         self.max_char_len = max_char_len
         self.profanity_check = profanity_check

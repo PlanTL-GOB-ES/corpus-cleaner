@@ -5,23 +5,35 @@ from typing import TextIO
 import os
 from typing import List
 from pathlib import Path
+from components.cleaner_component import CleanerComponent
+import argparse
 
 
-class DataParser:
+class DataParser(CleanerComponent):
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        parser.add_argument('--extensions', type=str, help='File extensions to work with (eg. json)', nargs='+')
+        parser.add_argument('--encoding', type=str, help='Input encoding format (eg. utf-8. If set to auto, the program'
+                                                         'tries to guess the encoding', default='auto')
+        parser.add_argument('--encoding-threshold', type=float, help='Encoding threshold if --encoding auto (ignored'
+                            'otherwise. If the encoding detector is not above this threshold, it assigns utf-8.')
+        parser.add_argument('--encoding-error-policy', type=str, help='Encoding error policy (same options as open()',
+                            default='ignore')
+
     def __init__(self, path: str, extensions: List[str], encoding: str = 'auto', encoding_threshold: float = 0.9,
-                 error_policy: str = 'ignore'):
+                 encoding_error_policy: str = 'ignore', **kwargs):
         self.path = path
         self.extensions = extensions
         self.encoding = encoding
         self.encoding_threshold = encoding_threshold  # TODO: Revisit default*
-        self.error_policy = error_policy  # TODO: Revisit default
+        self.encoding_error_policy = encoding_error_policy  # TODO: Revisit default
 
     def parse(self) -> Iterable[Document]:
         doc_counter = 0
         for idx_filepath, relative_filepath in enumerate(sorted(self._get_relative_filepaths())):
             abs_path = os.path.join(self.path, relative_filepath)
             enc = self._guess_encoding(abs_path) if self.encoding == 'auto' else self.encoding
-            with open(abs_path, 'r', encoding=enc, errors='ignore') as f:
+            with open(abs_path, 'r', encoding=enc, errors=self.encoding_error_policy) as f:
                 for doc in self._parse_file(f, relative_filepath, doc_counter):
                     if enc != 'utf-8':
                         pass  # TODO: Check possible problems when the original file was not utf-8

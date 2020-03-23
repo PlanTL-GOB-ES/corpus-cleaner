@@ -4,18 +4,42 @@ from document import Document
 import re
 from alphabet_detector import AlphabetDetector
 from langid.langid import LanguageIdentifier, model
+from components.cleaner_component import CleanerComponent
+import argparse
 # TODO: Check whether in pre-filtering or later on:  from profanity_check import predict, predict_prob
 
 
-class PreFilterer:
-    def __init__(self, remove_tags: bool = True, length_filter: int = 40, head_filter: bool = True,
+class PreFilterer(CleanerComponent):
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
+        parser.add_argument('--char-length-filter', type=int, help='Minimum char length per document. Set to 0 not'
+                                                                   'to apply any filter.', default=40)
+        parser.add_argument('--no-head-filter', action='store_true', help='Avoid filtering documents coming from'
+                            'a crawler (having a "heads" attribute) with common HTTP errors.')
+        parser.add_argument('--digits_filter', type=float, help='Maximum allowed proportion of digit characters',
+                            default=0.1)
+        parser.add_argument('--alphanum_filter', type=float, help='Maximum allowed proportion of non-alphanumeric'
+                                                                  'characters', default=0.05)
+        parser.add_argument('--uppercase_filter', type=float, help='Maximum allowed proportion of uppercase characters',
+                            default=0.4)
+        parser.add_argument('--alphabet-filter', type=str, help='Alphabets that should be present (eg. LATIN)',
+                            nargs='+', default=['LATIN'])
+        parser.add_argument('--lang-filter', type=str, help='Languages that should be present (eg. es)',
+                            nargs='+', default=['es'])
+        parser.add_argument('--lang-filter-threshold', type=float, help='If --lang-filter is set, minimum threshold',
+                            default=0.95)
+        parser.add_argument('--dictionary_filter', type=str, help='Path to dictionary (plain text, one term per line'
+                            'of terms that should not appear', default=None)
+
+    def __init__(self, no_remove_tags: bool = True, char_length_filter: int = 40, no_head_filter: bool = False,
                  digits_filter: float = 0.1, alphanum_filter: float = 0.05, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = ('es',),
-                 lang_filter_threshold: float = 0.95, dictionary_filter: Union[None, List[str]] = None):
-        self.remove_tags = remove_tags
+                 lang_filter_threshold: float = 0.95, dictionary_filter: Union[None, List[str]] = None, **kwargs):
+        self.remove_tags = not no_remove_tags
         self.tags_pattern = None
-        self.length_filter = length_filter
-        self.head_filter = head_filter
+        self.char_length_filter = char_length_filter
+        self.head_filter = not no_head_filter
         self.digits_filter = digits_filter
         self.alphanum_filter = alphanum_filter
         self.uppercase_filter = uppercase_filter
@@ -34,7 +58,7 @@ class PreFilterer:
     def _build_filters(self):
         if self.remove_tags:
             self.tags_pattern = re.compile('<.*?>')
-        if self.length_filter > 0:
+        if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
         if self.head_filter:
             self.filters.append(self._filter_by_heads)
@@ -55,7 +79,7 @@ class PreFilterer:
             self.filters.append(self._filter_by_dict)
 
     def _filter_by_length(self, doc: Document):
-        if len(doc.content) < self.length_filter:
+        if len(doc.content) < self.char_length_filter:
             return False
         return True
 
