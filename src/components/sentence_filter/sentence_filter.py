@@ -1,7 +1,7 @@
 from document import Document
 from typing import Iterable
 from components.data_parser.bsc_crawl_json_parser import BSCCrawlJSONParser
-from components.sentence_splitter.sentence_splitter import SentenceSplitter
+from components.sentence_splitter._sentence_splitter import _SentenceSplitter
 
 
 class SentenceFilter:
@@ -41,8 +41,8 @@ def test():
     documents_parsed = parser.parse()
 
     # apply sentence splitting
-    splitter = SentenceSplitter()
-    documents_splitted = splitter.split(documents_parsed, language='es')
+    splitter = _SentenceSplitter(language='es')
+    documents_splitted = splitter.split(documents_parsed)
 
     # apply sentence filtering
     sentence_filter = SentenceFilter(max_char_len=1)
