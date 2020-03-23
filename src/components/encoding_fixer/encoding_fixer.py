@@ -6,9 +6,12 @@ import argparse
 
 
 class EncodingFixer(CleanerComponent):
+    def __init__(self, **kwargs):
+        pass
+
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        raise NotImplementedError()
+        pass
 
     def fix_encoding(self, documents: Iterable[Document]) -> Iterable[Document]:
         # TODO: Study defaults

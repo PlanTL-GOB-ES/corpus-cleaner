@@ -5,9 +5,13 @@ import argparse
 
 
 class DocumentFilter(CleanerComponent):
+
+    def __init__(self, **kwargs):
+        pass
+
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        raise NotImplementedError()
+        pass
 
     def filter(self, documents: Iterable[Document]) -> Iterable[Document]:
         return documents

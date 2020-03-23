@@ -5,9 +5,12 @@ import argparse
 
 
 class DocumentOrganizer(CleanerComponent):
+    def __init__(self, **kwargs):
+        pass
+
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        raise NotImplementedError()
+        pass
 
     def organize_documents(self, documents: Iterable[Document]) -> Iterable[Iterable[Document]]:
         yield documents
