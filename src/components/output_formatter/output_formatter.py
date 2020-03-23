@@ -1,5 +1,5 @@
 from document import Document
-from typing import Iterable
+from typing import Iterable, Union
 from components.cleaner_component import CleanerComponent
 import argparse
 
@@ -16,3 +16,6 @@ class OutputFormatter(CleanerComponent):
 
     def output_format(self, path: str, documents: Iterable[Document]):
         raise NotImplementedError()
+
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document, None]]:
+        return self.output_format(documents)

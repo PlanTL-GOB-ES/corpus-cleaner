@@ -1,5 +1,5 @@
 from document import Document
-from typing import Iterable
+from typing import Iterable, Union
 from components.data_parser.bsc_crawl_json_parser import BSCCrawlJSONParser
 from components.sentence_splitter_component.sentence_splitter_component import SentenceSplitterComponent
 from components.cleaner_component import CleanerComponent
@@ -46,6 +46,9 @@ class SentenceFilter(CleanerComponent):
             return True
         else:
             return False
+
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document, None]]:
+        return self.filter(documents)
 
 
 def test():

@@ -1,5 +1,5 @@
 from document import Document
-from typing import Iterable
+from typing import Iterable, Union
 from components.cleaner_component import CleanerComponent
 import argparse
 
@@ -26,6 +26,9 @@ class DocumentFilter(CleanerComponent):
 
     def filter(self, documents: Iterable[Document]) -> Iterable[Document]:
         return documents
+
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document, None]]:
+        return self.filter(documents)
 
 
 # TODO: implement test here
