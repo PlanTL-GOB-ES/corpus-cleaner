@@ -11,6 +11,8 @@ class SentenceFilter(CleanerComponent):
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--char-length-filter-sentence', type=int, help='Minimum char length to accept a sentence.',
                             default=40)
+        parser.add_argument('--profanity_check', action='store_true',
+                            help='filter sentences with sensible content')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
