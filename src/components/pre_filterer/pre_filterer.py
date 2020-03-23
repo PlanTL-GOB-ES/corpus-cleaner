@@ -25,11 +25,12 @@ class PreFilterer(CleanerComponent):
                             default=0.4)
         parser.add_argument('--alphabet-filter', type=str, help='Alphabets that should be present (eg. LATIN)',
                             nargs='+', default=['LATIN'])
-        parser.add_argument('--lang-filter', type=str, help='Languages that should be present (eg. es)',
+        parser.add_argument('--lang-filter', type=str, help='List of languages that should allowed when filtering by'
+                                                            'lang. If not set, no filtering is applied.',
                             nargs='+', default=['es'])
         parser.add_argument('--lang-filter-threshold', type=float, help='If --lang-filter is set, minimum threshold',
                             default=0.95)
-        parser.add_argument('--dictionary_filter', type=str, help='Path to dictionary (plain text, one term per line'
+        parser.add_argument('--dictionary-filter', type=str, help='Path to dictionary (plain text, one term per line'
                             'of terms that should not appear', default=None)
 
     @staticmethod

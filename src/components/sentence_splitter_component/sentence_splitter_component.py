@@ -16,20 +16,21 @@ class SentenceSplitterComponent(CleanerComponent):
         # TODO check custom args
         pass
 
-    def __init__(self, language: str):
-        self.language = language
-        self.splitter = self._get_sentence_splitter()
+    def __init__(self, **kwargs):
+        self.splitter_dict = {}
 
     def _split(self, documents: Iterable[Document]) -> Iterable[Document]:
         for idx, doc in enumerate(documents):
+            if doc.language in self.splitter_dict:
+                splitter = self.splitter_dict[doc.language]
+            else:
+                self.splitter_dict[doc.language]
+                splitter = self.splitter_dict[doc.language]
             sentences = []
-            for sent in self.splitter.split(doc.content):
+            for sent in splitter.split(doc.content):
                 sentences.append(sent)
             doc.sentences = sentences
             yield doc
-
-    def _get_sentence_splitter(self):
-        return sentence_splitter.SentenceSplitter(language=self.language)
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self._split(documents)

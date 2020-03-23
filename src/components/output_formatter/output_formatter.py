@@ -5,8 +5,8 @@ import argparse
 
 
 class OutputFormatter(CleanerComponent):
-    def __init__(self, **kwargs):
-        pass
+    def __init__(self, output_path: str = None, **kwargs):
+        self.path = output_path
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -17,8 +17,8 @@ class OutputFormatter(CleanerComponent):
         # TODO check custom args
         pass
 
-    def output_format(self, path: str, documents: Iterable[Document]):
+    def _output_format(self, documents: Iterable[Document]):
         raise NotImplementedError()
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
-        return self.output_format(documents)
+        return self._output_format(documents)

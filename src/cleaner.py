@@ -2,6 +2,7 @@ from typing import Any
 import argparse
 import logging
 from components.data_parser.data_parser import DataParser
+from components.data_parser.data_parser_factory import DataParserFactory
 from components.pre_filterer.pre_filterer import PreFilterer
 from components.encoding_fixer.encoding_fixer import EncodingFixer
 from components.normalizer.normalizer import Normalizer
@@ -10,19 +11,24 @@ from components.sentence_filter.sentence_filter import SentenceFilter
 from components.document_filter.document_filter import DocumentFilter
 from components.document_organizer.document_organizer import DocumentOrganizer
 from components.output_formatter.output_formatter import OutputFormatter
+from components.output_formatter.output_formatter_factory import OutputFormatterFactory
+from typing import Iterable, Union
+from components.cleaner_component import CleanerComponent
+from document import Document
 
-COMPONENTS_DEFAULT = (PreFilterer, EncodingFixer,
-                      SentenceSplitterComponent, SentenceFilter, Normalizer,
-                      DocumentFilter, DocumentOrganizer, OutputFormatter)
+COMPONENTS_DEFAULT = (
+    EncodingFixer, PreFilterer,
+    SentenceSplitterComponent, SentenceFilter, Normalizer,
+    DocumentFilter, DocumentOrganizer
+)
 
 
 class Cleaner:
-    def __init__(self, args: argparse.Namespace, output_dir: str, logger: logging):
+    def __init__(self, args: argparse.Namespace, logger: logging):
         self.args = args
-        self.output_dir = output_dir
         self.logger = logger
         self.components = COMPONENTS_DEFAULT
-        self.documents = None
+        self.documents = self._get_documents()
         self.pipeline = self._create_pipeline()
 
     @staticmethod
@@ -36,16 +42,21 @@ class Cleaner:
 
     # TODO: remove specific component from the pipeline using cli arguments
     def _remove_component(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _get_documents(self):
-        parser = DataParser(**vars(self.args))
-        self.documents = parser.apply(self.documents)
+        parser = DataParserFactory(**vars(self.args)).get_parser(**vars(self.args))
+        return parser.apply(self.documents)
 
-    def _create_pipeline(self):
+    def _create_pipeline(self) -> Iterable[CleanerComponent]:
         return (component(**vars(self.args)) for component in self.components)
+
+    def _output(self, documents: Iterable[Document]):
+        output_formatter = OutputFormatterFactory(self.args).get_output_formatter(self.args)
+        output_formatter.apply(documents)
 
     def clean(self):
         documents = self.documents
         for component in self.pipeline:
             documents = component.apply(documents)
+        self._output(documents)

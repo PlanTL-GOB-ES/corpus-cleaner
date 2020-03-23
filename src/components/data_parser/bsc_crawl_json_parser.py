@@ -3,12 +3,15 @@ from typing import Iterable
 from document import Document
 import json
 from typing import TextIO
+from typing import List
 
 
 class BSCCrawlJSONParser(DataParser):
 
-    def __init__(self, *args, **kwargs):
-        super(BSCCrawlJSONParser, self).__init__(*args, extensions=['*.json'], **kwargs)
+    def __init__(self, *args, extensions: List[str], **kwargs):
+        if extensions is None:
+            extensions = ['.json']
+        super(BSCCrawlJSONParser, self).__init__(extensions=extensions, **kwargs)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, doc_counter: int) -> Iterable[Document]:
         i = doc_counter + 1

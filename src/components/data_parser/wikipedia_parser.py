@@ -3,11 +3,14 @@ from typing import Iterable
 from document import Document
 import xml.etree.ElementTree as ET
 from typing import TextIO
+from typing import List
 
 
 class WikipediaParser(DataParser):
-    def __init__(self, *args, **kwargs):
-        super(WikipediaParser, self).__init__(*args, extensions=['*'], **kwargs)
+    def __init__(self, *args, extensions: List[str], **kwargs):
+        if extensions is None:
+            extensions = ['*']
+        super(WikipediaParser, self).__init__(*args, extensions=extensions, **kwargs)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, doc_counter: int) -> Iterable[Document]:
         doc_lines = []

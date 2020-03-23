@@ -9,6 +9,7 @@ from components.cleaner_component import CleanerComponent
 import argparse
 from typing import Union, Iterable
 
+
 class DataParser(CleanerComponent):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -25,18 +26,18 @@ class DataParser(CleanerComponent):
         # TODO check custom args
         pass
 
-    def __init__(self, path: str, extensions: List[str], encoding: str = 'auto', encoding_threshold: float = 0.9,
+    def __init__(self, input_path: str, extensions: List[str], encoding: str = 'auto', encoding_threshold: float = 0.9,
                  encoding_error_policy: str = 'ignore', **kwargs):
-        self.path = path
+        self.input_path = input_path
         self.extensions = extensions
         self.encoding = encoding
-        self.encoding_threshold = encoding_threshold  # TODO: Revisit default*
+        self.encoding_threshold = encoding_threshold  # TODO: Revisit default
         self.encoding_error_policy = encoding_error_policy  # TODO: Revisit default
 
     def _parse(self) -> Iterable[Document]:
         doc_counter = 0
         for idx_filepath, relative_filepath in enumerate(sorted(self._get_relative_filepaths())):
-            abs_path = os.path.join(self.path, relative_filepath)
+            abs_path = os.path.join(self.input_path, relative_filepath)
             enc = self._guess_encoding(abs_path) if self.encoding == 'auto' else self.encoding
             with open(abs_path, 'r', encoding=enc, errors=self.encoding_error_policy) as f:
                 for doc in self._parse_file(f, relative_filepath, doc_counter):
@@ -51,9 +52,9 @@ class DataParser(CleanerComponent):
     def _get_relative_filepaths(self) -> Iterable[str]:
         relative_paths = []
         for extension in self.extensions:
-            for path in Path(self.path).rglob(extension):
+            for path in Path(self.input_path).rglob(extension):
                 if os.path.isfile(path):
-                    relative_paths.append(os.path.join(os.path.relpath(path.parents[0], self.path), path.name))
+                    relative_paths.append(os.path.join(os.path.relpath(path.parents[0], self.input_path), path.name))
         return relative_paths
 
     def _guess_encoding(self, path: str):

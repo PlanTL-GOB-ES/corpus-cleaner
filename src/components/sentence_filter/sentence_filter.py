@@ -9,7 +9,7 @@ import argparse
 class SentenceFilter(CleanerComponent):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        parser.add_argument('--har-length-filter-sentence', type=int, default=30,
+        parser.add_argument('--char-length-filter-sentence', type=int, default=30,
                             help='filter sentences shorter than a given minimum character length')
         parser.add_argument('--profanity-check', action='store_true',
                             help='filter sentences with sensible content')
