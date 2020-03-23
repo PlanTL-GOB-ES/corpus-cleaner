@@ -1,4 +1,6 @@
 import argparse
+from document import Document
+from typing import Iterable, Union
 
 
 class CleanerComponent:
@@ -10,5 +12,5 @@ class CleanerComponent:
     def check_args(args: argparse.Namespace):
         raise NotImplementedError()
 
-    def apply(self):
+    def apply(self, documents: Union[Iterable[Document], str]) -> Union[Iterable[Document, None]]:
         raise NotImplementedError()
