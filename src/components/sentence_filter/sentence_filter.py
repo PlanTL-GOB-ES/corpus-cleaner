@@ -9,10 +9,11 @@ import argparse
 class SentenceFilter(CleanerComponent):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        raise NotImplementedError()
+        parser.add_argument('--min_char_len', type=int, default=30,
+                            help='minimum character length to accept a sentence')
 
-    def __init__(self, max_char_len: int, profanity_check: bool = True):
-        self.max_char_len = max_char_len
+    def __init__(self, min_char_len: int, profanity_check: bool = True):
+        self.min_char_len = min_char_len
         self.profanity_check = profanity_check
         self.filters = []
         self._get_filters()
@@ -30,11 +31,11 @@ class SentenceFilter(CleanerComponent):
                 yield doc
 
     def _get_filters(self):
-        if self.max_char_len:
-            self.filters.append(self._check_max_char_len)
+        if self.min_char_len:
+            self.filters.append(self._check_char_len)
 
-    def _check_max_char_len(self, sentence: str) -> bool:
-        if len(sentence) > self.max_char_len:
+    def _check_char_len(self, sentence: str) -> bool:
+        if len(sentence) > self.min_char_len:
             return True
         else:
             return False
@@ -51,7 +52,7 @@ def test():
     documents_splitted = splitter.split(documents_parsed)
 
     # apply sentence filtering
-    sentence_filter = SentenceFilter(max_char_len=1)
+    sentence_filter = SentenceFilter(min_char_len=1)
     documents_sentence_filtered = sentence_filter.filter(documents_splitted)
 
     # Show the first two documents
