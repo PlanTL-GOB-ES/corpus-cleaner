@@ -4,6 +4,8 @@ from .wikipedia_parser import DataParser
 
 
 class DataParserFactory:
+    VALID_INPUT_FORMATS = ['wikipedia', 'bsc-crawl-json']
+
     def __init__(self, parser_type: str):
         self.parser_type = parser_type
 

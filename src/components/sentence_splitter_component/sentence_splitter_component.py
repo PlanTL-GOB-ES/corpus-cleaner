@@ -1,10 +1,21 @@
 from document import Document
 from typing import Iterable
 import sentence_splitter
+from components.cleaner_component import CleanerComponent
+import argparse
 
 
 # Use leading underscore to distinguish the class from the 'sentence_splitter' module class 'SentenceSplitter'
-class _SentenceSplitter:
+class SentenceSplitterComponent(CleanerComponent):
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        pass
+
+    @staticmethod
+    def check_args(args: argparse.Namespace):
+        # TODO check custom args
+        pass
+
     def __init__(self, language: str):
         self.language = language
         self.splitter = self._get_sentence_splitter()
@@ -30,7 +41,7 @@ def test():
     documents_parsed = parser.parse()
 
     # apply sentence splitting
-    splitter = _SentenceSplitter(language='es')
+    splitter = SentenceSplitterComponent(language='es')
     documents_splitted = splitter.split(documents_parsed)
 
     # Show the first two documents

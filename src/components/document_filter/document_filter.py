@@ -19,6 +19,11 @@ class DocumentFilter(CleanerComponent):
     def add_args(parser: argparse.ArgumentParser):
         pass
 
+    @staticmethod
+    def check_args(args: argparse.Namespace):
+        # TODO check custom args
+        pass
+
     def filter(self, documents: Iterable[Document]) -> Iterable[Document]:
         return documents
 

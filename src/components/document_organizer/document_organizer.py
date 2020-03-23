@@ -12,6 +12,11 @@ class DocumentOrganizer(CleanerComponent):
     def add_args(parser: argparse.ArgumentParser):
         pass
 
+    @staticmethod
+    def check_args(args: argparse.Namespace):
+        # TODO check custom args
+        pass
+
     def organize_documents(self, documents: Iterable[Document]) -> Iterable[Iterable[Document]]:
         yield documents
 

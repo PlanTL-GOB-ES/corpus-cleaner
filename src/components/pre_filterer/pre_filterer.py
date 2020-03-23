@@ -32,6 +32,11 @@ class PreFilterer(CleanerComponent):
         parser.add_argument('--dictionary_filter', type=str, help='Path to dictionary (plain text, one term per line'
                             'of terms that should not appear', default=None)
 
+    @staticmethod
+    def check_args(args: argparse.Namespace):
+        # TODO check custom args
+        pass
+
     def __init__(self, no_remove_tags: bool = True, char_length_filter: int = 40, no_head_filter: bool = False,
                  digits_filter: float = 0.1, alphanum_filter: float = 0.05, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = ('es',),

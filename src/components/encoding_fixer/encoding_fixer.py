@@ -13,6 +13,11 @@ class EncodingFixer(CleanerComponent):
     def add_args(parser: argparse.ArgumentParser):
         pass
 
+    @staticmethod
+    def check_args(args: argparse.Namespace):
+        # TODO check custom args
+        pass
+
     def fix_encoding(self, documents: Iterable[Document]) -> Iterable[Document]:
         # TODO: Study defaults
         # https://ftfy.readthedocs.io/en/latest/

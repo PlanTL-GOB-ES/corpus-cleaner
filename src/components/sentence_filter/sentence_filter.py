@@ -1,7 +1,7 @@
 from document import Document
 from typing import Iterable
 from components.data_parser.bsc_crawl_json_parser import BSCCrawlJSONParser
-from components.sentence_splitter._sentence_splitter import _SentenceSplitter
+from components.sentence_splitter_component.sentence_splitter_component import SentenceSplitterComponent
 from components.cleaner_component import CleanerComponent
 import argparse
 
@@ -9,11 +9,16 @@ import argparse
 class SentenceFilter(CleanerComponent):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        parser.add_argument('--min_char_len', type=int, default=30,
-                            help='minimum character length to accept a sentence')
+        parser.add_argument('--char-length-filter-sentence', type=int, help='Minimum char length to accept a sentence.',
+                            default=40)
 
-    def __init__(self, min_char_len: int, profanity_check: bool = True):
-        self.min_char_len = min_char_len
+    @staticmethod
+    def check_args(args: argparse.Namespace):
+        # TODO check custom args
+        pass
+
+    def __init__(self, char_length_filter_sentence: int, profanity_check: bool = True):
+        self.char_length_filter_sentence = char_length_filter_sentence
         self.profanity_check = profanity_check
         self.filters = []
         self._get_filters()
@@ -31,11 +36,11 @@ class SentenceFilter(CleanerComponent):
                 yield doc
 
     def _get_filters(self):
-        if self.min_char_len:
+        if self.char_length_filter_sentence:
             self.filters.append(self._check_char_len)
 
     def _check_char_len(self, sentence: str) -> bool:
-        if len(sentence) > self.min_char_len:
+        if len(sentence) > self.char_length_filter_sentence:
             return True
         else:
             return False
@@ -48,11 +53,11 @@ def test():
     documents_parsed = parser.parse()
 
     # apply sentence splitting
-    splitter = _SentenceSplitter(language='es')
+    splitter = SentenceSplitterComponent(language='es')
     documents_splitted = splitter.split(documents_parsed)
 
     # apply sentence filtering
-    sentence_filter = SentenceFilter(min_char_len=1)
+    sentence_filter = SentenceFilter(char_length_filter_sentence=1)
     documents_sentence_filtered = sentence_filter.filter(documents_splitted)
 
     # Show the first two documents

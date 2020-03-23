@@ -4,13 +4,18 @@ from components.cleaner_component import CleanerComponent
 import argparse
 
 
-class Normalizer:
+class Normalizer(CleanerComponent):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--spell-check', action='store_true', help='Apply spell checking.')
         parser.add_argument('--term-norm', type=str, help='Path to a terminology dictionary to appliy normalization',
                             default=None)
         parser.add_argument('--punctuation-norm', action='store_true', help='Apply punctuation normalization.')
+
+    @staticmethod
+    def check_args(args: argparse.Namespace):
+        # TODO check custom args
+        pass
 
     def __init__(self, spell_check: bool = False, terminology_norm: Union[None, Dict[str, str]] = None,
                  punctuation_norm: bool = False, **kwargs):

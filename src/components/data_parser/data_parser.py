@@ -20,6 +20,11 @@ class DataParser(CleanerComponent):
         parser.add_argument('--encoding-error-policy', type=str, help='Encoding error policy (same options as open()',
                             default='ignore')
 
+    @staticmethod
+    def check_args(args: argparse.Namespace):
+        # TODO check custom args
+        pass
+
     def __init__(self, path: str, extensions: List[str], encoding: str = 'auto', encoding_threshold: float = 0.9,
                  encoding_error_policy: str = 'ignore', **kwargs):
         self.path = path
