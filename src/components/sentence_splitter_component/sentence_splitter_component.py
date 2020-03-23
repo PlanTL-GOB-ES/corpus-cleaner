@@ -1,5 +1,5 @@
 from document import Document
-from typing import Iterable
+from typing import Iterable, Union
 import sentence_splitter
 from components.cleaner_component import CleanerComponent
 import argparse
@@ -20,7 +20,7 @@ class SentenceSplitterComponent(CleanerComponent):
         self.language = language
         self.splitter = self._get_sentence_splitter()
 
-    def split(self, documents: Iterable[Document]) -> Iterable[Document]:
+    def _split(self, documents: Iterable[Document]) -> Iterable[Document]:
         for idx, doc in enumerate(documents):
             sentences = []
             for sent in self.splitter.split(doc.content):
@@ -30,6 +30,9 @@ class SentenceSplitterComponent(CleanerComponent):
 
     def _get_sentence_splitter(self):
         return sentence_splitter.SentenceSplitter(language=self.language)
+
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
+        return self._split(documents)
 
 
 def test():
