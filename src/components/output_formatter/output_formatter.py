@@ -5,8 +5,8 @@ import argparse
 
 
 class OutputFormatter(CleanerComponent):
-    def __init__(self, output_path: str = None, **kwargs):
-        self.path = output_path
+    def __init__(self, args: argparse.Namespace, output_path: str = None):
+        self.path = args.output_path if args.output_path is not None else output_path
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):

@@ -16,7 +16,7 @@ class SentenceSplitterComponent(CleanerComponent):
         # TODO check custom args
         pass
 
-    def __init__(self, **kwargs):
+    def __init__(self, args: argparse.Namespace):
         self.splitter_dict = {}
 
     def _split(self, documents: Iterable[Document]) -> Iterable[Document]:

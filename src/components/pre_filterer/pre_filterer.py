@@ -38,22 +38,24 @@ class PreFilterer(CleanerComponent):
         # TODO check custom args
         pass
 
-    def __init__(self, no_remove_tags: bool = True, char_length_filter: int = 40, no_head_filter: bool = False,
-                 digits_filter: float = 0.1, alphanum_filter: float = 0.05, uppercase_filter: float = 0.4,
-                 alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = ('es',),
-                 lang_filter_threshold: float = 0.95, dictionary_filter: Union[None, List[str]] = None, **kwargs):
-        self.remove_tags = not no_remove_tags
+    def __init__(self, args: argparse.Namespace, no_remove_tags: bool = True, char_length_filter: int = 40,
+                 no_head_filter: bool = False, digits_filter: float = 0.1, alphanum_filter: float = 0.05,
+                 uppercase_filter: float = 0.4, alphabet_filter: Union[Tuple[str], None] = ('LATIN',),
+                 lang_filter: Union[Tuple[str], None] = ('es',), lang_filter_threshold: float = 0.95,
+                 dictionary_filter: Union[None, List[str]] = None):
+        self.remove_tags = not args.no_remove_tags if args.no_remove_tags is not None else not no_remove_tags
         self.tags_pattern = None
-        self.char_length_filter = char_length_filter
-        self.head_filter = not no_head_filter
-        self.digits_filter = digits_filter
-        self.alphanum_filter = alphanum_filter
-        self.uppercase_filter = uppercase_filter
-        self.alphabet_filter = alphabet_filter
-        self.lang_filter = lang_filter
+        self.char_length_filter = args.char_length_filter if args.char_length_filter is not None else char_length_filter
+        self.head_filter = not args.no_head_filter if args.no_head_filter is not None else not no_head_filter
+        self.digits_filter = args.digits_filter if args.digits_filter is not None else digits_filter
+        self.alphanum_filter = args.alphanum_filter if args.alphanum_filter is not None else alphanum_filter
+        self.uppercase_filter = args.uppercase_filter if args.uppercase_filter is not None else uppercase_filter
+        self.alphabet_filter = args.alphabet_filter if args.alphabet_filter is not None else alphabet_filter
+        self.lang_filter = args.lang_filter if args.lang_filter is not None else lang_filter
         self.lang_id = None
-        self.lang_filter_threshold = lang_filter_threshold
-        self.dictionary_filter = dictionary_filter
+        self.lang_filter_threshold = args.lang_filter_threshold if args.lang_filter_threshold is not None else \
+            lang_filter_threshold
+        self.dictionary_filter = args.dictionary_filter if args.dictionary_filter is not None else dictionary_filter
         self.dictionary_filter_pattern = None
         self.filters = []
         self._build_filters()
@@ -132,7 +134,6 @@ class PreFilterer(CleanerComponent):
     def _filter(self, documents: Iterable[Document]):
         i = 0
         for doc in documents:
-            print(i)
             i += 1
             keep = True
             for filter_ in self.filters:

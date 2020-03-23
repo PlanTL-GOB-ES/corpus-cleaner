@@ -16,9 +16,9 @@ from components.sentence_splitter_component import SentenceSplitterComponent
 import os
 
 
-def clean(args: argparse.Namespace, output_dir: str, log: logging):
+def clean(args: argparse.Namespace, log: logging):
     logging.info(args)
-    cleaner = Cleaner(args, output_dir, log)
+    cleaner = Cleaner(args, log)
     cleaner.clean()
 
 
@@ -76,6 +76,7 @@ def main():
     check_args(args)
 
     output_dir = get_output_dir(args.name, args.output_path)
+    args.output_path = output_dir
 
     os.makedirs(output_dir)
 
@@ -87,7 +88,7 @@ def main():
 
     logging.info(output_dir)
 
-    clean(args, output_dir, logging)
+    clean(args, logging)
 
 
 if __name__ == '__main__':

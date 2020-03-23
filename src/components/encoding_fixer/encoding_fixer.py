@@ -7,7 +7,7 @@ from typing import Union
 
 
 class EncodingFixer(CleanerComponent):
-    def __init__(self, **kwargs):
+    def __init__(self, args: argparse.Namespace):
         pass
 
     @staticmethod

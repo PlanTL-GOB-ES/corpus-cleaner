@@ -45,14 +45,14 @@ class Cleaner:
         raise NotImplementedError()
 
     def _get_documents(self):
-        parser = DataParserFactory(**vars(self.args)).get_parser(**vars(self.args))
-        return parser.apply(self.documents)
+        parser = DataParserFactory.get_parser(self.args)
+        return parser.apply()
 
     def _create_pipeline(self) -> Iterable[CleanerComponent]:
-        return (component(**vars(self.args)) for component in self.components)
+        return (component(self.args) for component in self.components)
 
     def _output(self, documents: Iterable[Document]):
-        output_formatter = OutputFormatterFactory(self.args).get_output_formatter(self.args)
+        output_formatter = OutputFormatterFactory.get_output_formatter(self.args)
         output_formatter.apply(documents)
 
     def clean(self):

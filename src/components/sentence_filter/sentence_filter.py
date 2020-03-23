@@ -19,9 +19,10 @@ class SentenceFilter(CleanerComponent):
         # TODO check custom args
         pass
 
-    def __init__(self, char_length_filter_sentence: int, profanity_check: bool = True, **kwargs):
-        self.char_length_filter_sentence = char_length_filter_sentence
-        self.profanity_check = profanity_check
+    def __init__(self, args: argparse.Namespace, char_length_filter_sentence: int = 30, profanity_check: bool = True):
+        self.char_length_filter_sentence = args.char_length_filter_sentence if args.char_length_filter_sentence is not \
+                                                                               None else char_length_filter_sentence
+        self.profanity_check = args.profanity_check if args.profanity_check is not None else profanity_check
         self.filters = []
         self._get_filters()
 

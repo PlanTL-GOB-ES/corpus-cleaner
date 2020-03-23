@@ -3,15 +3,14 @@ from typing import Iterable
 from document import Document
 import json
 from typing import TextIO
-from typing import List
+from typing import Tuple
+import argparse
 
 
 class BSCCrawlJSONParser(DataParser):
 
-    def __init__(self, *args, extensions: List[str], **kwargs):
-        if extensions is None:
-            extensions = ['.json']
-        super(BSCCrawlJSONParser, self).__init__(extensions=extensions, **kwargs)
+    def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.json',), **kwargs):
+        super(BSCCrawlJSONParser, self).__init__(args,  input_path=args.input_path, extensions=extensions, **kwargs)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, doc_counter: int) -> Iterable[Document]:
         i = doc_counter + 1
@@ -32,7 +31,7 @@ def test():
     import os
     file_dir = os.path.join('..', '..', '..', 'test', 'bne')
     parser = BSCCrawlJSONParser(file_dir)
-    documents = parser.parse()
+    documents = parser._parse()
 
     # Show the first document
     for idx, doc in enumerate(documents):

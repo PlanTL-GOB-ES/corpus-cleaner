@@ -3,7 +3,7 @@ from document import Document
 from chardet.universaldetector import UniversalDetector  # TODO: Try UnicodeDammit, Magic...?
 from typing import TextIO
 import os
-from typing import List
+from typing import Tuple
 from pathlib import Path
 from components.cleaner_component import CleanerComponent
 import argparse
@@ -26,13 +26,15 @@ class DataParser(CleanerComponent):
         # TODO check custom args
         pass
 
-    def __init__(self, input_path: str, extensions: List[str], encoding: str = 'auto', encoding_threshold: float = 0.9,
-                 encoding_error_policy: str = 'ignore', **kwargs):
-        self.input_path = input_path
-        self.extensions = extensions
-        self.encoding = encoding
-        self.encoding_threshold = encoding_threshold  # TODO: Revisit default
-        self.encoding_error_policy = encoding_error_policy  # TODO: Revisit default
+    def __init__(self, args: argparse.Namespace, input_path: str, extensions: Tuple[str], encoding: str = 'auto',
+                 encoding_threshold: float = 0.9, encoding_error_policy: str = 'ignore'):
+        # TODO: Revisit defaults
+        self.input_path = args.input_path if args.input_path is not None else input_path
+        self.extensions = args.extensions if args.extensions is not None else extensions
+        self.encoding = args.encoding if args.encoding is not None else encoding
+        self.encoding_threshold = args.encoding_threshold if args.encoding_threshold is not None else encoding_threshold
+        self.encoding_error_policy = args.encoding_error_policy if args.encoding_error_policy is not None else \
+            encoding_error_policy
 
     def _parse(self) -> Iterable[Document]:
         doc_counter = 0
@@ -70,6 +72,6 @@ class DataParser(CleanerComponent):
         encoding = detector.result['encoding'] if detector.result['confidence'] > self.encoding_threshold else 'utf-8'
         return encoding
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
+    def apply(self, documents: Union[Iterable[Document], None] = None) -> Union[Iterable[Document], None]:
         return self._parse()
 
