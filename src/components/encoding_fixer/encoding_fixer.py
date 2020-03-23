@@ -31,8 +31,7 @@ class EncodingFixer(CleanerComponent):
             doc.content = ftfy.fix_text(doc.content)
             yield doc
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document],
-                                                                         Iterable[Iterable[Document], None]]:
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self._fix_encoding(documents)
 
 

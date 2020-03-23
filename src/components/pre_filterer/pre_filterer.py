@@ -143,8 +143,7 @@ class PreFilterer(CleanerComponent):
             if keep:
                 yield doc
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document],
-                                                                         Iterable[Iterable[Document], None]]:
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self._filter(documents)
 
 

@@ -27,8 +27,7 @@ class DocumentFilter(CleanerComponent):
     def filter(self, documents: Iterable[Document]) -> Iterable[Document]:
         return documents
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document],
-                                                                         Iterable[Iterable[Document], None]]:
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self.filter(documents)
 
 

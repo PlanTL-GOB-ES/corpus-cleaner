@@ -17,12 +17,12 @@ class DocumentOrganizer(CleanerComponent):
         # TODO check custom args
         pass
 
-    def organize_documents(self, documents: Iterable[Document]) -> Iterable[Iterable[Document]]:
-        yield documents
+    def organize_documents(self, documents: Iterable[Document]) -> Iterable[Document]:
+        # TODO add keywords/labels
+        return documents
 
     def _find_domains(self):
         raise NotImplementedError()
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document],
-                                                                         Iterable[Iterable[Document], None]]:
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self.organize_documents(documents)

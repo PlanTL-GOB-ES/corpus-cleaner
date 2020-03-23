@@ -41,6 +41,5 @@ class Normalizer(CleanerComponent):
     def _punctuation_normalization(self):
         raise NotImplementedError()
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document],
-                                                                         Iterable[Iterable[Document], None]]:
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self.normalize(documents)
