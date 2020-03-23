@@ -3,6 +3,7 @@ import ftfy
 from typing import Iterable
 from components.cleaner_component import CleanerComponent
 import argparse
+from typing import Union
 
 
 class EncodingFixer(CleanerComponent):
@@ -18,7 +19,7 @@ class EncodingFixer(CleanerComponent):
         # TODO check custom args
         pass
 
-    def fix_encoding(self, documents: Iterable[Document]) -> Iterable[Document]:
+    def _fix_encoding(self, documents: Iterable[Document]) -> Iterable[Document]:
         # TODO: Study defaults
         # https://ftfy.readthedocs.io/en/latest/
         # ftfy.fix_text(text, *, fix_entities='auto', remove_terminal_escapes=True, fix_encoding=True,
@@ -29,6 +30,9 @@ class EncodingFixer(CleanerComponent):
         for doc in documents:
             doc.content = ftfy.fix_text(doc.content)
             yield doc
+
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document, None]]:
+        return self._fix_encoding(documents)
 
 
 def test():
