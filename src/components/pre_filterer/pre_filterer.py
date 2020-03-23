@@ -128,7 +128,7 @@ class PreFilterer(CleanerComponent):
             return False
         return True
 
-    def filter(self, documents: Iterable[Document]):
+    def _filter(self, documents: Iterable[Document]):
         i = 0
         for doc in documents:
             print(i)
@@ -142,6 +142,9 @@ class PreFilterer(CleanerComponent):
                     break
             if keep:
                 yield doc
+
+    def apply(self, documents: Union[Iterable[Document], None]):
+        return self._filter(documents)
 
 
 def test():

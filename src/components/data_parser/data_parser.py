@@ -7,7 +7,7 @@ from typing import List
 from pathlib import Path
 from components.cleaner_component import CleanerComponent
 import argparse
-
+from typing import Union, Iterable
 
 class DataParser(CleanerComponent):
     @staticmethod
@@ -33,7 +33,7 @@ class DataParser(CleanerComponent):
         self.encoding_threshold = encoding_threshold  # TODO: Revisit default*
         self.encoding_error_policy = encoding_error_policy  # TODO: Revisit default
 
-    def parse(self) -> Iterable[Document]:
+    def _parse(self) -> Iterable[Document]:
         doc_counter = 0
         for idx_filepath, relative_filepath in enumerate(sorted(self._get_relative_filepaths())):
             abs_path = os.path.join(self.path, relative_filepath)
@@ -68,4 +68,7 @@ class DataParser(CleanerComponent):
         detector.close()
         encoding = detector.result['encoding'] if detector.result['confidence'] > self.encoding_threshold else 'utf-8'
         return encoding
+
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document, None]]:
+        return self._parse()
 
