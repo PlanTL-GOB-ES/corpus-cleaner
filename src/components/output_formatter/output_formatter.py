@@ -5,6 +5,9 @@ import argparse
 
 
 class OutputFormatter(CleanerComponent):
+    def __init__(self, **kwargs):
+        pass
+
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         pass

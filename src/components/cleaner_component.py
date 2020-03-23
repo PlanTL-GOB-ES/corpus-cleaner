@@ -4,6 +4,9 @@ from typing import Iterable, Union
 
 
 class CleanerComponent:
+    def __init__(self, **kwargs):
+        pass
+
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         raise NotImplementedError()

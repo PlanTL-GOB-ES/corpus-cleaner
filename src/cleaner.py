@@ -45,7 +45,7 @@ class Cleaner:
     def _create_pipeline(self):
         return (component(**vars(self.args)) for component in self.components)
 
-    def clean(self) -> Any:
+    def clean(self):
         documents = self.documents
         for component in self.pipeline:
             documents = component.apply(documents)

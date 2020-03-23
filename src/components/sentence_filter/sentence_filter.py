@@ -19,7 +19,7 @@ class SentenceFilter(CleanerComponent):
         # TODO check custom args
         pass
 
-    def __init__(self, char_length_filter_sentence: int, profanity_check: bool = True):
+    def __init__(self, char_length_filter_sentence: int, profanity_check: bool = True, **kwargs):
         self.char_length_filter_sentence = char_length_filter_sentence
         self.profanity_check = profanity_check
         self.filters = []
