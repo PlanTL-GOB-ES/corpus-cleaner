@@ -9,7 +9,7 @@ from components.sentence_splitter_component.sentence_splitter_component import S
 from components.sentence_filter.sentence_filter import SentenceFilter
 from components.document_filter.document_filter import DocumentFilter
 from components.document_organizer.document_organizer import DocumentOrganizer
-from .components.output_formatter.output_formatter import OutputFormatter
+from components.output_formatter.output_formatter import OutputFormatter
 
 COMPONENTS_DEFAULT = (PreFilterer, EncodingFixer,
                       SentenceSplitterComponent, SentenceFilter, Normalizer,
