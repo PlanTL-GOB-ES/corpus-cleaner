@@ -23,5 +23,6 @@ class DocumentOrganizer(CleanerComponent):
     def _find_domains(self):
         raise NotImplementedError()
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document],
+                                                                         Iterable[Iterable[Document], None]]:
         return self.organize_documents(documents)

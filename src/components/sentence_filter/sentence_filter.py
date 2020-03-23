@@ -47,7 +47,8 @@ class SentenceFilter(CleanerComponent):
         else:
             return False
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document],
+                                                                         Iterable[Iterable[Document], None]]:
         return self.filter(documents)
 
 

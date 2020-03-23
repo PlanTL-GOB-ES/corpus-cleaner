@@ -69,6 +69,7 @@ class DataParser(CleanerComponent):
         encoding = detector.result['encoding'] if detector.result['confidence'] > self.encoding_threshold else 'utf-8'
         return encoding
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document],
+                                                                         Iterable[Iterable[Document], None]]:
         return self._parse()
 

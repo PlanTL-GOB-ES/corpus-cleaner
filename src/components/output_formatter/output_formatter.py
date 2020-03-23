@@ -17,5 +17,6 @@ class OutputFormatter(CleanerComponent):
     def output_format(self, path: str, documents: Iterable[Document]):
         raise NotImplementedError()
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
+    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document],
+                                                                         Iterable[Iterable[Document], None]]:
         return self.output_format(documents)
