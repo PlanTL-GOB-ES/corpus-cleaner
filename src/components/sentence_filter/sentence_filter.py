@@ -10,7 +10,9 @@ class SentenceFilter(CleanerComponent):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--min_char_len', type=int, default=30,
-                            help='minimum character length to accept a sentence')
+                            help='filter sentences shorter than a given minimum character length')
+        parser.add_argument('--profanity_check', action='store_true',
+                            help='filter sentences with sensible content')
 
     def __init__(self, min_char_len: int, profanity_check: bool = True):
         self.min_char_len = min_char_len

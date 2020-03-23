@@ -1,10 +1,11 @@
 from document import Document
 from typing import Iterable
 import sentence_splitter
+from components.cleaner_component import CleanerComponent
 
 
 # Use leading underscore to distinguish the class from the 'sentence_splitter' module class 'SentenceSplitter'
-class _SentenceSplitter:
+class _SentenceSplitter(CleanerComponent):
     def __init__(self, language: str):
         self.language = language
         self.splitter = self._get_sentence_splitter()
