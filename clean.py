@@ -16,9 +16,9 @@ from components.sentence_splitter_component import SentenceSplitterComponent
 import os
 
 
-def clean(args: argparse.Namespace, log: logging):
-    logging.info(args)
-    cleaner = Cleaner(args, log)
+def clean(args: argparse.Namespace, logger: logging.Logger):
+    logger.info(args)
+    cleaner = Cleaner(args, logger)
     cleaner.clean()
 
 
@@ -81,14 +81,15 @@ def main():
     os.makedirs(output_dir)
 
     logging.basicConfig(filename=os.path.join(output_dir, 'clean.log'), level=logging.INFO)
-    logging.getLogger('').addHandler(logging.StreamHandler())
+    logger = logging.getLogger(__name__)
+    logger.addHandler(logging.StreamHandler())
     # git rev-parse HEAD
     with open(os.path.join(output_dir, 'args.json'), 'w') as f:
         json.dump(args.__dict__, f, indent=2)
 
     logging.info(output_dir)
 
-    clean(args, logging)
+    clean(args, logger)
 
 
 if __name__ == '__main__':

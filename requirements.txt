@@ -1,3 +1,4 @@
+tqdm
 alphabet-detector==0.0.7
 chardet==3.0.4
 ftfy==5.7

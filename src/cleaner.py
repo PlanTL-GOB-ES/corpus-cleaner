@@ -12,15 +12,15 @@ from components.document_filter.document_filter import DocumentFilter
 from components.document_organizer.document_organizer import DocumentOrganizer
 from components.output_formatter.output_formatter import OutputFormatter
 from components.output_formatter.output_formatter_factory import OutputFormatterFactory
-from typing import Iterable, Union
+from typing import Iterable, Union, List
 from components.cleaner_component import CleanerComponent
 from document import Document
 
-COMPONENTS_DEFAULT = (
+COMPONENTS_DEFAULT = [
     EncodingFixer, PreFilterer,
     SentenceSplitterComponent, SentenceFilter, Normalizer,
     DocumentFilter, DocumentOrganizer
-)
+]
 
 
 class Cleaner:
@@ -44,22 +44,22 @@ class Cleaner:
     def _remove_component(self):
         raise NotImplementedError()
 
-    def _get_documents(self):
-        parser = DataParserFactory.get_parser(self.args)
+    def _get_documents(self) -> Iterable[Document]:
+        self.logger.info('Parsing...')
+        parser = DataParserFactory.get_parser(self.args, self.logger)
         return parser.apply()
 
-    def _create_pipeline(self) -> Iterable[CleanerComponent]:
-        return (component(self.args) for component in self.components)
+    def _create_pipeline(self) -> List[CleanerComponent]:
+        return [component(self.args, self.logger) for component in self.components]
 
     def _output(self, documents: Iterable[Document]):
-        output_formatter = OutputFormatterFactory.get_output_formatter(self.args)
+        self.logger.info('Outputting...')
+        output_formatter = OutputFormatterFactory.get_output_formatter(self.args, self.logger)
         output_formatter.apply(documents)
 
     def clean(self):
-        documents = self.documents
-        for component in self.pipeline:
-            documents = list(documents)
-            x = len(documents)
-            print(x, 'just before appyling', type(component).__name__)
-            documents = component.apply(documents)
+        documents = list(self.documents)
+        for idx, component in enumerate(list(self.pipeline)):
+            self.logger.info(f'Cleaning... ({idx + 1}/{len(self.pipeline)} components)')
+            documents = list(component.apply(documents))
         self._output(documents)

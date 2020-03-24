@@ -8,6 +8,8 @@ from pathlib import Path
 from components.cleaner_component import CleanerComponent
 import argparse
 from typing import Union, Iterable
+import logging
+from tqdm import tqdm
 
 
 class DataParser(CleanerComponent):
@@ -26,9 +28,10 @@ class DataParser(CleanerComponent):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace, input_path: str, extensions: Tuple[str], encoding: str = 'auto',
-                 encoding_threshold: float = 0.9, encoding_error_policy: str = 'ignore'):
+    def __init__(self, args: argparse.Namespace, logger: logging.Logger, input_path: str, extensions: Tuple[str],
+                 encoding: str = 'auto', encoding_threshold: float = 0.9, encoding_error_policy: str = 'ignore'):
         # TODO: Revisit defaults
+        super().__init__(args, logger)
         self.input_path = args.input_path if args.input_path is not None else input_path
         self.extensions = args.extensions if args.extensions is not None else extensions
         self.encoding = args.encoding if args.encoding is not None else encoding
@@ -37,16 +40,30 @@ class DataParser(CleanerComponent):
             encoding_error_policy
 
     def _parse(self) -> Iterable[Document]:
+        # self.logger.info(f'Parsing {self.extensions} extensions in {self.input_path} with {self.encoding_error_policy}'
+        #                  f' as encoding error policy')
+        # if self.encoding != 'auto':
+        #     self.logger.info(f'Encoding assumed to be {self.encoding}')
+        # else:
+        #     self.logger.info(f"Encoding set to 'auto', guessing encoding with confidence threshold "
+        #                      f"{self.encoding_threshold}'")
         doc_counter = 0
+        confidence_ok_counter = 0
         for idx_filepath, relative_filepath in enumerate(sorted(self._get_relative_filepaths())):
             abs_path = os.path.join(self.input_path, relative_filepath)
-            enc = self._guess_encoding(abs_path) if self.encoding == 'auto' else self.encoding
+            enc, confidence_ok = self._guess_encoding(abs_path) if self.encoding == 'auto' else (self.encoding, True)
+            if not confidence_ok:
+                confidence_ok_counter += 1
             with open(abs_path, 'r', encoding=enc, errors=self.encoding_error_policy) as f:
                 for doc in self._parse_file(f, relative_filepath, doc_counter):
                     if enc != 'utf-8':
                         pass  # TODO: Check possible problems when the original file was not utf-8
                     yield doc
                     doc_counter += 1
+        # if self.encoding == 'auto':
+        #     logging.info(f'{confidence_ok_counter}/{doc_counter+1} with low encoding guessing confidence\n'
+        #                  f'Using utf-8 as backup in these cases')
+        # logging.info(f'Parsed {doc_counter+1} documents from {idx_filepath+1} documents')
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, doc_counter: int) -> Iterable[Document]:
         raise NotImplementedError()
@@ -69,8 +86,9 @@ class DataParser(CleanerComponent):
                 if detector.done:
                     break
         detector.close()
-        encoding = detector.result['encoding'] if detector.result['confidence'] > self.encoding_threshold else 'utf-8'
-        return encoding
+        confidence_ok = detector.result['confidence'] > self.encoding_threshold
+        encoding = detector.result['encoding'] if confidence_ok else 'utf-8'
+        return encoding, confidence_ok
 
     def apply(self, documents: Union[Iterable[Document], None] = None) -> Union[Iterable[Document], None]:
         return self._parse()

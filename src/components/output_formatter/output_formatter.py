@@ -2,10 +2,12 @@ from document import Document
 from typing import Iterable, Union
 from components.cleaner_component import CleanerComponent
 import argparse
+import logging
 
 
 class OutputFormatter(CleanerComponent):
-    def __init__(self, args: argparse.Namespace, output_path: str = None):
+    def __init__(self, args: argparse.Namespace, logger: logging.Logger, output_path: str = None):
+        super().__init__(args, logger)
         self.path = args.output_path if args.output_path is not None else output_path
 
     @staticmethod

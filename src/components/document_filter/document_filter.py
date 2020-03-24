@@ -6,13 +6,11 @@ import argparse
 
 class DocumentFilter(CleanerComponent):
 
-    def __init__(self, args: argparse.Namespace):
-        pass
-
-    def _deduplicate(self, documents: Iterable[Document]) -> Iterable[Document]:
-        for doc in documents:
-            doc.sentences = list(set(doc.sentences))
-            yield doc
+    # ?
+    #def _deduplicate(self, documents: Iterable[Document]) -> Iterable[Document]:
+    #    for doc in documents:
+    #        doc.sentences = list(set(doc.sentences))
+    #        yield doc
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -24,6 +22,7 @@ class DocumentFilter(CleanerComponent):
         pass
 
     def _filter(self, documents: Iterable[Document]) -> Iterable[Document]:
+        # ?
         return documents
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:

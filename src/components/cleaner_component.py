@@ -1,9 +1,15 @@
 import argparse
 from document import Document
 from typing import Iterable, Union
+import logging
 
 
 class CleanerComponent:
+
+    def __init__(self, args: argparse.Namespace, logger: logging.Logger):
+        self.args = args
+        self.logger = logger
+
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         raise NotImplementedError()

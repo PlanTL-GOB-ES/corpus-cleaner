@@ -3,6 +3,7 @@ from typing import Iterable, Union
 import sentence_splitter
 from components.cleaner_component import CleanerComponent
 import argparse
+import logging
 
 
 # Use leading underscore to distinguish the class from the 'sentence_splitter' module class 'SentenceSplitter'
@@ -16,7 +17,8 @@ class SentenceSplitterComponent(CleanerComponent):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace):
+    def __init__(self, args: argparse.Namespace, logger: logging.Logger):
+        super().__init__(args, logger)
         self.splitter_dict = {}
 
     def _split(self, documents: Iterable[Document]) -> Iterable[Document]:

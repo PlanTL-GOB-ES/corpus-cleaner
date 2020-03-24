@@ -6,6 +6,7 @@ from alphabet_detector import AlphabetDetector
 from langid.langid import LanguageIdentifier, model
 from components.cleaner_component import CleanerComponent
 import argparse
+import logging
 # TODO: Check whether in pre-filtering or later on:  from profanity_check import predict, predict_prob
 
 
@@ -38,9 +39,10 @@ class PreFilterer(CleanerComponent):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace, no_remove_tags: bool = True, char_length_filter: int = 40,
-                 no_head_filter: bool = False, digits_filter: float = 0.1, alphanum_filter: float = 0.1,
-                 uppercase_filter: float = 0.4, alphabet_filter: Union[Tuple[str], None] = ('LATIN',),
+    def __init__(self, args: argparse.Namespace, logger: logging.Logger, no_remove_tags: bool = True,
+                 char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
+                 alphanum_filter: float = 0.1, uppercase_filter: float = 0.4,
+                 alphabet_filter: Union[Tuple[str], None] = ('LATIN',),
                  lang_filter: Union[Tuple[str], None] = None, lang_filter_threshold: float = 0.90,
                  dictionary_filter: Union[None, List[str]] = None):
         self.remove_tags = not args.no_remove_tags if args.no_remove_tags is not None else not no_remove_tags

@@ -4,12 +4,10 @@ from typing import Iterable
 from components.cleaner_component import CleanerComponent
 import argparse
 from typing import Union
+from tqdm import tqdm
 
 
 class EncodingFixer(CleanerComponent):
-    def __init__(self, args: argparse.Namespace):
-        pass
-
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         pass
@@ -27,6 +25,7 @@ class EncodingFixer(CleanerComponent):
         #              fix_surrogates=True, remove_control_chars=True, remove_bom=True, normalization='NFC',
         #              max_decode_length=1000000)
         # Also: Consider adding heuristics from https://github.com/PlanTL-SANIDAD/utils/tree/master/FixEncodingErrors
+        # self.logger.info('Fixing encoding errors')
         for doc in documents:
             doc.content = ftfy.fix_text(doc.content)
             yield doc

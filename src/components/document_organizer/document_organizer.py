@@ -5,9 +5,6 @@ import argparse
 
 
 class DocumentOrganizer(CleanerComponent):
-    def __init__(self, args: argparse.Namespace):
-        pass
-
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         pass
