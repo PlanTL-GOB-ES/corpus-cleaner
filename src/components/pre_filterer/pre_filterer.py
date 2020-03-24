@@ -20,16 +20,16 @@ class PreFilterer(CleanerComponent):
         parser.add_argument('--digits_filter', type=float, help='Maximum allowed proportion of digit characters',
                             default=0.1)
         parser.add_argument('--alphanum_filter', type=float, help='Maximum allowed proportion of non-alphanumeric'
-                                                                  'characters', default=0.05)
+                                                                  'characters', default=0.1)
         parser.add_argument('--uppercase_filter', type=float, help='Maximum allowed proportion of uppercase characters',
                             default=0.4)
         parser.add_argument('--alphabet-filter', type=str, help='Alphabets that should be present (eg. LATIN)',
                             nargs='+', default=['LATIN'])
         parser.add_argument('--lang-filter', type=str, help='List of languages that should allowed when filtering by'
                                                             'lang. If not set, no filtering is applied.',
-                            nargs='+', default=['es'])
+                            nargs='+')
         parser.add_argument('--lang-filter-threshold', type=float, help='If --lang-filter is set, minimum threshold',
-                            default=0.95)
+                            default=0.90)
         parser.add_argument('--dictionary-filter', type=str, help='Path to dictionary (plain text, one term per line'
                             'of terms that should not appear', default=None)
 
@@ -39,9 +39,9 @@ class PreFilterer(CleanerComponent):
         pass
 
     def __init__(self, args: argparse.Namespace, no_remove_tags: bool = True, char_length_filter: int = 40,
-                 no_head_filter: bool = False, digits_filter: float = 0.1, alphanum_filter: float = 0.05,
+                 no_head_filter: bool = False, digits_filter: float = 0.1, alphanum_filter: float = 0.1,
                  uppercase_filter: float = 0.4, alphabet_filter: Union[Tuple[str], None] = ('LATIN',),
-                 lang_filter: Union[Tuple[str], None] = ('es',), lang_filter_threshold: float = 0.95,
+                 lang_filter: Union[Tuple[str], None] = None, lang_filter_threshold: float = 0.90,
                  dictionary_filter: Union[None, List[str]] = None):
         self.remove_tags = not args.no_remove_tags if args.no_remove_tags is not None else not no_remove_tags
         self.tags_pattern = None
@@ -104,7 +104,8 @@ class PreFilterer(CleanerComponent):
         return True
 
     def _filter_by_alphanum(self, doc: Document):
-        if (1 - (sum(c.isalnum() for c in doc.content)/len(doc.content))) > self.alphanum_filter:
+        concat_content = ''.join(doc.content.split())
+        if (1 - (sum(c.isalnum() for c in concat_content)/len(concat_content))) > self.alphanum_filter:
             return False
         return True
 
@@ -135,10 +136,10 @@ class PreFilterer(CleanerComponent):
         i = 0
         for doc in documents:
             i += 1
+            if self.remove_tags:
+                doc.content = self._remove_tags(doc.content)
             keep = True
             for filter_ in self.filters:
-                if self.remove_tags:
-                    doc.content = self._remove_tags(doc.content)
                 keep = filter_(doc)
                 if not keep:
                     break

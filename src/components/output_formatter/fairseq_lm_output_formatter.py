@@ -8,5 +8,6 @@ class FairseqLMOutputFormatter(OutputFormatter):
     def _output_format(self, documents: Iterable[Document]):
         with open(os.path.join(self.path, 'output.txt'), 'w') as f:
             for doc in documents:
-                f.writelines(doc.sentences)
+                for sentence in doc.sentences:
+                    f.write(sentence + '\n')
                 f.write('\n')

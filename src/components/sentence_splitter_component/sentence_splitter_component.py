@@ -24,7 +24,7 @@ class SentenceSplitterComponent(CleanerComponent):
             if doc.language in self.splitter_dict:
                 splitter = self.splitter_dict[doc.language]
             else:
-                self.splitter_dict[doc.language]
+                self.splitter_dict[doc.language] = sentence_splitter.SentenceSplitter(language=doc.language)
                 splitter = self.splitter_dict[doc.language]
             sentences = []
             for sent in splitter.split(doc.content):

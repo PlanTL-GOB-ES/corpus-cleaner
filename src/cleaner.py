@@ -58,5 +58,8 @@ class Cleaner:
     def clean(self):
         documents = self.documents
         for component in self.pipeline:
+            documents = list(documents)
+            x = len(documents)
+            print(x, 'just before appyling', type(component).__name__)
             documents = component.apply(documents)
         self._output(documents)
