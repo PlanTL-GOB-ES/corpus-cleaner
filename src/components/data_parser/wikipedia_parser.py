@@ -39,20 +39,3 @@ class WikipediaParser(DataParser):
                 title = ''
             else:
                 doc_lines.append(line + '\n')
-
-
-def test():
-    import os
-    file_dir = os.path.join('..', '..', '..', 'test', 'wiki')
-    parser = WikipediaParser(file_dir, encoding='utf-8')
-    documents = parser.parse()
-
-    # Show the first document
-    for idx, doc in enumerate(documents):
-        print(f'DOC {idx}: {doc.content}\n')
-        if idx == 1:
-            break
-
-
-if __name__ == '__main__':
-    test()

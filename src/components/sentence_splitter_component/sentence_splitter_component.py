@@ -36,26 +36,3 @@ class SentenceSplitterComponent(CleanerComponent):
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self._split(documents)
-
-
-def test():
-    from components.data_parser.bsc_crawl_json_parser import BSCCrawlJSONParser
-    import os
-    file_dir = os.path.join('..', '..', '..', 'test', 'bne')
-    # parse documents
-    parser = BSCCrawlJSONParser(file_dir)
-    documents_parsed = parser.parse()
-
-    # apply sentence splitting
-    splitter = SentenceSplitterComponent(language='es')
-    documents_splitted = splitter.split(documents_parsed)
-
-    # Show the first two documents
-    for idx, doc in enumerate(documents_splitted):
-        print(f'DOC {idx}: {doc.sentences}\n')
-        if idx == 1:
-            break
-
-
-if __name__ == '__main__':
-    test()

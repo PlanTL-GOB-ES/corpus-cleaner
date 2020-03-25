@@ -52,29 +52,3 @@ class SentenceFilter(CleanerComponent):
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self.filter(documents)
-
-
-def test():
-    file_dir = '../../../test/bne'
-    # parse documents
-    parser = BSCCrawlJSONParser(file_dir)
-    documents_parsed = parser.parse()
-
-    # apply sentence splitting
-    splitter = SentenceSplitterComponent(language='es')
-    documents_splitted = splitter.split(documents_parsed)
-
-    # apply sentence filtering
-    sentence_filter = SentenceFilter(char_length_filter_sentence=1)
-    documents_sentence_filtered = sentence_filter.filter(documents_splitted)
-
-    # Show the first two documents
-    for idx, doc in enumerate(documents_sentence_filtered):
-        print(f'DOC {idx} (sentences filtered): {doc.sentences}\n')
-
-        if idx == 1:
-            break
-
-
-if __name__ == '__main__':
-    test()

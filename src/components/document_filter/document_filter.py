@@ -27,12 +27,3 @@ class DocumentFilter(CleanerComponent):
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self._filter(documents)
-
-
-# TODO: implement test here
-def test():
-    pass
-
-
-if __name__ == '__main__':
-    test()

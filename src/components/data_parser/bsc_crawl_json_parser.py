@@ -26,20 +26,3 @@ class BSCCrawlJSONParser(DataParser):
             yield Document(content=content, filename=filename, url=url, id_=i,
                            keywords=keywords, heads=heads, title=title)
             i += idx
-
-
-def test():
-    import os
-    file_dir = os.path.join('..', '..', '..', 'test', 'bne')
-    parser = BSCCrawlJSONParser(file_dir)
-    documents = parser._parse()
-
-    # Show the first document
-    for idx, doc in enumerate(documents):
-        print(f'DOC {idx}: {doc.content}\n')
-        if idx == 1:
-            break
-
-
-if __name__ == '__main__':
-    test()

@@ -33,23 +33,3 @@ class EncodingFixer(CleanerComponent):
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self._fix_encoding(documents)
 
-
-def test():
-    from components.data_parser.bsc_crawl_json_parser import BSCCrawlJSONParser
-    import os
-    file_dir = os.path.join('..', '..', '..', 'test', 'bne')
-    parser = BSCCrawlJSONParser(file_dir)
-    documents = parser.parse()
-    encoding = EncodingFixer()
-    documents = encoding.fix_encoding(documents)
-
-    # Show the first document
-    for idx, doc in enumerate(documents):
-        print(f'DOC {idx}: {doc.content}\n')
-        if idx == 1:
-            break
-
-
-if __name__ == '__main__':
-    test()
-
