@@ -28,17 +28,25 @@ class Cleaner:
         self.args = args
         self.logger = logger
         self.components = COMPONENTS_DEFAULT
+        if args.components is not None:
+            self.components = []
+            for comp in COMPONENTS_DEFAULT:
+                if comp.__name__ in args.components:
+                    self.components.append(comp)
         self.documents = self._get_documents()
         self.pipeline = self._create_pipeline()
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        parser.add_argument('--no-component', type=str, help='remove a given component from the pipeline')
+        parser.add_argument('--components', type=str, help='Elements of the pipeline', nargs='+',
+                            default=list(map(lambda x: x.name, COMPONENTS_DEFAULT)))
 
     @staticmethod
-    def check_args(parser: argparse.Namespace):
-        # TODO check custom args
-        pass
+    def check_args(args: argparse.Namespace):
+        for comp in args.components:
+            if comp not in list(map(lambda x: x.name, COMPONENTS_DEFAULT)):
+                raise Exception('Unknown component', comp)
+        # TODO: add more checks (eg. sentence splitting requirement for other components
 
     # TODO: remove specific component from the pipeline using cli arguments
     def _remove_component(self):
