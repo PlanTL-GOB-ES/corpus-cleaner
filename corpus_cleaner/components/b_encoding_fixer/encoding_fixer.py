@@ -1,7 +1,7 @@
-from document import Document
+from corpus_cleaner.document import Document
 import ftfy
 from typing import Iterable
-from components.cleaner_component import CleanerComponent
+from corpus_cleaner.components.cleaner_component import CleanerComponent
 import argparse
 from typing import Union
 from tqdm import tqdm

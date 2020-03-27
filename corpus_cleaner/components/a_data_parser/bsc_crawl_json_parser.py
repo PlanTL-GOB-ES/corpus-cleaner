@@ -1,17 +1,17 @@
-from components.data_parser import DataParser
+from .data_parser import DataParser
 from typing import Iterable
-from document import Document
+from corpus_cleaner.document import Document
 import json
 from typing import TextIO
 from typing import Tuple
 import argparse
-import logging
 
 
 class BSCCrawlJSONParser(DataParser):
 
-    def __init__(self, args: argparse.Namespace, logger: logging.Logger, extensions: Tuple[str]=('.json',), **kwargs):
-        super(BSCCrawlJSONParser, self).__init__(args, logger, input_path=args.input_path, extensions=extensions, **kwargs)
+    def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.json',), **kwargs):
+        super(BSCCrawlJSONParser, self).__init__(args, input_path=args.input_path, extensions=extensions,
+                                                 **kwargs)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, doc_counter: int) -> Iterable[Document]:
         i = doc_counter + 1

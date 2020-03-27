@@ -1,10 +1,8 @@
-from document import Document
+from corpus_cleaner.document import Document
 from typing import Iterable, Union
-from components.data_parser.bsc_crawl_json_parser import BSCCrawlJSONParser
-from components.sentence_splitter_component.sentence_splitter_component import SentenceSplitterComponent
-from components.cleaner_component import CleanerComponent
+from corpus_cleaner.components.cleaner_component import CleanerComponent
 import argparse
-import logging
+
 
 class SentenceFilter(CleanerComponent):
     @staticmethod
@@ -19,9 +17,9 @@ class SentenceFilter(CleanerComponent):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace, logger: logging.Logger, char_length_filter_sentence: int = 30,
+    def __init__(self, args: argparse.Namespace, char_length_filter_sentence: int = 30,
                  profanity_check: bool = True):
-        super().__init__(args, logger)
+        super().__init__(args)
         self.char_length_filter_sentence = args.char_length_filter_sentence if args.char_length_filter_sentence is not \
                                                                                None else char_length_filter_sentence
         self.profanity_check = args.profanity_check if args.profanity_check is not None else profanity_check

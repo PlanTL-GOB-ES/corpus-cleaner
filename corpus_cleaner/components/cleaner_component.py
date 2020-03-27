@@ -1,14 +1,12 @@
 import argparse
-from document import Document
-from typing import Iterable, Union
-import logging
+from corpus_cleaner.document import Document
+from typing import Iterable, Union, List
 
 
 class CleanerComponent:
 
-    def __init__(self, args: argparse.Namespace, logger: logging.Logger):
+    def __init__(self, args: argparse.Namespace):
         self.args = args
-        self.logger = logger
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -20,3 +18,6 @@ class CleanerComponent:
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         raise NotImplementedError()
+
+    def get_stats(self) -> List:
+        return []
