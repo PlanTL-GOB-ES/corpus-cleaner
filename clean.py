@@ -70,7 +70,7 @@ def main():
     output_dir = get_output_dir(args.name, args.output_path)
     args.output_path = output_dir
 
-    os.makedirs(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
 
     logger = init_logger(os.path.join(output_dir, 'clean.log'))
 
