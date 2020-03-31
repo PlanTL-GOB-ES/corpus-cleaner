@@ -62,7 +62,7 @@ class PreFilterer(CleanerComponent):
         self._build_filters()
 
     def _remove_tags(self, text):
-        return re.sub(self.tags_pattern, '', text)
+        return re.sub(self.tags_pattern, ' ', text)
 
     def _build_filters(self):
         if self.remove_tags:
