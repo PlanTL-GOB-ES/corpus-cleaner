@@ -1,11 +1,14 @@
 from typing import Union, Tuple, List
 from typing import Iterable
 from corpus_cleaner.document import Document
-import re
 from alphabet_detector import AlphabetDetector
 from langid.langid import LanguageIdentifier, model
 from corpus_cleaner.components.cleaner_component import CleanerComponent
+import unicodedata
+import re
 import argparse
+
+
 # TODO: Check whether in pre-filtering or later on:  from profanity_check import predict, predict_prob
 
 
@@ -16,7 +19,7 @@ class PreFilterer(CleanerComponent):
         parser.add_argument('--char-length-filter', type=int, help='Minimum char length per document. Set to 0 not'
                                                                    'to apply any filter.', default=40)
         parser.add_argument('--no-head-filter', action='store_true', help='Avoid filtering documents coming from'
-                            'a crawler (having a "heads" attribute) with common HTTP errors.')
+                                                                          'a crawler (having a "heads" attribute) with common HTTP errors.')
         parser.add_argument('--digits_filter', type=float, help='Maximum allowed proportion of digit characters',
                             default=0.1)
         parser.add_argument('--alphanum_filter', type=float, help='Maximum allowed proportion of non-alphanumeric'
@@ -31,21 +34,27 @@ class PreFilterer(CleanerComponent):
         parser.add_argument('--lang-filter-threshold', type=float, help='If --lang-filter is set, minimum threshold',
                             default=0.90)
         parser.add_argument('--dictionary-filter', type=str, help='Path to dictionary (plain text, one term per line'
-                            'of terms that should not appear', default=None)
+                                                                  'of terms that should not appear', default=None)
+        parser.add_argument('--no_normalize_unicode', action='store_true',
+                            help='Avoid unicode string normalization to the NFKD form')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace, no_remove_tags: bool = True, char_length_filter: int = 40,
-                 no_head_filter: bool = False, digits_filter: float = 0.1, alphanum_filter: float = 0.1,
-                 uppercase_filter: float = 0.4, alphabet_filter: Union[Tuple[str], None] = ('LATIN',),
-                 lang_filter: Union[Tuple[str], None] = None, lang_filter_threshold: float = 0.90,
+    def __init__(self, args: argparse.Namespace,
+                 no_remove_tags: bool = True, no_normalize_unicode: bool = False,
+                 char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
+                 alphanum_filter: float = 0.1, uppercase_filter: float = 0.4,
+                 alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
+                 lang_filter_threshold: float = 0.90,
                  dictionary_filter: Union[None, List[str]] = None):
         super().__init__(args)
         self.remove_tags = not args.no_remove_tags if args.no_remove_tags is not None else not no_remove_tags
         self.tags_pattern = None
+        self.normalize_unicode = not args.no_normalize_unicode if args.no_normalize_unicode is not None else not no_normalize_unicode
+        self.normalize_unicode_form = None
         self.char_length_filter = args.char_length_filter if args.char_length_filter is not None else char_length_filter
         self.head_filter = not args.no_head_filter if args.no_head_filter is not None else not no_head_filter
         self.digits_filter = args.digits_filter if args.digits_filter is not None else digits_filter
@@ -64,9 +73,14 @@ class PreFilterer(CleanerComponent):
     def _remove_tags(self, text):
         return re.sub(self.tags_pattern, ' ', text)
 
+    def _normalize_unicode(self, text):
+        return unicodedata.normalize(self.normalize_unicode_form, text)
+
     def _build_filters(self):
         if self.remove_tags:
             self.tags_pattern = re.compile('<.*?>')
+        if self.normalize_unicode:
+            self.normalize_unicode_form = 'NFKD'
         if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
         if self.head_filter:
@@ -92,7 +106,8 @@ class PreFilterer(CleanerComponent):
             return False
         return True
 
-    def _filter_by_heads(self, doc: Document):
+    @staticmethod
+    def _filter_by_heads(doc: Document):
         if doc.heads is not None:
             for token in ['found', '404', 'robots.txt', 'error']:
                 if re.search(token, doc.heads, re.IGNORECASE):
@@ -100,18 +115,18 @@ class PreFilterer(CleanerComponent):
         return True
 
     def _filter_by_digits(self, doc: Document):
-        if sum(c.isdigit() for c in doc.content)/len(doc.content) > self.digits_filter:
+        if sum(c.isdigit() for c in doc.content) / len(doc.content) > self.digits_filter:
             return False
         return True
 
     def _filter_by_alphanum(self, doc: Document):
         concat_content = ''.join(doc.content.split())
-        if (1 - (sum(c.isalnum() for c in concat_content)/len(concat_content))) > self.alphanum_filter:
+        if (1 - (sum(c.isalnum() for c in concat_content) / len(concat_content))) > self.alphanum_filter:
             return False
         return True
 
     def _filter_by_uppercase(self, doc: Document):
-        if sum(c.isupper() for c in doc.content)/len(doc.content) > self.uppercase_filter:
+        if sum(c.isupper() for c in doc.content) / len(doc.content) > self.uppercase_filter:
             return False
         return True
 
@@ -139,6 +154,8 @@ class PreFilterer(CleanerComponent):
             i += 1
             if self.remove_tags:
                 doc.content = self._remove_tags(doc.content)
+            if self.normalize_unicode:
+                doc.content = self._normalize_unicode(doc.content)
             keep = True
             for filter_ in self.filters:
                 keep = filter_(doc)
