@@ -71,14 +71,15 @@ class PreFilterer(CleanerComponent):
         self._build_filters()
 
     def _remove_tags(self, text):
-        return re.sub(self.tags_pattern, ' ', text)
+        """This function substitute HTML tags with a period "." assuming each tag marks the end of the sentence."""
+        return re.sub(self.tags_pattern, '. ', text)
 
     def _normalize_unicode(self, text):
         return unicodedata.normalize(self.normalize_unicode_form, text)
 
     def _build_filters(self):
         if self.remove_tags:
-            self.tags_pattern = re.compile('<.*?>')
+            self.tags_pattern = re.compile('[. ]*(<.*?> ?)+ *')
         if self.normalize_unicode:
             self.normalize_unicode_form = 'NFKD'
         if self.char_length_filter > 0:
@@ -152,10 +153,11 @@ class PreFilterer(CleanerComponent):
         i = 0
         for doc in documents:
             i += 1
-            if self.remove_tags:
-                doc.content = self._remove_tags(doc.content)
+            # Normalize unicode is applied FIRST
             if self.normalize_unicode:
                 doc.content = self._normalize_unicode(doc.content)
+            if self.remove_tags:
+                doc.content = self._remove_tags(doc.content)
             keep = True
             for filter_ in self.filters:
                 keep = filter_(doc)
