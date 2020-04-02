@@ -27,7 +27,7 @@ class EncodingFixer(CleanerComponent):
         # Also: Consider adding heuristics from https://github.com/PlanTL-SANIDAD/utils/tree/master/FixEncodingErrors
         # self.logger.info('Fixing encoding errors')
         for doc in documents:
-            doc.content = ftfy.fix_text(doc.content)
+            doc.content = ftfy.fix_text(doc.content, normalization='NFKD')
             yield doc
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:

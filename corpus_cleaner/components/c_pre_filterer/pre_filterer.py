@@ -35,8 +35,6 @@ class PreFilterer(CleanerComponent):
                             default=0.90)
         parser.add_argument('--dictionary-filter', type=str, help='Path to dictionary (plain text, one term per line'
                                                                   'of terms that should not appear', default=None)
-        parser.add_argument('--no_normalize_unicode', action='store_true',
-                            help='Avoid unicode string normalization to the NFKD form')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -44,7 +42,7 @@ class PreFilterer(CleanerComponent):
         pass
 
     def __init__(self, args: argparse.Namespace,
-                 no_remove_tags: bool = True, no_normalize_unicode: bool = False,
+                 no_remove_tags: bool = True,
                  char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
                  alphanum_filter: float = 0.1, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
@@ -53,8 +51,6 @@ class PreFilterer(CleanerComponent):
         super().__init__(args)
         self.remove_tags = not args.no_remove_tags if args.no_remove_tags is not None else not no_remove_tags
         self.tags_pattern = None
-        self.normalize_unicode = not args.no_normalize_unicode if args.no_normalize_unicode is not None else not no_normalize_unicode
-        self.normalize_unicode_form = None
         self.char_length_filter = args.char_length_filter if args.char_length_filter is not None else char_length_filter
         self.head_filter = not args.no_head_filter if args.no_head_filter is not None else not no_head_filter
         self.digits_filter = args.digits_filter if args.digits_filter is not None else digits_filter
@@ -74,14 +70,12 @@ class PreFilterer(CleanerComponent):
         """This function substitute HTML tags with a period "." assuming each tag marks the end of the sentence."""
         return re.sub(self.tags_pattern, '. ', text)
 
-    def _normalize_unicode(self, text):
-        return unicodedata.normalize(self.normalize_unicode_form, text)
+    # def _remove_newlines_and_tabs(self):
+    #     pass
 
     def _build_filters(self):
         if self.remove_tags:
             self.tags_pattern = re.compile('[. ]*(<.*?> ?)+ *')
-        if self.normalize_unicode:
-            self.normalize_unicode_form = 'NFKD'
         if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
         if self.head_filter:
@@ -153,9 +147,6 @@ class PreFilterer(CleanerComponent):
         i = 0
         for doc in documents:
             i += 1
-            # Normalize unicode is applied FIRST
-            if self.normalize_unicode:
-                doc.content = self._normalize_unicode(doc.content)
             if self.remove_tags:
                 doc.content = self._remove_tags(doc.content)
             keep = True
