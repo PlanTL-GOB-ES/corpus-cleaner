@@ -63,15 +63,16 @@ class PreFilterer(CleanerComponent):
             lang_filter_threshold
         self.dictionary_filter = args.dictionary_filter if args.dictionary_filter is not None else dictionary_filter
         self.dictionary_filter_pattern = None
+        self.input_format = args.input_format
         self.filters = []
         self._build_filters()
 
     def _remove_tags(self, text):
-        """This function substitute HTML tags with a period "." assuming each tag marks the end of the sentence."""
-        return re.sub(self.tags_pattern, '. ', text)
-
-    # def _remove_newlines_and_tabs(self):
-    #     pass
+        sub = ' '
+        # when the data are bsc-crawl-json, assume each tag marks the end of the sentence.
+        if self.input_format == 'bsc-crawl-json':
+            sub = '. '
+        return re.sub(self.tags_pattern, sub, text)
 
     def _build_filters(self):
         if self.remove_tags:
