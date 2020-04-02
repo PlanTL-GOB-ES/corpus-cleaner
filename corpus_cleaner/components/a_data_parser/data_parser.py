@@ -70,7 +70,7 @@ class DataParser(CleanerComponent):
     def _get_relative_filepaths(self) -> Iterable[str]:
         relative_paths = []
         for extension in self.extensions:
-            for path in Path(self.input_path).rglob(f'*{extension}'):
+            for path in Path(self.input_path).rglob(f'*{extension}' if '*' not in extension else extension):
                 if os.path.isfile(path):
                     relative_paths.append(os.path.join(os.path.relpath(path.parents[0], self.input_path), path.name))
         return relative_paths
