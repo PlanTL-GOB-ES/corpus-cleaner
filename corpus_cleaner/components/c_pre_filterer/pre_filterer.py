@@ -4,7 +4,6 @@ from corpus_cleaner.document import Document
 from alphabet_detector import AlphabetDetector
 from langid.langid import LanguageIdentifier, model
 from corpus_cleaner.components.cleaner_component import CleanerComponent
-import unicodedata
 import re
 import argparse
 
