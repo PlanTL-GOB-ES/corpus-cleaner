@@ -1,7 +1,7 @@
 from corpus_cleaner.document import Document
 from typing import Iterable, Union, Dict
 from corpus_cleaner.components.cleaner_component import CleanerComponent
-from mosestokenizer import MosesPunctuationNormalizer
+from sacremoses import MosesPunctNormalizer
 import argparse
 
 
@@ -55,7 +55,7 @@ class Normalizer(CleanerComponent):
         raise NotImplementedError()
 
     def _punctuation_normalization(self):
-        return MosesPunctuationNormalizer(self.language[0])
+        return MosesPunctNormalizer(self.language[0])
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self._normalize(documents)
