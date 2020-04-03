@@ -6,6 +6,7 @@ from langid.langid import LanguageIdentifier, model
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 import re
 import argparse
+import fasttext
 
 
 class PreFilterer(CleanerComponent):
@@ -31,8 +32,9 @@ class PreFilterer(CleanerComponent):
         parser.add_argument('--lang-filter', type=str, help='List of languages that should allowed when filtering by'
                                                             'lang. If not set, no filtering is applied.',
                             nargs='+')
-        parser.add_argument('--lang-filter-threshold', type=float, help='If --lang-filter is set, minimum threshold',
-                            default=0.90)
+        parser.add_argument('--lang-filter-threshold', type=float, help='If --lang-filter is set, minimum'
+                                                                             'threshold for the faster lang identifier',
+                            default=0.9)
         parser.add_argument('--dictionary-filter', type=str, help='Path to dictionary (plain text, one term per line'
                                                                   'of terms that should not appear', default=None)
 
@@ -87,12 +89,13 @@ class PreFilterer(CleanerComponent):
     def _build_filters(self):
         if self.remove_tags:
             self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
-            self.p_tag_pattern = re.compile('([.|?]*\s*)(</\p>)')
+            self.p_tag_pattern = re.compile(r'([.|?]*\s*)(</p>)')
         if self.remove_extra_spaces:
             self.extra_spaces_pattern = re.compile(r'\s+')
         if self.replace_urls:
+            # https://www.regextester.com/96146
             self.urls_pattern = re.compile(
-                "((http|ftp|https):\/\/)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)"
+                "((\w+):\/\/)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)"
             )
         if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
