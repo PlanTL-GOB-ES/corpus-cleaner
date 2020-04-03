@@ -80,7 +80,6 @@ class PreFilterer(CleanerComponent):
         return self.tags_pattern.sub(' ', self.p_tag_pattern.sub('. ', text))
 
     def _remove_extra_spaces(self, text):
-        """Remove multiple \n \t chars"""
         replace = ' '
         return self.extra_spaces_pattern.sub(replace, text).strip()
 
@@ -126,7 +125,7 @@ class PreFilterer(CleanerComponent):
     @staticmethod
     def _filter_by_heads(doc: Document):
         if doc.heads is not None:
-            for token in ['found', '404', 'robots.txt', 'error']:
+            for token in ['found', '404', 'robots.txt', 'error', 'trouvée']:
                 if re.search(token, doc.heads, re.IGNORECASE):
                     return False
         return True
@@ -166,9 +165,7 @@ class PreFilterer(CleanerComponent):
         return True
 
     def _filter(self, documents: Iterable[Document]):
-        i = 0
         for doc in documents:
-            i += 1
             if self.remove_tags:
                 doc.content = self._remove_tags(doc.content)
             if self.remove_extra_spaces:
