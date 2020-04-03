@@ -8,9 +8,6 @@ import re
 import argparse
 
 
-# TODO: Check whether in pre-filtering or later on:  from profanity_check import predict, predict_prob
-
-
 class PreFilterer(CleanerComponent):
 
     @staticmethod
