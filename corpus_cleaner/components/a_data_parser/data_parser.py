@@ -36,6 +36,7 @@ class DataParser(CleanerComponent):
         self.encoding_threshold = args.encoding_threshold if args.encoding_threshold is not None else encoding_threshold
         self.encoding_error_policy = args.encoding_error_policy if args.encoding_error_policy is not None else \
             encoding_error_policy
+        self.detector = UniversalDetector() if self.encoding == 'auto' else None
         self.info = []
 
     def _parse(self) -> Iterable[Document]:
@@ -77,16 +78,15 @@ class DataParser(CleanerComponent):
 
     def _guess_encoding(self, path: str):
         # https://stackoverflow.com/questions/46037058/using-chardet-to-find-encoding-of-very-large-file/49621821
-        detector = UniversalDetector()
-        detector.reset()
+        self.detector.reset()
         with open(path, 'rb') as f:
             for row in f:
-                detector.feed(row)
-                if detector.done:
+                self.detector.feed(row)
+                if self.detector.done:
                     break
-        detector.close()
-        confidence_ok = detector.result['confidence'] > self.encoding_threshold
-        encoding = detector.result['encoding'] if confidence_ok else 'utf-8'
+        self.detector.close()
+        confidence_ok = self.detector.result['confidence'] > self.encoding_threshold
+        encoding = self.detector.result['encoding'] if confidence_ok else 'utf-8'
         return encoding, confidence_ok
 
     def apply(self, documents: Union[Iterable[Document], None] = None) -> Union[Iterable[Document], None]:
