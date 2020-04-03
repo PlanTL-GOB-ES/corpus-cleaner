@@ -78,3 +78,5 @@ class SentenceFilter(CleanerComponent):
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self._filter(documents)
+
+# TODO: UDP. homoglyphs in prefilterer
