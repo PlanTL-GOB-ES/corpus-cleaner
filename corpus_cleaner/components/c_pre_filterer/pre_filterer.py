@@ -17,6 +17,7 @@ class PreFilterer(CleanerComponent):
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
         parser.add_argument('--no-remove-extra-spaces', action='store_true', help='Avoid removing XML/HTML tags')
+        parser.add_argument('--no-replace-urls', action='store_true', help='Avoid replacing URLs with "[URL]"')
         parser.add_argument('--char-length-filter', type=int, help='Minimum char length per document. Set to 0 not'
                                                                    'to apply any filter.', default=40)
         parser.add_argument('--no-head-filter', action='store_true', help='Avoid filtering documents coming from'
@@ -43,8 +44,8 @@ class PreFilterer(CleanerComponent):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace,
-                 no_remove_tags: bool = False, no_remove_extra_spaces: bool = False,
+    def __init__(self, args: argparse.Namespace, no_remove_tags: bool = False, no_remove_extra_spaces: bool = False,
+                 no_replace_urls: bool = False,
                  char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
                  alphanum_filter: float = 0.1, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
@@ -56,6 +57,8 @@ class PreFilterer(CleanerComponent):
         self.remove_extra_spaces = not args.no_remove_extra_spaces if args.no_remove_extra_spaces is not None else not \
             no_remove_extra_spaces
         self.extra_spaces_pattern = None
+        self.replace_urls = not args.no_replace_urls if args.no_replace_urls is not None else not no_replace_urls
+        self.urls_pattern = None
         self.char_length_filter = args.char_length_filter if args.char_length_filter is not None else char_length_filter
         self.head_filter = not args.no_head_filter if args.no_head_filter is not None else not no_head_filter
         self.digits_filter = args.digits_filter if args.digits_filter is not None else digits_filter
@@ -81,12 +84,20 @@ class PreFilterer(CleanerComponent):
         replace = ' '
         return self.extra_spaces_pattern.sub(replace, text).strip()
 
+    def _replace_urls(self, text):
+        replace = '[URL]'
+        return self.urls_pattern.sub(replace, text)
+
     def _build_filters(self):
         if self.remove_tags:
             self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
             self.p_tag_pattern = re.compile('([.|?]*\s*)(</\p>)')
         if self.remove_extra_spaces:
             self.extra_spaces_pattern = re.compile(r'\s+')
+        if self.replace_urls:
+            self.urls_pattern = re.compile(
+                "((http|ftp|https):\/\/)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)"
+            )
         if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
         if self.head_filter:
@@ -162,6 +173,8 @@ class PreFilterer(CleanerComponent):
                 doc.content = self._remove_tags(doc.content)
             if self.remove_extra_spaces:
                 doc.content = self._remove_extra_spaces(doc.content)
+            if self.replace_urls:
+                doc.content = self._replace_urls(doc.content)
             keep = True
             for filter_ in self.filters:
                 keep = filter_(doc)
