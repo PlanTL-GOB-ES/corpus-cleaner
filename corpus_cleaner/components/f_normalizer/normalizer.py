@@ -1,6 +1,7 @@
 from corpus_cleaner.document import Document
 from typing import Iterable, Union, Dict
 from corpus_cleaner.components.cleaner_component import CleanerComponent
+from mosestokenizer import MosesPunctuationNormalizer
 import argparse
 
 
@@ -24,15 +25,28 @@ class Normalizer(CleanerComponent):
         self.spell_check = args.spell_check if args.spell_check is not None else spell_check
         self.terminology_norm = args.terminology_norm if args.terminology_norm is not None else terminology_norm
         self.punctuation_norm = args.punctuation_norm if args.punctuation_norm is not None else punctuation_norm
+        self.language = args.lang_filter
+        self.normalizers = []
+        self._build_normalizers()
 
-    def normalize(self, documents: Iterable[Document]) -> Iterable[Document]:
-        if self.spell_check:
-            self._spell_checking()
-        if self.terminology_norm is not None:
-            self._terminology_normalization()
+    def _normalize(self, documents: Iterable[Document]) -> Iterable[Document]:
+        for doc in documents:
+            sent_norms = []
+            for sent in doc.sentences:
+                sent_norm = sent
+                for normalizer in self.normalizers:
+                    sent_norm = normalizer(sent_norm)
+                sent_norms.append(sent_norm)
+            doc.sentences = sent_norms
+            yield doc
+
+    def _build_normalizers(self):
         if self.punctuation_norm:
-            self._punctuation_normalization()
-        return documents
+            self.normalizers.append(self._punctuation_normalization())
+        if self.spell_check:
+            pass
+        if self.terminology_norm is not None:
+            pass
 
     def _spell_checking(self):
         raise NotImplementedError()
@@ -41,7 +55,7 @@ class Normalizer(CleanerComponent):
         raise NotImplementedError()
 
     def _punctuation_normalization(self):
-        raise NotImplementedError()
+        return MosesPunctuationNormalizer(self.language[0])
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
-        return self.normalize(documents)
+        return self._normalize(documents)

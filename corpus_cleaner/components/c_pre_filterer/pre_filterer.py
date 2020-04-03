@@ -4,7 +4,6 @@ from corpus_cleaner.document import Document
 from alphabet_detector import AlphabetDetector
 from langid.langid import LanguageIdentifier, model
 from corpus_cleaner.components.cleaner_component import CleanerComponent
-import unicodedata
 import re
 import argparse
 
@@ -13,9 +12,11 @@ import argparse
 
 
 class PreFilterer(CleanerComponent):
+
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
+        parser.add_argument('--no-remove-extra-chars', action='store_true', help='Avoid removing XML/HTML tags')
         parser.add_argument('--char-length-filter', type=int, help='Minimum char length per document. Set to 0 not'
                                                                    'to apply any filter.', default=40)
         parser.add_argument('--no-head-filter', action='store_true', help='Avoid filtering documents coming from'
@@ -42,7 +43,7 @@ class PreFilterer(CleanerComponent):
         pass
 
     def __init__(self, args: argparse.Namespace,
-                 no_remove_tags: bool = True,
+                 no_remove_tags: bool = True, no_remove_extra_chars: bool = True,
                  char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
                  alphanum_filter: float = 0.1, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
@@ -51,6 +52,8 @@ class PreFilterer(CleanerComponent):
         super().__init__(args)
         self.remove_tags = not args.no_remove_tags if args.no_remove_tags is not None else not no_remove_tags
         self.tags_pattern = None
+        self.remove_extra_chars = not args.no_remove_extra_chars if args.no_remove_extra_chars is not None else not no_remove_extra_chars
+        self.extra_chars_pattern = None
         self.char_length_filter = args.char_length_filter if args.char_length_filter is not None else char_length_filter
         self.head_filter = not args.no_head_filter if args.no_head_filter is not None else not no_head_filter
         self.digits_filter = args.digits_filter if args.digits_filter is not None else digits_filter
@@ -67,16 +70,27 @@ class PreFilterer(CleanerComponent):
         self.filters = []
         self._build_filters()
 
+    # TODO: move the remove operations to a new component called CharFilter
     def _remove_tags(self, text):
-        sub = ' '
+        replace = ' '
         # when the data are bsc-crawl-json, assume each tag marks the end of the sentence.
         if self.input_format == 'bsc-crawl-json':
-            sub = '. '
-        return re.sub(self.tags_pattern, sub, text)
+            replace = '. '
+        return self.tags_pattern.sub(replace, text)
+
+    def _remove_extra_chars(self, text):
+        """Remove multiple \n \t chars"""
+        replace = ' '
+        return self.extra_chars_pattern.sub(replace, text)
 
     def _build_filters(self):
         if self.remove_tags:
-            self.tags_pattern = re.compile('[. ]*(<.*?> ?)+ *')
+            if self.input_format == 'bsc-crawl-json':
+                self.tags_pattern = re.compile('[. ]*(<.*?> ?)+ *')
+            else:
+                self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
+        if self.remove_extra_chars:
+            self.extra_chars_pattern = re.compile('[\n\t]+')
         if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
         if self.head_filter:
@@ -150,6 +164,8 @@ class PreFilterer(CleanerComponent):
             i += 1
             if self.remove_tags:
                 doc.content = self._remove_tags(doc.content)
+            if self.remove_extra_chars:
+                doc.content = self._remove_extra_chars(doc.content)
             keep = True
             for filter_ in self.filters:
                 keep = filter_(doc)
