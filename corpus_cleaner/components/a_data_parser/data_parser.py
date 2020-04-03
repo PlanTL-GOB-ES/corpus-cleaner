@@ -1,4 +1,3 @@
-from typing import Iterable
 from corpus_cleaner.document import Document
 from chardet.universaldetector import UniversalDetector  # TODO: Try UnicodeDammit, Magic...?
 from typing import TextIO
@@ -41,7 +40,7 @@ class DataParser(CleanerComponent):
 
     def _parse(self) -> Iterable[Document]:
         self.info.append(f'Parsing {self.extensions} extensions in {self.input_path} with {self.encoding_error_policy}'
-                          f' as encoding error policy')
+                         f' as encoding error policy')
         if self.encoding != 'auto':
             self.info.append(f'Encoding assumed to be {self.encoding}')
         else:
