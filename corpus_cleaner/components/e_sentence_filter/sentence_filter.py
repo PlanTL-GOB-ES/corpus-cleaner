@@ -5,7 +5,6 @@ from langid.langid import LanguageIdentifier, model
 import argparse
 
 
-
 class SentenceFilter(CleanerComponent):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -62,7 +61,6 @@ class SentenceFilter(CleanerComponent):
         if res[0] in self.lang_filter and res[1] > self.lang_filter_threshold:
             return True
         return False
-
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self._filter(documents)

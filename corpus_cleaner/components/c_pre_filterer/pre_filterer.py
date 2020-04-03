@@ -16,11 +16,12 @@ class PreFilterer(CleanerComponent):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
-        parser.add_argument('--no-remove-extra-chars', action='store_true', help='Avoid removing XML/HTML tags')
+        parser.add_argument('--no-remove-extra-spaces', action='store_true', help='Avoid removing XML/HTML tags')
         parser.add_argument('--char-length-filter', type=int, help='Minimum char length per document. Set to 0 not'
                                                                    'to apply any filter.', default=40)
         parser.add_argument('--no-head-filter', action='store_true', help='Avoid filtering documents coming from'
-                                                                          'a crawler (having a "heads" attribute) with common HTTP errors.')
+                                                                          'a crawler (having a "heads" attribute) with'
+                                                                          'common HTTP errors.')
         parser.add_argument('--digits_filter', type=float, help='Maximum allowed proportion of digit characters',
                             default=0.1)
         parser.add_argument('--alphanum_filter', type=float, help='Maximum allowed proportion of non-alphanumeric'
@@ -43,7 +44,7 @@ class PreFilterer(CleanerComponent):
         pass
 
     def __init__(self, args: argparse.Namespace,
-                 no_remove_tags: bool = True, no_remove_extra_chars: bool = True,
+                 no_remove_tags: bool = False, no_remove_extra_spaces: bool = False,
                  char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
                  alphanum_filter: float = 0.1, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
@@ -52,8 +53,9 @@ class PreFilterer(CleanerComponent):
         super().__init__(args)
         self.remove_tags = not args.no_remove_tags if args.no_remove_tags is not None else not no_remove_tags
         self.tags_pattern = None
-        self.remove_extra_chars = not args.no_remove_extra_chars if args.no_remove_extra_chars is not None else not no_remove_extra_chars
-        self.extra_chars_pattern = None
+        self.remove_extra_spaces = not args.no_remove_extra_spaces if args.no_remove_extra_spaces is not None else not \
+            no_remove_extra_spaces
+        self.extra_spaces_pattern = None
         self.char_length_filter = args.char_length_filter if args.char_length_filter is not None else char_length_filter
         self.head_filter = not args.no_head_filter if args.no_head_filter is not None else not no_head_filter
         self.digits_filter = args.digits_filter if args.digits_filter is not None else digits_filter
@@ -81,7 +83,7 @@ class PreFilterer(CleanerComponent):
     def _remove_extra_chars(self, text):
         """Remove multiple \n \t chars"""
         replace = ' '
-        return self.extra_chars_pattern.sub(replace, text)
+        return self.extra_spaces_pattern.sub(replace, text).strip()
 
     def _build_filters(self):
         if self.remove_tags:
@@ -89,8 +91,8 @@ class PreFilterer(CleanerComponent):
                 self.tags_pattern = re.compile('[. ]*(<.*?> ?)+ *')
             else:
                 self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
-        if self.remove_extra_chars:
-            self.extra_chars_pattern = re.compile('[\n\t]+')
+        if self.remove_extra_spaces:
+            self.extra_spaces_pattern = re.compile(r'\s+')
         if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
         if self.head_filter:
