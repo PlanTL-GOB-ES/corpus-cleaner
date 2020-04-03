@@ -166,7 +166,7 @@ class PreFilterer(CleanerComponent):
             i += 1
             if self.remove_tags:
                 doc.content = self._remove_tags(doc.content)
-            if self.remove_extra_chars:
+            if self.remove_extra_spaces:
                 doc.content = self._remove_extra_chars(doc.content)
             keep = True
             for filter_ in self.filters:
