@@ -74,23 +74,17 @@ class PreFilterer(CleanerComponent):
 
     # TODO: move the remove operations to a new component called CharFilter
     def _remove_tags(self, text):
-        replace = ' '
-        # when the data are bsc-crawl-json, assume each tag marks the end of the sentence.
-        if self.input_format == 'bsc-crawl-json':
-            replace = '. '
-        return self.tags_pattern.sub(replace, text)
+        return self.tags_pattern.sub(' ', self.p_tag_pattern.sub('. ', text))
 
-    def _remove_extra_chars(self, text):
+    def _remove_extra_spaces(self, text):
         """Remove multiple \n \t chars"""
         replace = ' '
         return self.extra_spaces_pattern.sub(replace, text).strip()
 
     def _build_filters(self):
         if self.remove_tags:
-            if self.input_format == 'bsc-crawl-json':
-                self.tags_pattern = re.compile('[. ]*(<.*?> ?)+ *')
-            else:
-                self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
+            self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
+            self.p_tag_pattern = re.compile('([.|?]*\s*)(</\p>)')
         if self.remove_extra_spaces:
             self.extra_spaces_pattern = re.compile(r'\s+')
         if self.char_length_filter > 0:
@@ -167,7 +161,7 @@ class PreFilterer(CleanerComponent):
             if self.remove_tags:
                 doc.content = self._remove_tags(doc.content)
             if self.remove_extra_spaces:
-                doc.content = self._remove_extra_chars(doc.content)
+                doc.content = self._remove_extra_spaces(doc.content)
             keep = True
             for filter_ in self.filters:
                 keep = filter_(doc)
