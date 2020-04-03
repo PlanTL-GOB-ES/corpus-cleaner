@@ -6,12 +6,16 @@ from corpus_cleaner.cleaner import Cleaner
 import os
 import corpus_cleaner
 import sys
+import datetime
 
 
 def clean(args: argparse.Namespace, logger: logging.Logger):
     logger.info(args)
+    t0 = datetime.datetime.now().timestamp()
     cleaner = Cleaner(args, logger)
     cleaner.clean()
+    t1 = datetime.datetime.now().timestamp()
+    logger.info(f'Elapsed {t1-t0}s')
 
 
 def get_output_dir(name: str, output_path: str) -> str:
