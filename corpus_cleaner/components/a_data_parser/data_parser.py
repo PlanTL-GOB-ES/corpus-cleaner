@@ -6,7 +6,7 @@ from typing import Tuple
 from pathlib import Path
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 import argparse
-from typing import Union, Iterable
+from typing import Iterable, List
 
 
 class DataParser(CleanerComponent):
@@ -37,37 +37,29 @@ class DataParser(CleanerComponent):
             encoding_error_policy
         self.detector = UniversalDetector() if self.encoding == 'auto' else None
         self.info = []
+        self.logger = args.logger
 
-    def _parse(self) -> Iterable[Document]:
-        self.info.append(f'Parsing {self.extensions} extensions in {self.input_path} with {self.encoding_error_policy}'
-                         f' as encoding error policy')
-        if self.encoding != 'auto':
-            self.info.append(f'Encoding assumed to be {self.encoding}')
-        else:
-            self.info.append(f"Encoding set to 'auto', guessing encoding with confidence threshold "
-                             f"{self.encoding_threshold}'")
-        doc_counter = 0
-        confidence_ok_counter = 0
+    def _treat_file(self, idx_filepath: int, relative_filepath: str) -> Iterable[Document]:
+        abs_path = os.path.join(self.input_path, relative_filepath)
+        enc, confidence_ok = self._guess_encoding(abs_path) if self.encoding == 'auto' else (self.encoding, True)
+        with open(abs_path, 'r', encoding=enc, errors=self.encoding_error_policy) as f:
+            for doc in self._parse_file(f, relative_filepath, idx_filepath):
+                if enc != 'utf-8':
+                    pass  # TODO: Check possible problems when the original file was not utf-8
+                yield doc
+
+    def _parse(self) -> List[Iterable[Document]]:
+        parse_iterables = []
         for idx_filepath, relative_filepath in enumerate(sorted(self._get_relative_filepaths())):
-            abs_path = os.path.join(self.input_path, relative_filepath)
-            enc, confidence_ok = self._guess_encoding(abs_path) if self.encoding == 'auto' else (self.encoding, True)
-            if not confidence_ok:
-                confidence_ok_counter += 1
-            with open(abs_path, 'r', encoding=enc, errors=self.encoding_error_policy) as f:
-                for doc in self._parse_file(f, relative_filepath, doc_counter):
-                    if enc != 'utf-8':
-                        pass  # TODO: Check possible problems when the original file was not utf-8
-                    yield doc
-                    doc_counter += 1
-        if self.encoding == 'auto':
-            self.info.append(f'{confidence_ok_counter}/{doc_counter+1} with low encoding guessing confidence\n'
-                         f'Using utf-8 as backup in these cases')
-        self.info.append(f'Parsed {doc_counter+1} documents from {idx_filepath+1} documents')
+            parse_iterables.append(self._treat_file(idx_filepath, relative_filepath))
+        return parse_iterables
 
-    def _parse_file(self, fd: TextIO, relative_filepath: str, doc_counter: int) -> Iterable[Document]:
+    def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) ->\
+            List[Iterable[Document]]:
         raise NotImplementedError()
 
     def _get_relative_filepaths(self) -> Iterable[str]:
+        self.logger.logger.info('Getting relative filepaths')
         relative_paths = []
         for extension in self.extensions:
             for path in Path(self.input_path).rglob(f'*{extension}' if '*' not in extension else extension):
@@ -88,9 +80,7 @@ class DataParser(CleanerComponent):
         encoding = self.detector.result['encoding'] if confidence_ok else 'utf-8'
         return encoding, confidence_ok
 
-    def apply(self, documents: Union[Iterable[Document], None] = None) -> Union[Iterable[Document], None]:
+    def parse(self) -> List[Iterable[Document]]:
         return self._parse()
 
-    def get_stats(self):
-        return self.info
 

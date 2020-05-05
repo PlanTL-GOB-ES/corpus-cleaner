@@ -1,16 +1,14 @@
-from typing import Union, Tuple, List
-from typing import Iterable
+from typing import Union, Tuple, List, Optional
 from corpus_cleaner.document import Document
 from alphabet_detector import AlphabetDetector
-from langid.langid import LanguageIdentifier, model
-from corpus_cleaner.components.cleaner_component import CleanerComponent
+from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 import re
 import argparse
 import fasttext
 import os
 
 
-class PreFilterer(CleanerComponent):
+class PreFilterer(CleanerComponentMapper):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -57,7 +55,7 @@ class PreFilterer(CleanerComponent):
         self.remove_extra_spaces = not args.no_remove_extra_spaces if args.no_remove_extra_spaces is not None else not \
             no_remove_extra_spaces
         self.extra_spaces_pattern = None
-        self.replace_urls = False # not args.no_replace_urls if args.no_replace_urls is not None else not no_replace_urls
+        self.replace_urls = not args.no_replace_urls if args.no_replace_urls is not None else not no_replace_urls
         self.urls_pattern = None
         self.char_length_filter = args.char_length_filter if args.char_length_filter is not None else char_length_filter
         self.head_filter = not args.no_head_filter if args.no_head_filter is not None else not no_head_filter
@@ -176,21 +174,21 @@ class PreFilterer(CleanerComponent):
             return False
         return True
 
-    def _filter(self, documents: Iterable[Document]):
-        for doc in documents:
-            if self.remove_tags:
-                doc.content = self._remove_tags(doc.content)
-            if self.remove_extra_spaces:
-                doc.content = self._remove_extra_spaces(doc.content)
-            if self.replace_urls:
-                doc.content = self._replace_urls(doc.content)
-            keep = True
-            for filter_ in self.filters:
-                keep = filter_(doc)
-                if not keep:
-                    break
-            if keep:
-                yield doc
+    def _filter(self, document: Optional[Document]) -> Optional[Document]:
+        if self.remove_tags:
+            document.content = self._remove_tags(document.content)
+        if self.remove_extra_spaces:
+            document.content = self._remove_extra_spaces(document.content)
+        if self.replace_urls:
+            document.content = self._replace_urls(document.content)
+        keep = True
+        for filter_ in self.filters:
+            keep = filter_(document)
+            if not keep:
+                break
+        if keep:
+            return document
+        return None
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
-        return self._filter(documents)
+    def apply(self, document: Optional[Document]) -> Optional[Document]:
+        return self._filter(document)

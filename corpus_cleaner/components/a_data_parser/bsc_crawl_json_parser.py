@@ -13,8 +13,8 @@ class BSCCrawlJSONParser(DataParser):
         super(BSCCrawlJSONParser, self).__init__(args, input_path=args.input_path, extensions=extensions,
                                                  **kwargs)
 
-    def _parse_file(self, fd: TextIO, relative_filepath: str, doc_counter: int) -> Iterable[Document]:
-        i = doc_counter + 1
+    def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) ->\
+            Iterable[Document]:
         for idx, line in enumerate(fd.readlines()):
             j = json.loads(line)
             url = j['url']
@@ -23,6 +23,5 @@ class BSCCrawlJSONParser(DataParser):
             heads = j['heads']
             title = j['titles']
             filename = relative_filepath
-            yield Document(content=content, filename=filename, url=url, id_=i,
+            yield Document(content=content, filename=filename, url=url, id_=f'{idx_filepath}-{idx+1}',
                            keywords=keywords, heads=heads, title=title)
-            i += idx

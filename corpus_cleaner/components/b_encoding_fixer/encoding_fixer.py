@@ -1,13 +1,11 @@
 from corpus_cleaner.document import Document
 import ftfy
-from typing import Iterable
-from corpus_cleaner.components.cleaner_component import CleanerComponent
+from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 import argparse
-from typing import Union
-from tqdm import tqdm
+from typing import Optional
 
 
-class EncodingFixer(CleanerComponent):
+class EncodingFixer(CleanerComponentMapper):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         pass
@@ -17,7 +15,7 @@ class EncodingFixer(CleanerComponent):
         # TODO check custom args
         pass
 
-    def _fix_encoding(self, documents: Iterable[Document]) -> Iterable[Document]:
+    def _fix_encoding(self, document: Optional[Document]) -> Optional[Document]:
         # TODO: Study defaults
         # https://ftfy.readthedocs.io/en/latest/
         # ftfy.fix_text(text, *, fix_entities='auto', remove_terminal_escapes=True, fix_encoding=True,
@@ -25,11 +23,10 @@ class EncodingFixer(CleanerComponent):
         #              fix_surrogates=True, remove_control_chars=True, remove_bom=True, normalization='NFC',
         #              max_decode_length=1000000)
         # Also: Consider adding heuristics from https://github.com/PlanTL-SANIDAD/utils/tree/master/FixEncodingErrors
-        # self.logger.info('Fixing encoding errors')
-        for doc in documents:
-            doc.content = ftfy.fix_text(doc.content, normalization='NFKD')
-            yield doc
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
-        return self._fix_encoding(documents)
+        document.content = ftfy.fix_text(document.content, normalization='NFKD')
+        return document
+
+    def apply(self, document: Optional[Document]) -> Optional[Document]:
+        return self._fix_encoding(document)
 
