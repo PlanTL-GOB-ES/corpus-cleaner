@@ -1,6 +1,4 @@
 import argparse
-from corpus_cleaner.document import Document
-from typing import Iterable, Union, List
 
 
 class CleanerComponent:
@@ -15,9 +13,3 @@ class CleanerComponent:
     @staticmethod
     def check_args(args: argparse.Namespace):
         raise NotImplementedError()
-
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
-        raise NotImplementedError()
-
-    def get_stats(self) -> List:
-        return []

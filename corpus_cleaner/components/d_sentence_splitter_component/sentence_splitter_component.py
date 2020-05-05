@@ -1,12 +1,11 @@
 from corpus_cleaner.document import Document
-from typing import Iterable, Union
+from typing import Optional
 import sentence_splitter
-from corpus_cleaner.components.cleaner_component import CleanerComponent
+from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 import argparse
 
 
-# Use leading underscore to distinguish the class from the 'sentence_splitter' module class 'SentenceSplitter'
-class SentenceSplitterComponent(CleanerComponent):
+class SentenceSplitterComponent(CleanerComponentMapper):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         pass
@@ -20,18 +19,17 @@ class SentenceSplitterComponent(CleanerComponent):
         super().__init__(args)
         self.splitter_dict = {}
 
-    def _split(self, documents: Iterable[Document]) -> Iterable[Document]:
-        for idx, doc in enumerate(documents):
-            if doc.language in self.splitter_dict:
-                splitter = self.splitter_dict[doc.language]
-            else:
-                self.splitter_dict[doc.language] = sentence_splitter.SentenceSplitter(language=doc.language)
-                splitter = self.splitter_dict[doc.language]
-            sentences = []
-            for sent in splitter.split(doc.content):
-                sentences.append(sent)
-            doc.sentences = sentences
-            yield doc
+    def _split(self, document: Optional[Document]) -> Optional[Document]:
+        if document.language in self.splitter_dict:
+            splitter = self.splitter_dict[document.language]
+        else:
+            self.splitter_dict[document.language] = sentence_splitter.SentenceSplitter(language=document.language)
+            splitter = self.splitter_dict[document.language]
+        sentences = []
+        for sent in splitter.split(document.content):
+            sentences.append(sent)
+        document.sentences = sentences
+        return document
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
-        return self._split(documents)
+    def apply(self, document: Optional[Document]) -> Optional[Document]:
+        return self._split(document)

@@ -16,6 +16,10 @@ from typing import Iterable, List, Tuple
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 from corpus_cleaner.document import Document
 from collections import OrderedDict
+from pipel import Pipeline
+from pipel import PipelineLogger
+from typing import Generator
+from typing import cast
 
 COMPONENTS_DEFAULT = [
     EncodingFixer, PreFilterer,
@@ -36,14 +40,15 @@ class Cleaner:
 
     def __init__(self, args: argparse.Namespace, logger: logging):
         self.args = args
-        self.logger = logger
+        self.logger = PipelineLogger(logger)
+        self.args.logger = self.logger
         self.components = COMPONENTS_DEFAULT
         if args.components is not None:
             self.components = []
             for comp in COMPONENTS_DEFAULT:
                 if comp.__name__ in args.components:
                     self.components.append(comp)
-        self.documents = self._get_documents()
+        self.documents = None
         self.pipeline = self._create_pipeline()
         self.stats = OrderedDict()
 
@@ -51,6 +56,7 @@ class Cleaner:
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--components', type=str, help='Elements of the pipeline', nargs='+',
                             default=list(map(lambda x: x.__name__, COMPONENTS_DEFAULT)))
+        parser.add_argument('--parallel',  action='store_true', help='Run the cleaner in parallel')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -59,10 +65,10 @@ class Cleaner:
                 raise Exception('Unknown component', comp)
         # TODO: add more checks (eg. sentence splitting requirement for other components
 
-    def _get_documents(self) -> Iterable[Document]:
+    def _get_documents(self) -> List[Iterable[Document]]:
         # self.logger.info('Parsing...')
         parser = DataParserFactory.get_parser(self.args)
-        return parser.apply()
+        return parser.parse()
 
     def _create_pipeline(self) -> List[CleanerComponent]:
         return [component(self.args) for component in self.components]
@@ -73,16 +79,10 @@ class Cleaner:
         output_formatter.apply(documents)
 
     def clean(self):
-        documents = self.documents
-        for component in self.pipeline:
-            documents = component.apply(documents=documents)
-        self._output(documents)
-        self._log()
 
-    def _log(self):
-        for component in self.pipeline:
-            self.stats[component.__class__.__name__] = component.get_stats()
-        for component, stats in self.stats.items():
-            self.logger.info(component)
-            for line in self.stats[component]:
-                self.logger.info(line)
+        pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self._get_documents()],
+                            mappers_factory=self._create_pipeline,
+                            output_reducer=self._output, batch_size=100,
+                            parallel=True, logger=self.logger, log_every_iter=1)
+        pipeline.run()
+

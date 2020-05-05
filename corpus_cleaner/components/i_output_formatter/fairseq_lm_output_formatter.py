@@ -7,7 +7,7 @@ import os
 class FairseqLMOutputFormatter(OutputFormatter):
 
     def _init_writing(self):
-        self.fd = open(os.path.join(self.path, 'output.txt'), 'w')
+        self.fd = open(os.path.join(self.path, 'output.txt'), 'a')
 
     def _write_document(self, document: Document):
         for sentence in document.sentences:

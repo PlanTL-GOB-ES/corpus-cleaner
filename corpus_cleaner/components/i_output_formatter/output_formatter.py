@@ -32,9 +32,15 @@ class OutputFormatter(CleanerComponent):
         raise NotImplementedError()
 
     def _output_format(self, documents: Iterable[Document]):
-        self._init_writing()
-        for document in tqdm(documents):
+        if self.fd is None:
+            self._init_writing()
+        for document in documents:#tqdm(documents):
+            if document is None:
+                continue
             self._write_document(document)
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self._output_format(documents)
+
+    def __del__(self):
+        self._end_writing()

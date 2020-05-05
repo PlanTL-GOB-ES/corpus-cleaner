@@ -1,13 +1,13 @@
 from corpus_cleaner.document import Document
-from typing import Iterable, Union, Tuple
-from corpus_cleaner.components.cleaner_component import CleanerComponent
+from typing import Union, Tuple, Optional
+from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 from langid.langid import LanguageIdentifier, model
 import argparse
 import fasttext
 import os
 
 
-class SentenceFilter(CleanerComponent):
+class SentenceFilter(CleanerComponentMapper):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--char-length-filter-sentence', type=int, default=30,
@@ -38,17 +38,18 @@ class SentenceFilter(CleanerComponent):
         self.filters = []
         self._get_filters()
 
-    def _filter(self, documents: Iterable[Document]) -> Iterable[Document]:
-        for doc in documents:
-            sentences_filtered = []
-            for sent in doc.sentences:
-                # keep only sentences that are not filtered out by all the filters
-                if all(_filter(sent) for _filter in self.filters):
-                    sentences_filtered.append(sent)
-            # return the document if contains at least one sentence
-            if sentences_filtered:
-                doc.sentences = sentences_filtered
-                yield doc
+    def _filter(self, document: Optional[Document]) -> Optional[Document]:
+        sentences_filtered = []
+        for sent in document.sentences:
+            # keep only sentences that are not filtered out by all the filters
+            if all(_filter(sent) for _filter in self.filters):
+                sentences_filtered.append(sent)
+        # return the document if contains at least one sentence
+        if sentences_filtered:
+            document.sentences = sentences_filtered
+            return document
+        else:
+            return None
 
     def _get_filters(self):
         if self.char_length_filter_sentence is not None:
@@ -64,7 +65,7 @@ class SentenceFilter(CleanerComponent):
             return True
         return False
         
-    def _filter_by_lang(self, sentence: str):
+    def _filter_by_lang(self, sentence: str) -> bool:
         res = self.fasttext_lid.predict(sentence)
         lang = res[0][0][-2:]
         conf = res[1][0]
@@ -76,7 +77,7 @@ class SentenceFilter(CleanerComponent):
                 return True
         return False
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
-        return self._filter(documents)
+    def apply(self, document: Optional[Document]) -> Optional[Document]:
+        return self._filter(document)
 
 # TODO: UDP. homoglyphs in prefilterer

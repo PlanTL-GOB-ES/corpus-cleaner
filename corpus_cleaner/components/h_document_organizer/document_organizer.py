@@ -1,10 +1,10 @@
 from corpus_cleaner.document import Document
-from typing import Iterable, Union
-from corpus_cleaner.components.cleaner_component import CleanerComponent
+from typing import Optional
+from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 import argparse
 
 
-class DocumentOrganizer(CleanerComponent):
+class DocumentOrganizer(CleanerComponentMapper):  # TODO: Unclear whether it should be a mapper
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         pass
@@ -14,12 +14,12 @@ class DocumentOrganizer(CleanerComponent):
         # TODO check custom args
         pass
 
-    def organize_documents(self, documents: Iterable[Document]) -> Iterable[Document]:
+    def organize_documents(self, document: Optional[Document]) -> Optional[Document]:
         # TODO add keywords/labels
-        return documents
+        return document
 
     def _find_domains(self):
         raise NotImplementedError()
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
-        return self.organize_documents(documents)
+    def apply(self, document: Optional[Document]) -> Optional[Document]:
+        return self.organize_documents(document)

@@ -1,11 +1,11 @@
 from corpus_cleaner.document import Document
-from typing import Iterable, Union, Dict
-from corpus_cleaner.components.cleaner_component import CleanerComponent
+from typing import Union, Dict, Optional
+from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 from sacremoses import MosesPunctNormalizer
 import argparse
 
 
-class Normalizer(CleanerComponent):
+class Normalizer(CleanerComponentMapper):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--spell-check', action='store_true', help='Apply spell checking.')
@@ -29,24 +29,23 @@ class Normalizer(CleanerComponent):
         self.normalizers = []
         self._build_normalizers()
 
-    def _normalize(self, documents: Iterable[Document]) -> Iterable[Document]:
-        for doc in documents:
-            sent_norms = []
-            for sent in doc.sentences:
-                sent_norm = sent
-                for normalizer in self.normalizers:
-                    sent_norm = normalizer(sent_norm)
-                sent_norms.append(sent_norm)
-            doc.sentences = sent_norms
-            yield doc
+    def _normalize(self, document: Optional[Document]) -> Optional[Document]:
+        sent_norms = []
+        for sent in document.sentences:
+            sent_norm = sent
+            for normalizer in self.normalizers:
+                sent_norm = normalizer(sent_norm)
+            sent_norms.append(sent_norm)
+        document.sentences = sent_norms
+        return document
 
     def _build_normalizers(self):
         if self.punctuation_norm:
             self.normalizers.append(self._punctuation_normalization())
         if self.spell_check:
-            pass
+            raise NotImplementedError()
         if self.terminology_norm is not None:
-            pass
+            raise NotImplementedError()
 
     def _spell_checking(self):
         raise NotImplementedError()
@@ -57,5 +56,5 @@ class Normalizer(CleanerComponent):
     def _punctuation_normalization(self):
         return MosesPunctNormalizer(self.language[0])
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
-        return self._normalize(documents)
+    def apply(self, document: Optional[Document]) -> Optional[Document]:
+        return self._normalize(document)

@@ -1,17 +1,18 @@
 from typing import List
+from typing import Optional
 
 
 class Document:
     def __init__(self,
                  content: str,
-                 sentences: List[str] = None,
-                 filename: str = None,
-                 title: str = None,
-                 url: str = None,
-                 id_: str = None,
-                 keywords: str = None,
-                 heads: str = None,
-                 language: str = None):
+                 sentences: Optional[List[str]] = None,
+                 filename: Optional[str] = None,
+                 title: Optional[str] = None,
+                 url: Optional[str] = None,
+                 id_: Optional[str] = None,
+                 keywords: Optional[str] = None,
+                 heads: Optional[str] = None,
+                 language: Optional[str] = None):
         self.content = content
         self.sentences = sentences
         self.title = title
