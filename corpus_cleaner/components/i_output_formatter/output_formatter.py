@@ -2,8 +2,6 @@ from corpus_cleaner.document import Document
 from typing import Iterable, Union
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 import argparse
-import logging
-from tqdm import tqdm
 from typing import TextIO
 
 
