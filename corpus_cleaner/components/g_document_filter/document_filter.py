@@ -12,24 +12,23 @@ import os
 class OnionParser(DataParser):
     def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.onion',), **kwargs):
         super(OnionParser, self).__init__(args, input_path=args.input_path, extensions=extensions, **kwargs)
-        self.file_onion = os.path.join(args.output_path, 'output_deduplicated.onion')
+        self.input_path = os.path.join(args.output_path, 'output_deduplicated.onion')
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:
         doc_sentences = []
-        with open(self.file_onion) as fd:
-            for line in fd.readlines():
-                line_index, line = line.split('\t')
-                # ignore the first two lines with the start tags
-                if line.startswith('<doc>') or line.startswith('<p>') or line.startswith('</p>'):
-                    continue
-                # empty the document sentences list when a new document is reached and return the document object
-                elif line.startswith('</doc>'):
-                    # TODO: add the raw content for each document with the Onion tags
-                    yield Document(content='', sentences=doc_sentences)
-                    doc_sentences = []
-                else:
-                    if line_index == '0':
-                        doc_sentences.append(line.strip())
+        for line in fd.readlines():
+            line_index, line = line.split('\t')
+            # ignore the first two lines with the start tags
+            if line.startswith('<doc>') or line.startswith('<p>') or line.startswith('</p>'):
+                continue
+            # empty the document sentences list when a new document is reached and return the document object
+            elif line.startswith('</doc>'):
+                # TODO: add the raw content for each document with the Onion tags
+                yield Document(content='', sentences=doc_sentences)
+                doc_sentences = []
+            else:
+                if line_index == '0':
+                    doc_sentences.append(line.strip())
 
 
 # Class used to write the documents in the Onion input file
