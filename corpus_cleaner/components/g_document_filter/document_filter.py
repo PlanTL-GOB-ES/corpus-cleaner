@@ -10,9 +10,9 @@ from ..cleaner_component_reducer import CleanerComponentReducer
 
 # Class used to parse the de-duplicated documents from the Onion output file
 class OnionParser(DataParser):
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.onion',), **kwargs):
-        super(OnionParser, self).__init__(args, encoding='utf-8', input_path= os.path.join(args.output_path,
-                                                                                           'output_deduplicated.onion'),
+    def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('.onion',), **kwargs):
+        super(OnionParser, self).__init__(args, encoding='utf-8', input_path=os.path.join(args.output_path,
+                                                                                          'output_deduplicated.onion'),
                                           extensions=extensions, **kwargs)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:
@@ -70,13 +70,8 @@ class DocumentFilter(CleanerComponentReducer):
         pass
 
     def _run_onion(self):
-        onion_command = f'{self.onion_path} -m -n 1 -t 0.8 {self.onion_input_file}'
-        # Please rewrite the following code. This doesn't fit in memory.
-        #with open(self.onion_output_file, 'w') as fd:
-        #    process = subprocess.run(onion_command, stdout=subprocess.PIPE, shell=True, check=True,
-        #                             universal_newlines=True)
-        #    output = process.stdout
-        #    fd.writelines(output)
+        onion_command = f'{self.onion_path} -m -n 1 -t 0.8 {self.onion_input_file} > {self.onion_output_file}'
+        subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
     def _reduce(self):
         self._run_onion()
