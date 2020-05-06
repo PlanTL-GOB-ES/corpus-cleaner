@@ -1,4 +1,3 @@
-from corpus_cleaner.components.cleaner_component_mapper import CleanerComponent
 from corpus_cleaner.components.a_data_parser.data_parser import DataParser
 from corpus_cleaner.components.i_output_formatter import OutputFormatter
 from corpus_cleaner.document import Document
@@ -6,13 +5,15 @@ from typing import TextIO, Iterable, Optional, Tuple, List
 import subprocess
 import argparse
 import os
+from ..cleaner_component_reducer import CleanerComponentReducer
 
 
 # Class used to parse the de-duplicated documents from the Onion output file
 class OnionParser(DataParser):
     def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.onion',), **kwargs):
-        super(OnionParser, self).__init__(args, input_path=args.input_path, extensions=extensions, **kwargs)
-        self.input_path = os.path.join(args.output_path, 'output_deduplicated.onion')
+        super(OnionParser, self).__init__(args, encoding='utf-8', input_path= os.path.join(args.output_path,
+                                                                                           'output_deduplicated.onion'),
+                                          extensions=extensions, **kwargs)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:
         doc_sentences = []
@@ -33,9 +34,9 @@ class OnionParser(DataParser):
 
 # Class used to write the documents in the Onion input file
 class OnionOutputFormatter(OutputFormatter):
-    def __init__(self, args: argparse.Namespace):
+    def __init__(self, args: argparse.Namespace, filepath: str):
         super().__init__(args)
-        self.file = os.path.join(args.output_path, 'output.onion')
+        self.file = filepath
         self.file_fd = None
         self.start_doc_tag = '<doc>\n<p>\n'
         self.end_doc_tag = '</doc>\n</p>\n'
@@ -51,13 +52,13 @@ class OnionOutputFormatter(OutputFormatter):
         self.file_fd.close()
 
 
-class DocumentFilter(CleanerComponent):
+class DocumentFilter(CleanerComponentReducer):
     def __init__(self, args: argparse.Namespace):
-        super().__init__(args)
-        self.onion_parser = OnionParser(args)
-        self.onion_formatter = OnionOutputFormatter(args)
-        self.onion_input_file = self.onion_formatter.file
+        onion_input_file = os.path.join(args.output_path, 'input.onion')
+        super().__init__(args, OnionOutputFormatter(args, onion_input_file), OnionParser(args))
+        self.onion_input_file = onion_input_file
         self.onion_output_file = os.path.join(args.output_path, 'output_deduplicate.onion')
+        self.onion_path = os.path.join('..', '..', '..', 'lib', 'onion-1.2', 'bin', 'onion')
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -68,22 +69,14 @@ class DocumentFilter(CleanerComponent):
         # TODO check custom args
         pass
 
-    def _deduplicate_onion(self, documents: Optional[Iterable[Document]]) -> List[Iterable[Document]]:
-        self.onion_formatter.apply(documents)  # write documents in Onion input file
-        self._run_onion()  # run Onion de-duplication
-        return self.onion_parser.parse() # apply Onion parser to generate a new iterable of documents
-
     def _run_onion(self):
-        onion_command = f'onion -m -n 1 -t 0.8 {self.onion_input_file}'
-        with open(self.onion_output_file, 'w') as fd:
-            process = subprocess.run(onion_command, stdout=subprocess.PIPE, shell=True, check=True,
-                                     universal_newlines=True)
-            output = process.stdout
-            fd.writelines(output)
+        onion_command = f'{self.onion_path} -m -n 1 -t 0.8 {self.onion_input_file}'
+        # Please rewrite the following code. This doesn't fit in memory.
+        #with open(self.onion_output_file, 'w') as fd:
+        #    process = subprocess.run(onion_command, stdout=subprocess.PIPE, shell=True, check=True,
+        #                             universal_newlines=True)
+        #    output = process.stdout
+        #    fd.writelines(output)
 
-
-    def _filter(self, documents: Optional[Iterable[Document]]) -> List[Iterable[Document]]:
-        return self._deduplicate_onion(documents)
-
-    def apply(self, documents: Optional[Iterable[Document]]) -> List[Iterable[Document]]:
-        return self._filter(documents)
+    def _reduce(self):
+        self._run_onion()
