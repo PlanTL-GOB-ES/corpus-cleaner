@@ -39,7 +39,7 @@ class OnionOutputFormatter(OutputFormatter):
         self.file = filepath
         self.file_fd = None
         self.start_doc_tag = '<doc>\n<p>\n'
-        self.end_doc_tag = '</doc>\n</p>\n'
+        self.end_doc_tag = '\n</p>\n</doc>\n'
 
     def _init_writing(self):
         self.file_fd = open(self.file, 'w+')

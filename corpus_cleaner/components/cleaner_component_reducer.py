@@ -12,7 +12,7 @@ class CleanerComponentReducer(CleanerComponent):
     def __init__(self, args: argparse.Namespace, output_formatter: OutputFormatter, data_parser: DataParser):
         super().__init__(args)
         self.output_formatter = output_formatter
-        self.output_parser = data_parser
+        self.data_parser = data_parser
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -30,7 +30,7 @@ class CleanerComponentReducer(CleanerComponent):
         self._reduce()
 
     def get_documents(self):
-        self.output_parser.parse()
+        self.data_parser.parse()
 
     def output(self, documents: List[Document]):
         # self.logger.info('Outputting...')
