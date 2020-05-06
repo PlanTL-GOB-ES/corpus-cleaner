@@ -4,6 +4,7 @@ from typing import Optional
 from . import CleanerComponent
 from .a_data_parser import DataParser
 from .i_output_formatter import OutputFormatter
+from typing import List
 
 
 class CleanerComponentReducer(CleanerComponent):
@@ -30,3 +31,7 @@ class CleanerComponentReducer(CleanerComponent):
 
     def get_documents(self):
         self.output_parser.parse()
+
+    def output(self, documents: List[Document]):
+        # self.logger.info('Outputting...')
+        self.output_formatter.apply(documents)

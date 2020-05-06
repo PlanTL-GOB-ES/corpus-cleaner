@@ -98,7 +98,7 @@ class Cleaner:
         output_formatter.apply(documents)
 
     def clean(self):
-
+        self.reducer = self.reducer(self.args)
         if self.reducer is None:
             pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self._get_documents()],
                                 mappers_factory=self._create_pipeline_mappers,
@@ -109,7 +109,7 @@ class Cleaner:
             self.reducer = self.reducer(self.args)
             pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self._get_documents()],
                                 mappers_factory=self._create_pipeline_mappers,
-                                output_reducer=self.reducer.apply, batch_size=100,
+                                output_reducer=self.reducer.output, batch_size=100,
                                 parallel=True, logger=self.logger, log_every_iter=1)
             pipeline.run()
 
