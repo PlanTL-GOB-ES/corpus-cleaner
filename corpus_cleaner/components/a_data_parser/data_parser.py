@@ -6,7 +6,7 @@ from typing import Tuple
 from pathlib import Path
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 import argparse
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 
 
 class DataParser(CleanerComponent):
@@ -25,12 +25,13 @@ class DataParser(CleanerComponent):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace, input_path: str, extensions: Tuple[str],
+    def __init__(self, args: argparse.Namespace, input_path: Optional[str] = None,
+                 extensions: Optional[Tuple[str]] = None,
                  encoding: str = 'auto', encoding_threshold: float = 0.9, encoding_error_policy: str = 'ignore'):
         # TODO: Revisit defaults
         super().__init__(args)
-        self.input_path = args.input_path if args.input_path is not None else input_path
-        self.extensions = args.extensions if args.extensions is not None else extensions
+        self.input_path = input_path if input_path is not None else args.input_path
+        self.extensions = extensions if extensions is not None else args.extensions
         self.encoding = args.encoding if args.encoding is not None else encoding
         self.encoding_threshold = args.encoding_threshold if args.encoding_threshold is not None else encoding_threshold
         self.encoding_error_policy = args.encoding_error_policy if args.encoding_error_policy is not None else \

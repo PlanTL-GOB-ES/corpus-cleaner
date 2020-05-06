@@ -10,9 +10,8 @@ from ..cleaner_component_reducer import CleanerComponentReducer
 
 # Class used to parse the de-duplicated documents from the Onion output file
 class OnionParser(DataParser):
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('.onion',), **kwargs):
-        super(OnionParser, self).__init__(args, encoding='utf-8', input_path=os.path.join(args.output_path,
-                                                                                          'output_deduplicated.onion'),
+    def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('.dedup',), **kwargs):
+        super(OnionParser, self).__init__(args, encoding='utf-8', input_path=args.output_path,
                                           extensions=extensions, **kwargs)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:
@@ -37,19 +36,18 @@ class OnionOutputFormatter(OutputFormatter):
     def __init__(self, args: argparse.Namespace, filepath: str):
         super().__init__(args)
         self.file = filepath
-        self.file_fd = None
         self.start_doc_tag = '<doc>\n<p>\n'
         self.end_doc_tag = '\n</p>\n</doc>\n'
 
     def _init_writing(self):
-        self.file_fd = open(self.file, 'w+')
+        self.fd = open(self.file, 'w+')
 
     def _write_document(self, document: Document):
         doc_onion = self.start_doc_tag + '\n'.join(document.sentences) + self.end_doc_tag
-        self.file_fd.writelines(doc_onion)
+        self.fd.writelines(doc_onion)
 
     def _end_writing(self):
-        self.file_fd.close()
+        self.fd.close()
 
 
 class DocumentFilter(CleanerComponentReducer):
@@ -57,8 +55,8 @@ class DocumentFilter(CleanerComponentReducer):
         onion_input_file = os.path.join(args.output_path, 'input.onion')
         super().__init__(args, OnionOutputFormatter(args, onion_input_file), OnionParser(args))
         self.onion_input_file = onion_input_file
-        self.onion_output_file = os.path.join(args.output_path, 'output_deduplicate.onion')
-        self.onion_path = os.path.join('..', '..', '..', 'lib', 'onion-1.2', 'bin', 'onion')
+        self.onion_output_file = os.path.join(args.output_path, 'output_deduplicate.onion.dedup')
+        self.onion_path = os.path.join('lib', 'onion-1.2', 'bin', 'onion')
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):

@@ -30,7 +30,7 @@ class CleanerComponentReducer(CleanerComponent):
         self._reduce()
 
     def get_documents(self):
-        self.data_parser.parse()
+        return self.data_parser.parse()
 
     def output(self, documents: List[Document]):
         # self.logger.info('Outputting...')
