@@ -34,7 +34,7 @@ class Normalizer(CleanerComponentMapper):
         for sent in document.sentences:
             sent_norm = sent
             for normalizer in self.normalizers:
-                sent_norm = normalizer(sent_norm)
+                sent_norm = normalizer.normalize(sent_norm)
             sent_norms.append(sent_norm)
         document.sentences = sent_norms
         return document
