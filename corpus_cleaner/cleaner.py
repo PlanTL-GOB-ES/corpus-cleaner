@@ -109,7 +109,7 @@ class Cleaner:
             pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self._get_documents()],
                                 mappers_factory=self._create_pipeline_mappers,
                                 output_reducer=self.reducer.output, batch_size=100,
-                                parallel=True, logger=self.logger, log_every_iter=1)
+                                parallel=False, logger=self.logger, log_every_iter=1)
             pipeline.run()
 
             self.reducer.reduce()

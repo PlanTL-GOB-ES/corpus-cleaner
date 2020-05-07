@@ -3,16 +3,20 @@ from corpus_cleaner.document import Document
 from typing import Optional
 from . import CleanerComponent
 from .a_data_parser import DataParser
-from .i_output_formatter import OutputFormatter
+from .i_output_formatter import OutputFormatterFactory
+from .a_data_parser import DataParserFactory
 from typing import List
+import os
 
 
 class CleanerComponentReducer(CleanerComponent):
 
-    def __init__(self, args: argparse.Namespace, output_formatter: OutputFormatter, data_parser: DataParser):
+    def __init__(self, args: argparse.Namespace, format_: str, tmp_file: str, final_path: str):
         super().__init__(args)
-        self.output_formatter = output_formatter
-        self.data_parser = data_parser
+        self.format = format_
+        self.tmp_file = tmp_file
+        self.final_path = final_path
+        self.data_parser = DataParserFactory.get_parser(args, input_format=self.format)
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -26,7 +30,6 @@ class CleanerComponentReducer(CleanerComponent):
         raise NotImplementedError()
 
     def reduce(self):
-        del self.output_formatter
         self._reduce()
 
     def get_documents(self):
@@ -34,4 +37,5 @@ class CleanerComponentReducer(CleanerComponent):
 
     def output(self, documents: List[Document]):
         # self.logger.info('Outputting...')
-        self.output_formatter.apply(documents)
+        output_formatter = OutputFormatterFactory.get_output_formatter(self.args, self.format, self.tmp_file)
+        output_formatter.apply(documents)

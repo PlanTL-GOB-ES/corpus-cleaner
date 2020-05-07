@@ -3,12 +3,13 @@ from typing import Iterable, Union
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 import argparse
 from typing import TextIO
+from typing import Optional
 
 
 class OutputFormatter(CleanerComponent):
-    def __init__(self, args: argparse.Namespace, output_path: str = None):
+    def __init__(self, args: argparse.Namespace, output_path: Optional[str] = None):
         super().__init__(args)
-        self.path = args.output_path if args.output_path is not None else output_path
+        self.path = output_path if output_path is not None else args.output_path
         self.fd: Union[TextIO, None] = None
 
     @staticmethod
