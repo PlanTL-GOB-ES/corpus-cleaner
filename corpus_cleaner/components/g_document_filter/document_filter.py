@@ -2,15 +2,12 @@ import subprocess
 import argparse
 import os
 from ..cleaner_component_reducer import CleanerComponentReducer
-from ..a_data_parser import DataParserFactory
-from ..i_output_formatter import OnionOutputFormatter
 
 
 class DocumentFilter(CleanerComponentReducer):
     def __init__(self, args: argparse.Namespace):
         onion_input_file = os.path.join(args.output_path, 'input.onion')
         onion_output_file = os.path.join(args.output_path, 'output_deduplicate.onion.dedup')
-        #super().__init__(args, OnionOutputFormatter(args, onion_input_file), OnionParser(args))
         super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=onion_output_file)
         self.onion_input_file = onion_input_file
         self.onion_output_file = onion_output_file
