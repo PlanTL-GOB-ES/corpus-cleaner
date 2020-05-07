@@ -1,12 +1,9 @@
 import argparse
 from corpus_cleaner.document import Document
-from typing import Optional
 from . import CleanerComponent
-from .a_data_parser import DataParser
 from .i_output_formatter import OutputFormatterFactory
 from .a_data_parser import DataParserFactory
 from typing import List
-import os
 
 
 class CleanerComponentReducer(CleanerComponent):

@@ -1,7 +1,6 @@
 from .data_parser import DataParser
 from typing import Iterable
 from corpus_cleaner.document import Document
-import xml.etree.ElementTree as ET
 from typing import TextIO
 from typing import Tuple
 import argparse

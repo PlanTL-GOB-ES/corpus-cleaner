@@ -1,7 +1,5 @@
 from .output_formatter import OutputFormatter
-from typing import Iterable
 from corpus_cleaner.document import Document
-import os
 import argparse
 
 
