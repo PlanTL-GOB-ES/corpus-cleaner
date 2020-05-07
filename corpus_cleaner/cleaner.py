@@ -20,6 +20,7 @@ from pipel import Pipeline
 from pipel import PipelineLogger
 from typing import Generator
 from typing import cast
+from . import __version__
 
 MAPPERS = [
     EncodingFixer, PreFilterer,
@@ -44,6 +45,7 @@ class Cleaner:
 
     def __init__(self, args: argparse.Namespace, logger: logging):
         self.args = args
+        self.args.cleaner_version = __version__
         self.logger = PipelineLogger(logger)
         self.args.logger = self.logger
         self.mappers = MAPPERS
