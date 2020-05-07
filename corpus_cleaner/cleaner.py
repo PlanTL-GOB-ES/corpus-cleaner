@@ -73,12 +73,17 @@ class Cleaner:
         parser.add_argument('--components', type=str, help='Elements of the pipeline', nargs='+',
                             default=list(map(lambda x: x.__name__, MAPPERS + [REDUCER] + POSTMAPPERS)))
         parser.add_argument('--parallel',  action='store_true', help='Run the cleaner in parallel')
+        parser.add_argument('--batch-size', type=int, default=100, help='Number of instances that are simultaneously'
+                                                                        'instantiated in memory')
+        parser.add_argument('--log-every-iter', type=int, default=10, help='Log the pipeline every N iterations'
+                                                                           '(-1, silent)')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
         for comp in args.components:
             if comp not in list(map(lambda x: x.__name__, MAPPERS + [REDUCER] + POSTMAPPERS)):
                 raise Exception('Unknown component', comp)
+        assert args.log_every_iter == -1 or args.log_every_iter >= 1
         # TODO: add more checks (eg. sentence splitting requirement for other components
 
     def _get_documents(self) -> List[Iterable[Document]]:
@@ -101,23 +106,29 @@ class Cleaner:
         if self.reducer is None:
             pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self._get_documents()],
                                 mappers_factory=self._create_pipeline_mappers,
-                                output_reducer=self._output, batch_size=100,
-                                parallel=True, logger=self.logger, log_every_iter=1)
+                                output_reducer=self._output, batch_size=self.args.batch_size,
+                                parallel=self.args.parallel,
+                                logger=self.logger if self.args.log_every_iter != -1 else None,
+                                log_every_iter=self.args.log_every_iter)
             pipeline.run()
         else:
             self.reducer = self.reducer(self.args)
             pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self._get_documents()],
                                 mappers_factory=self._create_pipeline_mappers,
-                                output_reducer=self.reducer.output, batch_size=100,
-                                parallel=False, logger=self.logger, log_every_iter=1)
+                                output_reducer=self.reducer.output,batch_size=self.args.batch_size,
+                                parallel=self.args.parallel,
+                                logger=self.logger if self.args.log_every_iter != -1 else None,
+                                log_every_iter=self.args.log_every_iter)
             pipeline.run()
 
             self.reducer.reduce()
 
             pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self.reducer.get_documents()],
                                 mappers_factory=self._create_pipeline_postmappers,
-                                output_reducer=self._output, batch_size=100,
-                                parallel=False, logger=self.logger, log_every_iter=1)
+                                output_reducer=self._output, batch_size=self.args.batch_size,
+                                parallel=self.args.parallel,
+                                logger=self.logger if self.args.log_every_iter != -1 else None,
+                                log_every_iter=self.args.log_every_iter)
 
             pipeline.run()
 
