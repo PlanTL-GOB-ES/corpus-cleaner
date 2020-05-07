@@ -75,7 +75,7 @@ class PreFilterer(CleanerComponentMapper):
 
     # TODO: move the remove operations to a new component called CharFilter
     def _remove_tags(self, text):
-        return self.tags_pattern.sub(' ', self.p_tag_pattern.sub('. ', text))
+        return self.tags_pattern.sub(' ', self.p_tags_pattern.sub('. ', text))
 
     def _remove_extra_spaces(self, text):
         replace = ' '
@@ -88,7 +88,7 @@ class PreFilterer(CleanerComponentMapper):
     def _build_filters(self):
         if self.remove_tags:
             self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
-            self.p_tag_pattern = re.compile(r'([.|?]*\s*)(</p>)')
+            self.p_tags_pattern = re.compile('([.|?]*\s*)(<p>)+')
         if self.remove_extra_spaces:
             self.extra_spaces_pattern = re.compile(r'\s+')
         if self.replace_urls:

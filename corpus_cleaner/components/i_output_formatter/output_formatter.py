@@ -2,15 +2,14 @@ from corpus_cleaner.document import Document
 from typing import Iterable, Union
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 import argparse
-import logging
-from tqdm import tqdm
 from typing import TextIO
+from typing import Optional
 
 
 class OutputFormatter(CleanerComponent):
-    def __init__(self, args: argparse.Namespace, output_path: str = None):
+    def __init__(self, args: argparse.Namespace, output_path: Optional[str] = None):
         super().__init__(args)
-        self.path = args.output_path if args.output_path is not None else output_path
+        self.path = output_path if output_path is not None else args.output_path
         self.fd: Union[TextIO, None] = None
 
     @staticmethod
@@ -38,6 +37,7 @@ class OutputFormatter(CleanerComponent):
             if document is None:
                 continue
             self._write_document(document)
+        self._end_writing()
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self._output_format(documents)

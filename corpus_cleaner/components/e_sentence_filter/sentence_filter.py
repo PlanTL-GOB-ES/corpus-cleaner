@@ -2,6 +2,7 @@ from corpus_cleaner.document import Document
 from typing import Union, Tuple, Optional
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 from langid.langid import LanguageIdentifier, model
+from ordered_set import OrderedSet
 import argparse
 import fasttext
 import os
@@ -40,7 +41,9 @@ class SentenceFilter(CleanerComponentMapper):
 
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
         sentences_filtered = []
-        for sent in document.sentences:
+        # first, de-duplicate sentences
+        sentences_deduplicate = OrderedSet(document.sentences).items
+        for sent in sentences_deduplicate:
             # keep only sentences that are not filtered out by all the filters
             if all(_filter(sent) for _filter in self.filters):
                 sentences_filtered.append(sent)

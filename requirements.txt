@@ -12,7 +12,7 @@ numpy==1.18.2
 openfile==0.0.7
 ordered-set==3.1.1
 pip-autoremove==0.9.1
-pipel==0.1
+pipel==0.1.1
 pybind11==2.5.0
 regex==2020.2.20
 sacremoses==0.0.38

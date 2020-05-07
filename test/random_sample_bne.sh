@@ -4,7 +4,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 DATA_DIR=$1
 SAMPLE_SIZE=$2
-NUMBER_FILES=$3
+NUMBER_FILES=${3:-100}
 SEED=${4:-42}
 
 if [[ -z ${DATA_DIR}] || -z ${SAMPLE_SIZE} ]]; then

@@ -1,28 +1,36 @@
-from corpus_cleaner.document import Document
-from typing import Optional
-from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
+import subprocess
 import argparse
-from ordered_set import OrderedSet
+import os
+from ..cleaner_component_reducer import CleanerComponentReducer
 
 
-class DocumentFilter(CleanerComponentMapper):  # TODO: Should be a reducer
-
-    def _deduplicate(self, document: Document) -> Document:
-        sentences_deduplicate = OrderedSet(document.sentences).items
-        return sentences_deduplicate
+class DocumentFilter(CleanerComponentReducer):
+    def __init__(self, args: argparse.Namespace, document_deduplication_threshold: float = 0.5):
+        onion_input_file = os.path.join(args.output_path, 'input.onion')
+        onion_output_file = os.path.join(args.output_path, 'output_deduplicate.onion.dedup')
+        super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=onion_output_file)
+        self.document_deduplication_threshold = args.document_deduplication_threshold \
+            if args.document_deduplication_threshold is not None else document_deduplication_threshold
+        self.onion_input_file = onion_input_file
+        self.onion_output_file = onion_output_file
+        self.onion_path = os.path.join('lib', 'onion-1.2', 'bin', 'onion')
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        pass
+        parser.add_argument('--document-deduplication-threshold', type=float,
+                            help='Threshold for document de-duplication, expressed as the percentage of sentences'
+                                 'overlap between documents',
+                            default=0.5)
 
     @staticmethod
     def check_args(args: argparse.Namespace):
         # TODO check custom args
         pass
 
-    def _filter(self, document: Optional[Document]) -> Optional[Document]:
-        document.sentences = self._deduplicate(document)
-        return document
+    def _run_onion(self):
+        onion_command = f'{self.onion_path} -m -n 1 -t {self.document_deduplication_threshold} {self.onion_input_file}' \
+            f' > {self.onion_output_file}'
+        subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
-    def apply(self, document: Optional[Document]) -> Optional[Document]:
-        return self._filter(document)
+    def _reduce(self):
+        self._run_onion()
