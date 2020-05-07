@@ -7,7 +7,7 @@ tar xzf onion-1.2.tar.gz
 mv onion-1.2 lib
 cd lib/onion-1.2/
 PREFIX=$(pwd)
-sudo apt-get install libjudy-dev
+apt-get install libjudy-dev
 echo "#JUDY_INC=-I/opt/local/include
 #JUDY_LIB=-L/opt/local/lib
 PREFIX=${PREFIX}
