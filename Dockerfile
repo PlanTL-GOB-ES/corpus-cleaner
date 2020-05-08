@@ -3,9 +3,9 @@ FROM ubuntu:18.04
 RUN  apt-get update \
   && apt-get install -y wget \
   && apt-get install -y git \
-  && apt-get install -y python3.7 \
-  && apt-get install -y python3.7-dev \
-  && apt-get install -y python3.7-pip \
+  && apt-get install -y python3 \
+  && apt-get install -y python3-dev \
+  && apt-get install -y python3-pip \
   && rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/TeMU-BSC/CorpusCleaner.git
@@ -20,8 +20,8 @@ RUN ls -s /data data/
 
 RUN ls -s /output output/
 
-RUN python -m pip install -r requirements.txt
+RUN python3 -m pip install -r requirements.txt
 
 RUN bash get-third-party.sh
 
-ENTRYPOINT ["python3.7", "clean.py"]
+ENTRYPOINT ["python3", "clean.py"]
