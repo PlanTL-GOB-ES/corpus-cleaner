@@ -1,6 +1,7 @@
 FROM ubuntu:18.04
 
 RUN  apt-get update \
+  && apt-get install -y apt-utils \
   && apt-get install -y wget \
   && apt-get install -y git \
   && apt-get install -y python3 \
