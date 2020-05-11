@@ -18,5 +18,4 @@ sacremoses==0.0.38
 sentence-splitter==1.4
 six==1.14.0
 tqdm==4.43.0
-uctools==1.2.1
 wcwidth==0.1.8
