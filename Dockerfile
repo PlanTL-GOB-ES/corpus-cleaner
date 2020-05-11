@@ -22,6 +22,6 @@ RUN ln -s /output CorpusCleaner/output
 
 RUN python3 -m pip install -r CorpusCleaner/requirements.txt
 
-RUN bash CorpusCleaner/get-third-party.sh
+RUN bash CorpusCleaner/get-third-party-docker.sh
 
 ENTRYPOINT ["python3", "CorpusCleaner/clean.py"]
