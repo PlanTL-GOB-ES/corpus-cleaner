@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-ln -s /data CorpusCleaner/data && ln -s /output CorpusCleaner/output && ls CorpusCleaner/data && python3 CorpusCleaner/clean.py $*
+ln -s /data CorpusCleaner/data && ln -s /output CorpusCleaner/output && cd CorpusCleaner && python3 clean.py $*
