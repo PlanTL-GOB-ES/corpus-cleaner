@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+cd CorpusCleaner
+
 mkdir -p lib
 
 # Onion
@@ -7,7 +10,6 @@ tar xzf onion-1.2.tar.gz
 mv onion-1.2 lib
 cd lib/onion-1.2/
 PREFIX=$(pwd)
-sudo apt-get install libjudy-dev
 echo "#JUDY_INC=-I/opt/local/include
 #JUDY_LIB=-L/opt/local/lib
 PREFIX=${PREFIX}
@@ -17,5 +19,5 @@ make
 make install
 
 # fasttext
-wget https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
+wget -q https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
 mv lid.176.bin lib/
