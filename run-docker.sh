@@ -1,2 +1,6 @@
 #!/usr/bin/env bash
-docker build -t corpuscleaner . && docker run -v output:/output -v data:/data -it corpuscleaner $*
+
+o=$(realpath output)
+d=$(realpath data)
+
+docker build -t corpuscleaner . && docker run -v ${o}:/output -v ${d}:/data -it corpuscleaner $*
