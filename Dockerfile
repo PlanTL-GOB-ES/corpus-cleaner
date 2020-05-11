@@ -18,16 +18,8 @@ RUN rm -rf CorpusCleaner/data/
 
 RUN rm -rf CorpusCleaner/output/
 
-#RUN ln -s /data CorpusCleaner/data
-
-#RUN ln -s /output CorpusCleaner/output
-
 RUN python3 -m pip install -r CorpusCleaner/requirements.txt
 
 RUN bash CorpusCleaner/get-third-party-docker.sh
-
-#ENTRYPOINT ["bash", "CorpusCleaner/clean.py"]
-
-#CMD ln -s /data CorpusCleaner/data & ln -s /output CorpusCleaner/output & python3 CorpusCleaner/clean.py
 
 ENTRYPOINT ["bash", "CorpusCleaner/entrypoint.sh"]
