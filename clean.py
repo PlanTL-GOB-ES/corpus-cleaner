@@ -57,7 +57,10 @@ def init_logger(filename_path: str) -> logging.Logger:
 def main():
     print(os.listdir('.'))
     print()
-    print(os.listdir('data'))
+    print(os.listdir('lib'))
+    print()
+    print(os.listdir('lib/onion-1.2'))
+    print()
     parser = argparse.ArgumentParser(description='Clean raw text data.')
     parser.add_argument('name', type=str, help='A name to identify the run')
     parser.add_argument('--input-path', type=str, help='Input data directory')
