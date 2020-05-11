@@ -11,18 +11,18 @@ RUN  apt-get update \
 
 RUN git clone https://github.com/TeMU-BSC/CorpusCleaner.git
 
-RUN cd CorpusCleaner/
+RUN ls
 
-RUN rm -rf data/
+RUN rm -rf CorpusCleaner/data/
 
-RUN rm -rf output/
+RUN rm -rf CorpusCleaner/output/
 
-RUN ls -s /data data/
+RUN ln -s /data CorpusCleaner/data
 
-RUN ls -s /output output/
+RUN ln -s /output CorpusCleaner/output
 
-RUN python3 -m pip install -r requirements.txt
+RUN python3 -m pip install -r CorpusCleaner/requirements.txt
 
-RUN bash get-third-party.sh
+RUN cd CorpusCleaner & bash get-third-party.sh
 
-ENTRYPOINT ["python3", "clean.py"]
+ENTRYPOINT ["python3", "CorpusCleaner/clean.py"]
