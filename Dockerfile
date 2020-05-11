@@ -23,6 +23,6 @@ RUN ln -s /output CorpusCleaner/output
 
 RUN python3 -m pip install -r CorpusCleaner/requirements.txt
 
-RUN cd CorpusCleaner & bash get-third-party.sh
+RUN bash CorpusCleaner/get-third-party.sh
 
 ENTRYPOINT ["python3", "CorpusCleaner/clean.py"]
