@@ -16,9 +16,9 @@ RUN rm -rf CorpusCleaner/data/
 
 RUN rm -rf CorpusCleaner/output/
 
-RUN ln -s /data CorpusCleaner/data
+#RUN ln -s /data CorpusCleaner/data
 
-RUN ln -s /output CorpusCleaner/output
+#RUN ln -s /output CorpusCleaner/output
 
 RUN python3 -m pip install -r CorpusCleaner/requirements.txt
 
