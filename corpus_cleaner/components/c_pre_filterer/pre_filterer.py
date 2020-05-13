@@ -66,7 +66,7 @@ class PreFilterer(CleanerComponentMapper):
         self.lang_filter = args.lang_filter if args.lang_filter is not None else lang_filter
         self.fasttext_lid = None
         self.fast_lang_filter_threshold = args.fast_lang_filter_threshold if args.fast_lang_filter_threshold is not \
-            None else fast_lang_filter_threshold
+                                                                             None else fast_lang_filter_threshold
         self.dictionary_filter = args.dictionary_filter if args.dictionary_filter is not None else dictionary_filter
         self.dictionary_filter_pattern = None
         self.input_format = args.input_format
@@ -92,10 +92,12 @@ class PreFilterer(CleanerComponentMapper):
         if self.remove_extra_spaces:
             self.extra_spaces_pattern = re.compile(r'\s+')
         if self.replace_urls:
-            # https://www.regextester.com/96146
+            # slightly modified from: https://stackoverflow.com/questions/6718633/python-regular-expression-again-match-url
+            # to account for: 1) words attached at the beginning and the end of the url
+            #                 2) mantaining period at the end to improve sentence splitter
+            # TODO: use a list of all the alphabet for each language instead of hard-coded accented characters
             self.urls_pattern = re.compile(
-                "((\w+):\/\/)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)"
-            )
+                '([áéóüñúí\w]+)?((http|https)://)?[a-zA-Z0-9./?:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9&/?:@\-_=#])*([áéóüñúí\w]+)?')
         if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
         if self.head_filter:

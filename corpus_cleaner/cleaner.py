@@ -1,5 +1,3 @@
-import argparse
-import logging
 from corpus_cleaner.components.a_data_parser.data_parser import DataParser
 from corpus_cleaner.components.a_data_parser.data_parser_factory import DataParserFactory
 from corpus_cleaner.components.b_encoding_fixer.encoding_fixer import EncodingFixer
@@ -20,6 +18,9 @@ from pipel import Pipeline
 from pipel import PipelineLogger
 from typing import Generator
 from typing import cast
+import argparse
+import logging
+import os
 from . import __version__
 
 MAPPERS = [
@@ -74,7 +75,7 @@ class Cleaner:
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--components', type=str, help='Elements of the pipeline', nargs='+',
                             default=list(map(lambda x: x.__name__, MAPPERS + [REDUCER] + POSTMAPPERS)))
-        parser.add_argument('--parallel',  action='store_true', help='Run the cleaner in parallel')
+        parser.add_argument('--parallel', action='store_true', help='Run the cleaner in parallel')
         parser.add_argument('--batch-size', type=int, default=100, help='Number of instances that are simultaneously'
                                                                         'instantiated in memory')
         parser.add_argument('--log-every-iter', type=int, default=10, help='Log the pipeline every N iterations'
@@ -117,7 +118,7 @@ class Cleaner:
             self.reducer = self.reducer(self.args)
             pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self._get_documents()],
                                 mappers_factory=self._create_pipeline_mappers,
-                                output_reducer=self.reducer.output,batch_size=self.args.batch_size,
+                                output_reducer=self.reducer.output, batch_size=self.args.batch_size,
                                 parallel=self.args.parallel,
                                 logger=self.logger if self.args.log_every_iter != -1 else None,
                                 log_every_iter=self.args.log_every_iter)
@@ -134,4 +135,6 @@ class Cleaner:
 
             pipeline.run()
 
-
+            # remove Onion temporary files
+            os.remove(self.reducer.onion_input_file)
+            os.remove(self.reducer.onion_output_file)
