@@ -17,11 +17,13 @@ class WikipediaParser(DataParser):
         doc_id = ''
         url = ''
         title = ''
+        first = True
         for line in fd.readlines():
             parsed_line = line.split()
             if len(parsed_line) == 0:
                 continue
             if parsed_line[0] == '<doc':
+                first = True
                 root = ET.fromstring(line + '</doc>')
                 attribs = root.attrib
                 doc_id = attribs['id']
@@ -36,4 +38,8 @@ class WikipediaParser(DataParser):
                 url = ''
                 title = ''
             else:
-                doc_lines.append(line + '\n')
+                if first:
+                    doc_lines.append(line + '.\n')
+                    first = False
+                else:
+                    doc_lines.append(line + '\n')

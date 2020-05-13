@@ -12,6 +12,7 @@ class FairseqLMOutputFormatter(OutputFormatter):
         if len(document.sentences) > 0:
             self.fd.writelines(f'{sentence}\n' for sentence in document.sentences)
             self.fd.write('\n')
+
     def _end_writing(self):
         self.fd.close()
 
