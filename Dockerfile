@@ -14,12 +14,12 @@ RUN  apt-get update \
 
 RUN git clone https://github.com/TeMU-BSC/CorpusCleaner.git
 
-RUN rm -rf CorpusCleaner/data/
+RUN rm -rf /CorpusCleaner/data/
 
-RUN rm -rf CorpusCleaner/output/
+RUN rm -rf /CorpusCleaner/output/
 
-RUN python3 -m pip install -r CorpusCleaner/requirements.txt
+RUN python3 -m pip install -r /CorpusCleaner/requirements.txt
 
-RUN bash CorpusCleaner/get-third-party-docker.sh
+RUN bash /CorpusCleaner/get-third-party-docker.sh
 
-ENTRYPOINT ["bash", "CorpusCleaner/entrypoint.sh"]
+ENTRYPOINT ["bash", "/CorpusCleaner/entrypoint.sh"]
