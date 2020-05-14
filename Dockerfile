@@ -12,14 +12,18 @@ RUN  apt-get update \
   && apt-get install -y libjudy-dev \
   && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/TeMU-BSC/CorpusCleaner.git
+RUN git clone --single-branch --branch singularity https://github.com/TeMU-BSC/CorpusCleaner.git
 
-RUN rm -rf /CorpusCleaner/data/
+RUN mkdir /scratch
 
-RUN rm -rf /CorpusCleaner/output/
+RUN mv /CorpusCleaner /scratch
 
-RUN python3 -m pip install -r /CorpusCleaner/requirements.txt
+RUN rm -rf /scratch/CorpusCleaner/data/
 
-RUN bash /CorpusCleaner/get-third-party-docker.sh
+RUN rm -rf /scratch/CorpusCleaner/output/
 
-ENTRYPOINT ["bash", "/CorpusCleaner/entrypoint.sh"]
+RUN python3 -m pip install -r /scratch/CorpusCleaner/requirements.txt
+
+RUN bash /scratch/CorpusCleaner/get-third-party-docker.sh
+
+ENTRYPOINT ["bash", "/scratch/CorpusCleaner/entrypoint.sh"]

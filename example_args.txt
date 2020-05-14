@@ -1,0 +1,1 @@
+example-output --input-path data/toy_wiki --input-format wikipedia --output-format fairseq-lm --lang-filter ca
