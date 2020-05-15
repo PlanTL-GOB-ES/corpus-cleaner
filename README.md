@@ -1,29 +1,32 @@
-# Project description
+# Corpus Cleaner
 
-CorpusCleaner is a modular, Python-based toolkit to clean raw text corpora through generator pipelines. 
-It was mainly designed to clean text collected from web crawlers resulting in a specific data format. 
-However, due to its modularity, it can be customized and adapted to any data format.
-*WARNING*: CorpusCleaner is currently only intended for internal usage, and it is in alpha stage. Expect it to break and have bugs.
+## Project description
 
-## Install
+Corpus Cleaner is a modular Python-based toolkit to clean raw text corpora through generator pipelines.
 
-We provide three ways of installing CorpusCleaner.
+It was mainly designed to clean text collected from web crawlers resulting in a specific data format. However, due to its modularity, it can be customized and adapted to any data format.
 
-### Virtual environment
+*WARNING*: Corpus Cleaner is currently only intended for internal usage, and it is in alpha stage. Expect it to break and have bugs.
 
-CorpusCleaner was built and tested with Python3.7. It should work for Python >= 3.6 but it has not been tested with other versions than 3.7.
+## Install and run
+
+We provide three ways of installing the Corpus Cleaner.
+
+### Method 1: Virtual environment
+
+Corpus Cleaner was built and tested with Python3.7. It should work for Python >= 3.6 but it has not been tested with other versions than 3.7.
 
 In addition, some parts are not supposed to be run in Windows, specially the parallel implementation. Instead, a Unix system is assumed.
 
-For creating the virtual environment and installing the dependencies (from requirements.txt), run:
+For creating the virtual environment and installing the dependencies (from `requirements.txt`), run:
 
-```
+```sh
 bash setup.sh
 ```
 
 For downloading third-party, non-Python dependencies, run:
 
-```
+```sh
 bash get-third-party.sh
 ```
 
@@ -31,53 +34,62 @@ Currently, the non-Python dependencies are:
   - FastText language identifier (<https://fasttext.cc/docs/en/language-identification.html>).
   - Onion (<http://corpus.tools/wiki/Onion>).
   
-Notice that installing a library required by Onion implies a system-wise installation of a library.
-  
-### Docker
+> Notice that installing a library required by Onion implies a system-wise installation of a library.
 
-For building the Docker image (assuming Docker is installed):
+With the virtual environment activated (`source venv/bin/activate` is included in `setup.sh`, so you should see `(venv)` prepended to your prompt), run the following with the python interpreter:
+
+```sh
+(venv) $ python clean.py [ARGS]
 ```
+
+> To know the available arguments `[ARGS]`, see [Usage section](#usage) below.
+
+### Method 2: Docker
+
+Make sure docker is installed in your system: https://docs.docker.com/engine/install/
+
+Build the docker image:
+
+```sh
 bash build-docker.sh
 ```
 
-### Singularity
-For building the Singularity image, once the Docker one has been built (since it is converted using <https://github.com/singularityhub/docker2singularity>), assuming Singuliraty is installed, run:
-```
-bash build-singularity.sh
-```
-The Singularity image needs FS overlay to work.
+Run the docker container:
 
-## Run
-
-### Virtual environment
-With the virtual environment activated (```source venv/bin/activate```), run (within the root of the projecTt:
-```
-python clean.py [ARGS]
-```
-### Docker
-
-```
+```sh
 bash run-docker.sh [ARGS]
 ```
 
-### Singularity
+> To know the available arguments `[ARGS]`, see [Usage section](#usage) below.
 
+### Method 3: Singularity
+
+For building the Singularity image, once the Docker one has been built (since it is converted using <https://github.com/singularityhub/docker2singularity>), assuming Singuliraty is installed, run:
+
+```sh
+bash build-singularity.sh
 ```
+
+The Singularity image needs FS overlay to work.
+
+```sh
 bash run-singularity.sh [ARGS]
 ```
+
+> To know the available arguments `[ARGS]`, see [Usage section](#usage) below.
 
 ## Usage
 
 ### Data
 
-In case Docker or Singularity are used, input data should be placed in a sub-directory in the ```data/``` directory. Use symbolic links in case you do not want to place there your actual data. One can use the ```input-path``` or ```--output-path``` arguments, which are supposed to be relative paths from the root of the project (e.g. ```--input-path data/example-data```).
+In case Docker or Singularity are used, input data should be placed in a sub-directory in the `data/` directory. Use symbolic links in case you do not want to place there your actual data. One can use the `input-path` or `--output-path` arguments, which are supposed to be relative paths from the root of the project (e.g. `--input-path data/example-data`).
 
 In the case of the virtual environment, data could be placed in other directories, as long as the path is correctly passed as an argument.
 
 ### Arguments
 
-Currently, CorpusCleaner has the following arguments:
-```
+Currently, Corpus Cleaner has the following arguments:
+```sh
 usage: clean.py [-h] [--input-path INPUT_PATH] [--output-path OUTPUT_PATH]
                 [--input-format INPUT_FORMAT] [--output-format OUTPUT_FORMAT]
                 [--components COMPONENTS [COMPONENTS ...]] [--parallel]
@@ -104,38 +116,38 @@ usage: clean.py [-h] [--input-path INPUT_PATH] [--output-path OUTPUT_PATH]
                 name
 ```
 
-The options will be detailed if you run the program with the ```--help``` argument.
+The options will be detailed if you run the program with the `--help` argument.
 
 ### Examples
 
-In the ```data/``` directory, there is the ```toy_wiki``` directory, which is a tiny subset of the Catalan wikipedia.
+In the `data/` directory, there is the `toy_wiki` directory, which is a tiny subset of the Catalan wikipedia.
 
 Depending on your run option, run one of the following commands:
 
-```
-python clean.py example-output --input-path data/toy_wiki --input-format wikipedia --output-format fairseq-lm --lang-filter ca
+```sh
+(venv) $ python clean.py example-output --input-path data/toy_wiki --input-format wikipedia --output-format fairseq-lm --lang-filter ca
 ```
 
-```
+```sh
 bash run-docker.sh example-output --input-path data/toy_wiki --input-format wikipedia --output-format fairseq-lm --lang-filter ca
 ```
 
-```
+```sh
 bash run-singularity.sh example-output --input-path data/toy_wiki --input-format wikipedia --output-format fairseq-lm --lang-filter ca
 ```
 
-The output will be stored in ```output/```:
-  - ```args.json```: Arguments used, in order to make it reproducible.
-  - ```clean.log```: The cleaning log.
-  - ```output.txt```: The actual output.
+The output will be stored in `output/` directory:
+  - `args.json`: Arguments used, in order to make it reproducible.
+  - `clean.log`: The cleaning log.
+  - `output.txt`: The actual output.
 
 ## Internals
 
-For understanding how CorpusCleaner works, please see the code documentation (TODO). As a high-level overview, see this section.
+For understanding how Corpus Cleaner works, please see the code documentation (_TODO_). As a high-level overview, see this section.
 
 ### Components
 
-CorpusCleaner applies the following components (in order):
+Corpus Cleaner applies the following components (in order):
   - a) Data parser: Parse the data in a specific format (currently supported formats: BNE Json and Wikipedia). It is easy to extend to new formats, by subclassing DataParser.
   - b) Encoding fixer.
   - c) Pre-filterer: Document-level, char-based, heuristic filters for discarding documents.
@@ -145,7 +157,6 @@ CorpusCleaner applies the following components (in order):
   - g) Document filter: Document-level filters. Basically, document deduplication.
   - h) Document organizer: Organize documents into domains or languagees (not implemented yet).
   - i) Output formatter: Write the output in a specific format (currently supported outputs: Fairseq LM format).
-
 
 ## Contributing
 
@@ -164,17 +175,18 @@ First, try to change the default arguments. If it still doesn't fit your use cas
 
 ## Versioning
 
-So far, CorpusCleaner is only used internally and it is still being developed. The current version is 0.1 but we don't have a proper versioning scheme yet.
+So far, Corpus Cleaner is only used internally and it is still being developed. The current version is 0.1 but we don't have a proper versioning scheme yet.
 
 ## Authors
 
-* [Jordi Armengol Estapé](https://github.com/jordiae) and [Casimiro Pio Carrino](https://github.com/ccasimiro88).
+* [Jordi Armengol Estapé](https://github.com/jordiae)
+* [Casimiro Pio Carrino](https://github.com/ccasimiro88)
 
-See also the full list of [contributors](https://github.com/TeMU-BSC/CorpusCleaner/graphs/contributors) who participated in this project.
+See also the full list of [contributors](https://github.com/TeMU-BSC/corpus-cleaner/graphs/contributors) who participated in this project.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the [MIT License](LICENSE).
 
 ## Acknowledgments
 
