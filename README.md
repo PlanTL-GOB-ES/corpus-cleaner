@@ -140,11 +140,11 @@ CorpusCleaner applies the following components (in order):
   - b) Encoding fixer.
   - c) Pre-filterer: Document-level, char-based, heuristic filters for discarding documents.
   - d) Sentence splitter.
-  - e) Sentence filte
-  - f) Normalizer
-  - g) Document filter
-  - h) Document organizer
-  - i) Output formatter
+  - e) Sentence filter: Sentence-level filters, slightly more complex than the ones in the Pre-filterer.
+  - f) Normalizer: Optional normalization including punctuation.
+  - g) Document filter: Document-level filters. Basically, document deduplication.
+  - h) Document organizer: Organize documents into domains or languagees (not implemented yet).
+  - i) Output formatter: Write the output in a specific format (currently supported outputs: Fairseq LM format).
 
 
 ## Contributing
