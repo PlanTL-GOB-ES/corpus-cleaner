@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-rm -rf /scratch/CorpusCleaner/data && rm -rf /scratch/CorpusCleaner/output && ln -s /scratch/data /scratch/CorpusCleaner/data && ln -s /scratch/output /scratch/CorpusCleaner/output && cd /scratch/CorpusCleaner && python3 clean.py $*
+rm -rf /cc/CorpusCleaner/data && rm -rf /cc/CorpusCleaner/output && ln -s /cc/data /cc/CorpusCleaner/data && ln -s /cc/output /cc/CorpusCleaner/output && cd /cc/CorpusCleaner && python3 clean.py $*

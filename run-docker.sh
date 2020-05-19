@@ -3,4 +3,4 @@
 o=$(realpath output)
 d=$(realpath data)
 
-docker run -v ${o}:/scratch/output -v ${d}:/scratch/data -it corpuscleaner $*
+docker run -v ${o}:/cc/output -v ${d}:/cc/data -it corpuscleaner $*
