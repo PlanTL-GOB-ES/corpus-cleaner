@@ -36,7 +36,7 @@ Currently, the non-Python dependencies are:
   
 > Notice that installing a library required by Onion implies a system-wise installation of a library.
 
-With the virtual environment activated (`source venv/bin/activate` is included in `setup.sh`, so you should see `(venv)` prepended to your prompt), run the following with the python interpreter:
+With the virtual environment activated (`source venv/bin/activate`), run the following with the python interpreter:
 
 ```sh
 (venv) $ python clean.py [ARGS]
