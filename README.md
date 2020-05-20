@@ -64,13 +64,11 @@ bash run-docker.sh [ARGS]
 
 ### Method 3: Singularity
 
-For building the Singularity image, once the Docker one has been built (since it is converted using <https://github.com/singularityhub/docker2singularity>), assuming Singuliraty is installed, run:
+For building the Singularity image, once the Docker one has been built (since it is converted using <https://github.com/singularityhub/docker2singularity>), assuming Singularity is installed (<https://singularity.lbl.gov/docs-installation>), run:
 
 ```sh
 bash build-singularity.sh
 ```
-
-The Singularity image needs FS overlay to work.
 
 ```sh
 bash run-singularity.sh [ARGS]
