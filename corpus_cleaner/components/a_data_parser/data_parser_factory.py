@@ -1,5 +1,6 @@
 from .wikipedia_parser import  WikipediaParser
 from .bsc_crawl_json_parser import BSCCrawlJSONParser
+from .fairseq_lm_parser import FairseqLMParser
 from .onion_parser import OnionParser
 from .data_parser import DataParser
 import argparse
@@ -7,7 +8,7 @@ from typing import Optional
 
 
 class DataParserFactory:
-    VALID_INPUT_FORMATS = ['wikipedia', 'bsc-crawl-json']
+    VALID_INPUT_FORMATS = ['wikipedia', 'bsc-crawl-json', 'fairseq-lm']
 
     @staticmethod
     def get_parser(args: argparse.Namespace, input_format: Optional[str] = None, **kwargs)\
@@ -17,6 +18,8 @@ class DataParserFactory:
                 return WikipediaParser(args, **kwargs)
             elif args.input_format == 'bsc-crawl-json':
                 return BSCCrawlJSONParser(args, **kwargs)
+            elif args.input_format == 'fairseq-lm':
+                return FairseqLMParser(args, **kwargs)
             else:
                 raise NotImplementedError()
         else:
