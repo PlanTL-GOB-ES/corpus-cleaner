@@ -12,18 +12,18 @@ RUN  apt-get update \
   && apt-get install -y libjudy-dev \
   && rm -rf /var/lib/apt/lists/*
 
-RUN git clone --single-branch --branch singularity-bsc https://github.com/TeMU-BSC/CorpusCleaner.git
+RUN git clone --single-branch --branch singularity-bsc https://github.com/TeMU-BSC/corpus-cleaner.git
 
 RUN mkdir /cc
 
-RUN mv /CorpusCleaner /cc
+RUN mv /corpus-cleaner /cc
 
-RUN rm -rf /cc/CorpusCleaner/data/
+RUN rm -rf /cc/corpus-cleaner/data/
 
-RUN rm -rf /cc/CorpusCleaner/output/
+RUN rm -rf /cc/corpus-cleaner/output/
 
-RUN python3 -m pip install -r /cc/CorpusCleaner/requirements.txt
+RUN python3 -m pip install -r /cc/corpus-cleaner/requirements.txt
 
-RUN bash /cc/CorpusCleaner/get-third-party-docker.sh
+RUN bash /cc/corpus-cleaner/get-third-party-docker.sh
 
-ENTRYPOINT ["bash", "/cc/CorpusCleaner/entrypoint.sh"]
+ENTRYPOINT ["bash", "/cc/corpus-cleaner/entrypoint.sh"]
