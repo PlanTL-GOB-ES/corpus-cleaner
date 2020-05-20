@@ -1,6 +1,3 @@
 #!/usr/bin/env bash
 
-o=$(realpath output)
-d=$(realpath data)
-
-docker build -t corpuscleaner .
+docker build --no-cache -t corpuscleaner .
