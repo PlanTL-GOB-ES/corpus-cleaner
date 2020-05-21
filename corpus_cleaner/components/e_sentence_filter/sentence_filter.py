@@ -1,11 +1,12 @@
 from corpus_cleaner.document import Document
-from typing import Union, Tuple, Optional
+from typing import Union, Tuple, Optional, List
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 from langid.langid import LanguageIdentifier, model
 from ordered_set import OrderedSet
 import argparse
 import fasttext
 import os
+import re
 
 
 class SentenceFilter(CleanerComponentMapper):
@@ -18,6 +19,10 @@ class SentenceFilter(CleanerComponentMapper):
         parser.add_argument('--slow-lang-filter-threshold', type=float, help='If --lang-filter is set, minimum'
                                                                              'threshold for the slower lang identifier',
                             default=0.9)
+        parser.add_argument('--dictionary-filter-sen', type=str, help='Path to dictionary (plain text, one term per'
+                                                                      'line of terms that should not appear in a'
+                                                                      'sentence',
+                            default=None)
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -26,7 +31,7 @@ class SentenceFilter(CleanerComponentMapper):
 
     def __init__(self, args: argparse.Namespace, char_length_filter_sentence: int = 30, 
                  lang_filter: Union[Tuple[str], None] = None, slow_lang_filter_threshold: float = 0.90,
-                 profanity_check: bool = True):
+                 profanity_check: bool = True, dictionary_filter: Optional[str] = None):
         super().__init__(args)
         self.char_length_filter_sentence = args.char_length_filter_sentence if args.char_length_filter_sentence is not \
             None else char_length_filter_sentence
@@ -36,6 +41,12 @@ class SentenceFilter(CleanerComponentMapper):
         self.fasttext_lid = None
         self.slow_lang_filter_threshold = args.slow_lang_filter_threshold if args.slow_lang_filter_threshold is not \
             None else slow_lang_filter_threshold
+        self.dictionary_filter = \
+            args.dictionary_filter_sen if args.dictionary_filter_sen is not None else dictionary_filter
+        if self.dictionary_filter is not None:
+            with open(self.dictionary_filter, 'r') as f:
+                self.dictionary_filter = [line.strip() for line in f.readlines()]
+        self.dictionary_filter_pattern = None
         self.filters = []
         self._get_filters()
 
@@ -62,6 +73,9 @@ class SentenceFilter(CleanerComponentMapper):
             self.lang_id = LanguageIdentifier.from_modelstring(model, norm_probs=True)
             _ = self.lang_id.classify('')  # force init
             self.filters.append(self._filter_by_lang)
+        if self.dictionary_filter is not None:
+            self.dictionary_filter_pattern = re.compile("|".join(self.dictionary_filter))
+            self.filters.append(self._filter_by_dict)
 
     def _filter_by_char_len(self, sentence: str) -> bool:
         if len(sentence) > self.char_length_filter_sentence:
@@ -79,6 +93,11 @@ class SentenceFilter(CleanerComponentMapper):
             if res[0] in self.lang_filter and res[1] > self.slow_lang_filter_threshold:
                 return True
         return False
+
+    def _filter_by_dict(self, sentence: str):
+        if self.dictionary_filter_pattern.search(sentence):
+            return False
+        return True
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
         return self._filter(document)

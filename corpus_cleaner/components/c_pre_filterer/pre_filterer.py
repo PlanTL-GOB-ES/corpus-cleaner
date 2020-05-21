@@ -34,8 +34,10 @@ class PreFilterer(CleanerComponentMapper):
         parser.add_argument('--fast-lang-filter-threshold', type=float, help='If --lang-filter is set, minimum'
                                                                              'threshold for the faster lang identifier',
                             default=0.3)
-        parser.add_argument('--dictionary-filter', type=str, help='Path to dictionary (plain text, one term per line'
-                                                                  'of terms that should not appear', default=None)
+        parser.add_argument('--dictionary-filter-doc', type=str, help='Path to dictionary (plain text, one term per'
+                                                                      'line of terms that should not appear in a'
+                                                                      'document',
+                            default=None)
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -48,7 +50,7 @@ class PreFilterer(CleanerComponentMapper):
                  alphanum_filter: float = 0.1, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
                  fast_lang_filter_threshold: float = 0.3,
-                 dictionary_filter: Union[None, List[str]] = None):
+                 dictionary_filter: Optional[str] = None):
         super().__init__(args)
         self.remove_tags = not args.no_remove_tags if args.no_remove_tags is not None else not no_remove_tags
         self.tags_pattern = None
@@ -67,7 +69,12 @@ class PreFilterer(CleanerComponentMapper):
         self.fasttext_lid = None
         self.fast_lang_filter_threshold = args.fast_lang_filter_threshold if args.fast_lang_filter_threshold is not \
                                                                              None else fast_lang_filter_threshold
-        self.dictionary_filter = args.dictionary_filter if args.dictionary_filter is not None else dictionary_filter
+        self.dictionary_filter =\
+            args.dictionary_filter_doc if args.dictionary_filter_doc is not None else dictionary_filter
+        if self.dictionary_filter is not None:
+            with open(self.dictionary_filter, 'r') as f:
+                self.dictionary_filter = f.readlines()
+
         self.dictionary_filter_pattern = None
         self.input_format = args.input_format
         self.filters = []
