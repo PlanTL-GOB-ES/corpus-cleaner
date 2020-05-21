@@ -36,7 +36,7 @@ Currently, the non-Python dependencies are:
   
 > Notice that installing a library required by Onion implies a system-wise installation of a library.
 
-With the virtual environment activated (`source venv/bin/activate` is included in `setup.sh`, so you should see `(venv)` prepended to your prompt), run the following with the python interpreter:
+With the virtual environment activated (`source venv/bin/activate`), run the following with the python interpreter:
 
 ```sh
 (venv) $ python clean.py [ARGS]
@@ -64,13 +64,11 @@ bash run-docker.sh [ARGS]
 
 ### Method 3: Singularity
 
-For building the Singularity image, once the Docker one has been built (since it is converted using <https://github.com/singularityhub/docker2singularity>), assuming Singuliraty is installed, run:
+For building the Singularity image, once the Docker one has been built (since it is converted using <https://github.com/singularityhub/docker2singularity>), assuming Singularity is installed (<https://singularity.lbl.gov/docs-installation>), run:
 
 ```sh
 bash build-singularity.sh
 ```
-
-The Singularity image needs FS overlay to work.
 
 ```sh
 bash run-singularity.sh [ARGS]
