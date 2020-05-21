@@ -9,7 +9,7 @@ import argparse
 
 class BSCCrawlJSONParser(DataParser):
 
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.json',), **kwargs):
+    def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.json', '.json.gz'), **kwargs):
         super(BSCCrawlJSONParser, self).__init__(args, input_path=args.input_path, extensions=extensions,
                                                  **kwargs)
 

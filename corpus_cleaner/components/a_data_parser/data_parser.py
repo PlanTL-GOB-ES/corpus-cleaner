@@ -7,6 +7,7 @@ from pathlib import Path
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 import argparse
 from typing import Iterable, List, Optional
+import gzip
 
 
 class DataParser(CleanerComponent):
@@ -41,13 +42,24 @@ class DataParser(CleanerComponent):
         self.logger = args.logger
 
     def _treat_file(self, idx_filepath: int, relative_filepath: str) -> Iterable[Document]:
+        gz = False
+        extension = os.path.splitext(relative_filepath)[1][1:].strip()
+        if extension == 'gz':
+            gz = True
         abs_path = os.path.join(self.input_path, relative_filepath)
-        enc, confidence_ok = self._guess_encoding(abs_path) if self.encoding == 'auto' else (self.encoding, True)
-        with open(abs_path, 'r', encoding=enc, errors=self.encoding_error_policy) as f:
-            for doc in self._parse_file(f, relative_filepath, idx_filepath):
-                if enc != 'utf-8':
-                    pass  # TODO: Check possible problems when the original file was not utf-8
-                yield doc
+        enc, confidence_ok = self._guess_encoding(abs_path, gz=gz) if self.encoding == 'auto' else (self.encoding, True)
+        if not gz:
+            with open(abs_path, 'r', encoding=enc, errors=self.encoding_error_policy) as f:
+                for doc in self._parse_file(f, relative_filepath, idx_filepath):
+                    if enc != 'utf-8':
+                        pass  # TODO: Check possible problems when the original file was not utf-8
+                    yield doc
+        else:
+            with gzip.open(abs_path, 'rt', encoding=enc, errors=self.encoding_error_policy) as f:
+                for doc in self._parse_file(f, relative_filepath, idx_filepath):
+                    if enc != 'utf-8':
+                        pass  # TODO: Check possible problems when the original file was not utf-8
+                    yield doc
 
     def _parse(self) -> List[Iterable[Document]]:
         parse_iterables = []
@@ -68,14 +80,21 @@ class DataParser(CleanerComponent):
                     relative_paths.append(os.path.join(os.path.relpath(path.parents[0], self.input_path), path.name))
         return relative_paths
 
-    def _guess_encoding(self, path: str):
+    def _guess_encoding(self, path: str, gz: bool):
         # https://stackoverflow.com/questions/46037058/using-chardet-to-find-encoding-of-very-large-file/49621821
         self.detector.reset()
-        with open(path, 'rb') as f:
-            for row in f:
-                self.detector.feed(row)
-                if self.detector.done:
-                    break
+        if not gz:
+            with open(path, 'rb') as f:
+                for row in f:
+                    self.detector.feed(row)
+                    if self.detector.done:
+                        break
+        else:
+            with gzip.open(path, 'rb') as f:
+                for row in f:
+                    self.detector.feed(row)
+                    if self.detector.done:
+                        break
         self.detector.close()
         confidence_ok = self.detector.result['confidence'] > self.encoding_threshold
         encoding = self.detector.result['encoding'] if confidence_ok else 'utf-8'
