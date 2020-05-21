@@ -33,10 +33,9 @@ function random_sample_files_bne() {
   DATA_DIR=$1
   NUMBER_FILES=$2
   SEED=$3
-  find ${DATA_DIR} -type f  -not -name '*metadat.json' | \
-    shuf -n ${NUMBER_FILES} --random-source=<(get_seeded_random ${SEED})
+  find ${DATA_DIR} -type f -not -name "*metadat*" -and -not -name "*.gz" | \
+  shuf -n ${NUMBER_FILES} --random-source=<(get_seeded_random ${SEED})
 }
-
 function read_lines() {
     INPUT_FILE=$1
     while IFS= read -r line; do
@@ -46,8 +45,7 @@ function read_lines() {
 
 # First, sample ${NUMBER_FILES} random files from each BNE directory and write their content to a single file
 echo "Creating random sample of BNE files of size "
-cat $(random_sample_files_bne ${DATA_DIR} ${NUMBER_FILES} ${SEED}) > \
-  ${SAMPLE_DIR}/files_bne_${NUMBER_FILES}
+cat $(random_sample_files_bne ${DATA_DIR} ${NUMBER_FILES} ${SEED}) > ${SAMPLE_DIR}/files_bne_${NUMBER_FILES}
 
 RANDOM_SAMPLE_FILES_SIZE=$(du -h ${SAMPLE_DIR}/files_bne_${NUMBER_FILES} | cut -f1)
 echo "Collected random sample of BNE files with size: ${RANDOM_SAMPLE_FILES_SIZE}"
@@ -55,7 +53,9 @@ echo "Collected random sample of BNE files with size: ${RANDOM_SAMPLE_FILES_SIZE
 # Second, sample ${SAMPLE_SIZE} documents from the previous ${NUMBER_FILES} random files
 echo "Extracting ${SAMPLE_SIZE} random documents"
 read_lines ${SAMPLE_DIR}/files_bne_${NUMBER_FILES} | \
-  shuf -n ${SAMPLE_SIZE} --random-source=<(get_seeded_random ${SEED}) >> \
-    ${SAMPLE_DIR}/docs_bne_${SAMPLE_SIZE}
+  shuf -n ${NUMBER_FILES} --random-source=<(get_seeded_random ${SEED}) | \
+  split --additional-suffix "sample-bne.json" -${SAMPLE_SIZE} ${SAMPLE_DIR}/files_bne_${NUMBER_FILES}
+
+mv *sample-bne.json ${SAMPLE_DIR}
 
 rm ${SAMPLE_DIR}/files_bne_${NUMBER_FILES}
