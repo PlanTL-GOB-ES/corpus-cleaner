@@ -4,7 +4,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 DATA_DIR=$1
 SAMPLE_SIZE=$2
-NUMBER_FILES=${3:-100}
+NUMBER_FILES=${3:-200}
 SEED=${4:-42}
 
 if [[ -z ${DATA_DIR}] || -z ${SAMPLE_SIZE} ]]; then
@@ -34,8 +34,9 @@ function random_sample_files_bne() {
   NUMBER_FILES=$2
   SEED=$3
   find ${DATA_DIR} -type f -not -name "*metadat*" -and -not -name "*.gz" | \
-  shuf -n ${NUMBER_FILES} --random-source=<(get_seeded_random ${SEED})
+    shuf -n ${NUMBER_FILES} --random-source=<(get_seeded_random ${SEED})
 }
+
 function read_lines() {
     INPUT_FILE=$1
     while IFS= read -r line; do
@@ -44,18 +45,23 @@ function read_lines() {
 }
 
 # First, sample ${NUMBER_FILES} random files from each BNE directory and write their content to a single file
-echo "Creating random sample of BNE files of size "
-cat $(random_sample_files_bne ${DATA_DIR} ${NUMBER_FILES} ${SEED}) > ${SAMPLE_DIR}/files_bne_${NUMBER_FILES}
+echo "$(date) - Creating random sample of BNE files"
+cat $(random_sample_files_bne ${DATA_DIR} ${NUMBER_FILES} ${SEED}) > \
+  ${SAMPLE_DIR}/files_bne_${NUMBER_FILES}
 
 RANDOM_SAMPLE_FILES_SIZE=$(du -h ${SAMPLE_DIR}/files_bne_${NUMBER_FILES} | cut -f1)
-echo "Collected random sample of BNE files with size: ${RANDOM_SAMPLE_FILES_SIZE}"
+echo "$(date) - Collected random sample of BNE files with size: ${RANDOM_SAMPLE_FILES_SIZE}"
 
 # Second, sample ${SAMPLE_SIZE} documents from the previous ${NUMBER_FILES} random files
-echo "Extracting ${SAMPLE_SIZE} random documents"
+echo "$(date) - Extracting ${SAMPLE_SIZE} random documents"
 read_lines ${SAMPLE_DIR}/files_bne_${NUMBER_FILES} | \
-  shuf -n ${NUMBER_FILES} --random-source=<(get_seeded_random ${SEED}) | \
-  split --additional-suffix "sample-bne.json" -${SAMPLE_SIZE} ${SAMPLE_DIR}/files_bne_${NUMBER_FILES}
+  shuf -n ${SAMPLE_SIZE} --random-source=<(get_seeded_random ${SEED}) >> \
+    ${SAMPLE_DIR}/docs_bne_sample_${SAMPLE_SIZE}
 
-mv *sample-bne.json ${SAMPLE_DIR}
+RANDOM_SAMPLE_DOCS_SIZE=$(du -h ${SAMPLE_DIR}/docs_bne_sample_${SAMPLE_SIZE} | cut -f1)
+echo "$(date) - Final sample size: ${RANDOM_SAMPLE_DOCS_SIZE}"
+
+echo "$(date) - Splitting into files with one line each"
+split -l 1 --additional-suffix="_docs_bne_sample" ${SAMPLE_DIR}/docs_bne_sample_${SAMPLE_SIZE} ${SAMPLE_DIR}/
 
 rm ${SAMPLE_DIR}/files_bne_${NUMBER_FILES}
