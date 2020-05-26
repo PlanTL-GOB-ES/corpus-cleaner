@@ -114,7 +114,7 @@ class PreFilterer(CleanerComponentMapper):
         if self.alphanum_filter > 0:
             self.filters.append(self._filter_by_alphanum)
         if self.uppercase_filter > 0:
-            self.filters.append(self._filter_by_alphanum)
+            self.filters.append(self._filter_by_uppercase)
         if self.alphabet_filter is not None:
             self.ad = AlphabetDetector()
             self.filters.append(self._filter_by_alphabet)
