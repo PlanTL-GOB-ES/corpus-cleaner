@@ -6,6 +6,7 @@ import re
 import argparse
 import fasttext
 import os
+from corpus_cleaner.configs.langs import langs
 
 
 class PreFilterer(CleanerComponentMapper):
@@ -23,8 +24,11 @@ class PreFilterer(CleanerComponentMapper):
                                                                           'common HTTP errors.')
         parser.add_argument('--digits_filter', type=float, help='Maximum allowed proportion of digit characters',
                             default=0.1)
+        parser.add_argument('--lang_chars_filter', type=float, help='Maximum allowed proportion of characters not'
+                                                                    'belonging to the alphabet of the language',
+                            default=0.1)
         parser.add_argument('--alphanum_filter', type=float, help='Maximum allowed proportion of non-alphanumeric'
-                                                                  'characters', default=0.1)
+                                                                  'characters', default=0.3)
         parser.add_argument('--uppercase_filter', type=float, help='Maximum allowed proportion of uppercase characters',
                             default=0.4)
         parser.add_argument('--alphabet-filter', type=str, help='Alphabets that should be present (eg. LATIN)',
@@ -50,7 +54,8 @@ class PreFilterer(CleanerComponentMapper):
                  no_remove_tags: bool = False, no_remove_extra_spaces: bool = False,
                  no_replace_urls: bool = False,
                  char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
-                 alphanum_filter: float = 0.1, uppercase_filter: float = 0.4,
+                 lang_chars_filter: float = 0.1,
+                 alphanum_filter: float = 0.3, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
                  initial_lang_filter_threshold: float = 0.3,
                  dictionary_filter: Optional[str] = None):
@@ -67,8 +72,12 @@ class PreFilterer(CleanerComponentMapper):
         self.urls_pattern = None
         self.char_length_filter = args.char_length_filter if args.char_length_filter is not None else char_length_filter
         self.head_filter = not args.no_head_filter if args.no_head_filter is not None else not no_head_filter
+        self.alphabet = set([])
+        for lang in self.lang_filter:
+            self.alphabet.add(langs[lang]['alphabet'])
         self.digits_filter = args.digits_filter if args.digits_filter is not None else digits_filter
         self.alphanum_filter = args.alphanum_filter if args.alphanum_filter is not None else alphanum_filter
+        self.lang_chars_filter = args.lang_chars_filter if args.lang_chars_filter is not None else lang_chars_filter
         self.uppercase_filter = args.uppercase_filter if args.uppercase_filter is not None else uppercase_filter
         self.alphabet_filter = args.alphabet_filter if args.alphabet_filter is not None else alphabet_filter
         self.lang_filter = args.lang_filter if args.lang_filter is not None else lang_filter
@@ -125,6 +134,8 @@ class PreFilterer(CleanerComponentMapper):
             self.filters.append(self._filter_by_digits)
         if self.alphanum_filter > 0:
             self.filters.append(self._filter_by_alphanum)
+        if self.lang_chars_filter > 0:
+            self.filters.append(self._filter_by_lang_chars)
         if self.uppercase_filter > 0:
             self.filters.append(self._filter_by_uppercase)
         if self.alphabet_filter is not None:
@@ -165,6 +176,13 @@ class PreFilterer(CleanerComponentMapper):
     def _filter_by_alphanum(self, doc: Document):
         concat_content = ''.join(doc.content.split())
         if (1 - (sum(c.isalnum() for c in concat_content) / len(concat_content))) > self.alphanum_filter:
+            return False
+        return True
+
+    def _filter_by_lang_chars(self, doc: Document):
+        concat_content = ''.join(doc.content.split())
+        if (1 - (sum(c in self.alphabet for c in concat_content) /
+                 len(concat_content))) > self.lang_chars_filter:
             return False
         return True
 
