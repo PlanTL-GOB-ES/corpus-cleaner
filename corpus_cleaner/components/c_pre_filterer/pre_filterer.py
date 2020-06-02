@@ -113,7 +113,7 @@ class PreFilterer(CleanerComponentMapper):
     def _build_filters(self):
         # https://stackoverflow.com/questions/8376691/how-to-remove-hashtag-user-link-of-a-tweet-using-regular-expression
         if self.remove_hashtags_mentions:
-            self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9])|(#(\w+))')
+            self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9]+)|(#(\w+))')
         if self.remove_tags:
             self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
             self.p_tags_pattern = re.compile('([.|?]*\s*)(<p>)+')
