@@ -13,7 +13,7 @@ class PreFilterer(CleanerComponentMapper):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        parser.add_argument('--no-remove-tags-mentions', action='store_true', help='Remove hashtags and mentions.')
+        parser.add_argument('--no-remove-hashtags-mentions', action='store_true', help='Remove hashtags and mentions.')
         parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
         parser.add_argument('--no-remove-extra-spaces', action='store_true', help='Avoid removing XML/HTML tags')
         parser.add_argument('--no-replace-urls', action='store_true', help='Avoid replacing URLs with "[URL]"')
@@ -50,7 +50,7 @@ class PreFilterer(CleanerComponentMapper):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace, no_remove_hastags_mentions: bool = False,
+    def __init__(self, args: argparse.Namespace, no_remove_hashtags_mentions: bool = False,
                  no_remove_tags: bool = False, no_remove_extra_spaces: bool = False,
                  no_replace_urls: bool = False,
                  char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
@@ -60,8 +60,8 @@ class PreFilterer(CleanerComponentMapper):
                  initial_lang_filter_threshold: float = 0.3,
                  dictionary_filter: Optional[str] = None):
         super().__init__(args)
-        self.remove_hashtags_mentions = not args.no_remove_tags if args.remove_hastags_mentions is not None else not \
-            no_remove_hastags_mentions
+        self.remove_hashtags_mentions = not args.no_remove_hashtags_mentions if args.no_remove_hashtags_mentions is not None else not \
+            no_remove_hashtags_mentions
         self.remove_hashtags_pattern = None
         self.remove_tags = not args.no_remove_tags if args.no_remove_tags is not None else not no_remove_tags
         self.tags_pattern = None
