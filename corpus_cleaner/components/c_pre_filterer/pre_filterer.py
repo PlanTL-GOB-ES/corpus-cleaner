@@ -1,4 +1,4 @@
-from typing import Union, Tuple, List, Optional
+from typing import Union, Tuple, Optional
 from corpus_cleaner.document import Document
 from alphabet_detector import AlphabetDetector
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
@@ -12,6 +12,7 @@ class PreFilterer(CleanerComponentMapper):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
+        parser.add_argument('--no-remove-tags-mentions', action='store_true', help='Remove hashtags and mentions.')
         parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
         parser.add_argument('--no-remove-extra-spaces', action='store_true', help='Avoid removing XML/HTML tags')
         parser.add_argument('--no-replace-urls', action='store_true', help='Avoid replacing URLs with "[URL]"')
@@ -31,8 +32,9 @@ class PreFilterer(CleanerComponentMapper):
         parser.add_argument('--lang-filter', type=str, help='List of languages that should allowed when filtering by'
                                                             'lang. If not set, no filtering is applied.',
                             nargs='+')
-        parser.add_argument('--fast-lang-filter-threshold', type=float, help='If --lang-filter is set, minimum'
-                                                                             'threshold for the faster lang identifier',
+        parser.add_argument('--initial-lang-filter-threshold', type=float, help='If --lang-filter is set, minimum'
+                                                                                'threshold for the initial lang'
+                                                                                'identifier',
                             default=0.3)
         parser.add_argument('--dictionary-filter-doc', type=str, help='Path to dictionary (plain text, one term per'
                                                                       'line of terms that should not appear in a'
@@ -44,14 +46,18 @@ class PreFilterer(CleanerComponentMapper):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace, no_remove_tags: bool = False, no_remove_extra_spaces: bool = False,
+    def __init__(self, args: argparse.Namespace, no_remove_hastags_mentions: bool = False,
+                 no_remove_tags: bool = False, no_remove_extra_spaces: bool = False,
                  no_replace_urls: bool = False,
                  char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
                  alphanum_filter: float = 0.1, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
-                 fast_lang_filter_threshold: float = 0.3,
+                 initial_lang_filter_threshold: float = 0.3,
                  dictionary_filter: Optional[str] = None):
         super().__init__(args)
+        self.remove_hashtags_mentions = not args.no_remove_tags if args.remove_hastags_mentions is not None else not \
+            no_remove_hastags_mentions
+        self.remove_hashtags_pattern = None
         self.remove_tags = not args.no_remove_tags if args.no_remove_tags is not None else not no_remove_tags
         self.tags_pattern = None
         self.remove_extra_spaces = not args.no_remove_extra_spaces if args.no_remove_extra_spaces is not None else not \
@@ -67,8 +73,8 @@ class PreFilterer(CleanerComponentMapper):
         self.alphabet_filter = args.alphabet_filter if args.alphabet_filter is not None else alphabet_filter
         self.lang_filter = args.lang_filter if args.lang_filter is not None else lang_filter
         self.fasttext_lid = None
-        self.fast_lang_filter_threshold = args.fast_lang_filter_threshold if args.fast_lang_filter_threshold is not \
-                                                                             None else fast_lang_filter_threshold
+        self.initial_lang_filter_threshold = args.fast_lang_filter_threshold if args.initial_lang_filter_threshold is not \
+                                                                             None else initial_lang_filter_threshold
         self.dictionary_filter =\
             args.dictionary_filter_doc if args.dictionary_filter_doc is not None else dictionary_filter
         if self.dictionary_filter is not None:
@@ -81,6 +87,9 @@ class PreFilterer(CleanerComponentMapper):
         self._build_filters()
 
     # TODO: move the remove operations to a new component called CharFilter
+    def _remove_hashtags_mentions(self, text):
+        return self.remove_hashtags_pattern.sub(' ', text)
+
     def _remove_tags(self, text):
         return self.tags_pattern.sub(' ', self.p_tags_pattern.sub('. ', text))
 
@@ -93,6 +102,9 @@ class PreFilterer(CleanerComponentMapper):
         return self.urls_pattern.sub(replace, text)
 
     def _build_filters(self):
+        # https://stackoverflow.com/questions/8376691/how-to-remove-hashtag-user-link-of-a-tweet-using-regular-expression
+        if self.remove_hashtags_mentions:
+            self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9])|(#(\w+))')
         if self.remove_tags:
             self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
             self.p_tags_pattern = re.compile('([.|?]*\s*)(<p>)+')
@@ -173,7 +185,7 @@ class PreFilterer(CleanerComponentMapper):
         res = self.fasttext_lid.predict(content)
         lang = res[0][0][-2:]
         conf = res[1][0]
-        if lang in self.lang_filter and conf > self.fast_lang_filter_threshold:
+        if lang in self.lang_filter and conf > self.initial_lang_filter_threshold:
             doc.language = lang
             return True
         return False
@@ -184,6 +196,8 @@ class PreFilterer(CleanerComponentMapper):
         return True
 
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
+        if self.remove_hashtags_mentions:
+            document.content = self._remove_hashtags_mentions(document.content)
         if self.remove_tags:
             document.content = self._remove_tags(document.content)
         if self.remove_extra_spaces:

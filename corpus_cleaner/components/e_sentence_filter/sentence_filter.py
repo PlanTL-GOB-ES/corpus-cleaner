@@ -16,6 +16,9 @@ class SentenceFilter(CleanerComponentMapper):
                             help='filter sentences shorter than a given minimum character length')
         parser.add_argument('--profanity-check', action='store_true',
                             help='filter sentences with sensible content')
+        parser.add_argument('--fast-lang-filter-threshold', type=float, help='If --lang-filter is set, minimum'
+                                                                             'threshold for the faster lang identifier',
+                            default=0.3)
         parser.add_argument('--slow-lang-filter-threshold', type=float, help='If --lang-filter is set, minimum'
                                                                              'threshold for the slower lang identifier',
                             default=0.9)
