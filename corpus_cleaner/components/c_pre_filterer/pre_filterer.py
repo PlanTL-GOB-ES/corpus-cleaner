@@ -60,8 +60,8 @@ class PreFilterer(CleanerComponentMapper):
                  initial_lang_filter_threshold: float = 0.3,
                  dictionary_filter: Optional[str] = None):
         super().__init__(args)
-        self.remove_hashtags_mentions = not args.no_remove_hashtags_mentions if args.no_remove_hashtags_mentions is not None else not \
-            no_remove_hashtags_mentions
+        self.remove_hashtags_mentions = not args.no_remove_hashtags_mentions if args.no_remove_hashtags_mentions is \
+                                        not None else not no_remove_hashtags_mentions
         self.remove_hashtags_pattern = None
         self.remove_tags = not args.no_remove_tags if args.no_remove_tags is not None else not no_remove_tags
         self.tags_pattern = None
