@@ -72,15 +72,15 @@ class PreFilterer(CleanerComponentMapper):
         self.urls_pattern = None
         self.char_length_filter = args.char_length_filter if args.char_length_filter is not None else char_length_filter
         self.head_filter = not args.no_head_filter if args.no_head_filter is not None else not no_head_filter
-        self.alphabet = set([])
-        for lang in self.lang_filter:
-            self.alphabet.add(langs[lang]['alphabet'])
         self.digits_filter = args.digits_filter if args.digits_filter is not None else digits_filter
         self.alphanum_filter = args.alphanum_filter if args.alphanum_filter is not None else alphanum_filter
         self.lang_chars_filter = args.lang_chars_filter if args.lang_chars_filter is not None else lang_chars_filter
         self.uppercase_filter = args.uppercase_filter if args.uppercase_filter is not None else uppercase_filter
         self.alphabet_filter = args.alphabet_filter if args.alphabet_filter is not None else alphabet_filter
         self.lang_filter = args.lang_filter if args.lang_filter is not None else lang_filter
+        self.alphabet = set([])
+        for lang in self.lang_filter:
+            self.alphabet.update(langs[lang]['alphabet'])
         self.fasttext_lid = None
         self.initial_lang_filter_threshold = args.fast_lang_filter_threshold if args.initial_lang_filter_threshold is not \
                                                                              None else initial_lang_filter_threshold
