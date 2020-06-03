@@ -15,7 +15,7 @@ INSTALL_BIN=${PREFIX}/bin
 INSTALL_DATA=${PREFIX}/share" > Makefile.config
 make
 make install
-cd ..
+cd ../..
 
 # fasttext
 wget https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
