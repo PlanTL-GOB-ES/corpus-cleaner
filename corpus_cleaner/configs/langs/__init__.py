@@ -1,4 +1,5 @@
 from .ca import ca
+from .de import de
 from .en import en
 from .eu import eu
 from .es import es
