@@ -7,7 +7,8 @@ from .fi import fi
 from .ka import ka
 from .lv import lv
 from .no import no
+from .uk import uk
 
-langs = dict(ca=ca, de=de, en=en, eu=eu, es=es, fi=fi, ka=ka, lv=lv, no=no)
+langs = dict(ca=ca, de=de, en=en, eu=eu, es=es, fi=fi, ka=ka, lv=lv, no=no, uk=uk)
 
 __all__ = ['langs']
