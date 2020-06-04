@@ -86,7 +86,7 @@ class SentenceFilter(CleanerComponentMapper):
         return False
         
     def _filter_by_lang(self, sentence: str) -> bool:
-        res = self.fasttext_lid.predict(sentence)
+        res = self.fasttext_lid.predict(sentence.lower())
         lang = res[0][0][-2:]
         conf = res[1][0]
         if lang in self.lang_filter and conf > self.slow_lang_filter_threshold - 0.1:
