@@ -13,6 +13,7 @@ class PreFilterer(CleanerComponentMapper):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
+        parser.add_argument('--no-replace-emails', action='store_true', help='Avoid replacing email adresses with "[EMAIL]"')
         parser.add_argument('--no-remove-hashtags-mentions', action='store_true', help='Remove hashtags and mentions.')
         parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
         parser.add_argument('--no-remove-extra-spaces', action='store_true', help='Avoid removing XML/HTML tags')
@@ -50,9 +51,9 @@ class PreFilterer(CleanerComponentMapper):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace, no_remove_hashtags_mentions: bool = False,
-                 no_remove_tags: bool = False, no_remove_extra_spaces: bool = False,
-                 no_replace_urls: bool = False,
+    def __init__(self, args: argparse.Namespace, no_replace_emails: bool = False,
+                 no_remove_hashtags_mentions: bool = False, no_remove_tags: bool = False,
+                 no_remove_extra_spaces: bool = False, no_replace_urls: bool = False,
                  char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
                  lang_chars_filter: float = 0.1,
                  alphanum_filter: float = 0.3, uppercase_filter: float = 0.4,
@@ -60,6 +61,8 @@ class PreFilterer(CleanerComponentMapper):
                  initial_lang_filter_threshold: float = 0.3,
                  dictionary_filter: Optional[str] = None):
         super().__init__(args)
+        self.replace_emails = not args.no_replace_emails if args.no_replace_emails is not None else not no_replace_emails
+        self.emails_pattern = None
         self.remove_hashtags_mentions = not args.no_remove_hashtags_mentions if args.no_remove_hashtags_mentions is \
                                         not None else not no_remove_hashtags_mentions
         self.remove_hashtags_pattern = None
@@ -97,6 +100,10 @@ class PreFilterer(CleanerComponentMapper):
         self._build_filters()
 
     # TODO: move the remove operations to a new component called CharFilter
+    def _replace_emails(self, text):
+        replace = '[EMAIL]'
+        return self.emails_pattern.sub(replace, text)
+
     def _remove_hashtags_mentions(self, text):
         return self.remove_hashtags_pattern.sub(' ', text)
 
@@ -112,6 +119,10 @@ class PreFilterer(CleanerComponentMapper):
         return self.urls_pattern.sub(replace, text)
 
     def _build_filters(self):
+        # https://www.tutorialspoint.com/Extracting-email-addresses-using-regular-expressions-in-Python
+        if self.replace_emails:
+            self.emails_pattern = re.compile(
+                '[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
         # https://stackoverflow.com/questions/8376691/how-to-remove-hashtag-user-link-of-a-tweet-using-regular-expression
         if self.remove_hashtags_mentions:
             self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9]+)|(#(\w+))')
@@ -216,6 +227,8 @@ class PreFilterer(CleanerComponentMapper):
         return True
 
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
+        if self.replace_emails:
+            document.content = self._replace_emails(document.content)
         if self.remove_hashtags_mentions:
             document.content = self._remove_hashtags_mentions(document.content)
         if self.remove_tags:
