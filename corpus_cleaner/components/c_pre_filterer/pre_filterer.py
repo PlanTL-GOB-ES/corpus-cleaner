@@ -108,7 +108,7 @@ class PreFilterer(CleanerComponentMapper):
         return self.extra_spaces_pattern.sub(replace, text).strip()
 
     def _replace_urls(self, text):
-        replace = '[URL]'
+        replace = ' [URL]'
         return self.urls_pattern.sub(replace, text)
 
     def _build_filters(self):
@@ -127,7 +127,7 @@ class PreFilterer(CleanerComponentMapper):
             #                 2) mantaining period at the end to improve sentence splitter
             # TODO: use a list of all the alphabet for each language instead of hard-coded accented characters
             self.urls_pattern = re.compile(
-                '([áéóüñúí\w]+)?((http|https)://)?[a-zA-Z0-9./?:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9&/?:@\-_=#])*([áéóüñúí\w]+)?')
+                '((http|https)://)?[a-zA-Z0-9./?@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9&/?:@\-_=#()])*([áéóüñúí\w]+)?')
         if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
         if self.head_filter:
