@@ -14,8 +14,7 @@ from typing import Iterable, List, Tuple
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 from corpus_cleaner.document import Document
 from collections import OrderedDict
-from pipel import Pipeline
-from pipel import PipelineLogger
+from corpus_cleaner.par_utils import Pipeline, PipelineLogger
 from typing import Generator
 from typing import cast
 import argparse
@@ -110,7 +109,7 @@ class Cleaner:
             pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self._get_documents()],
                                 mappers_factory=self._create_pipeline_mappers,
                                 output_reducer=self._output, batch_size=self.args.batch_size,
-                                parallel=self.args.parallel,
+                                parallel=self.args.parallel, parallel_streams=self.args.parallel,
                                 logger=self.logger if self.args.log_every_iter != -1 else None,
                                 log_every_iter=self.args.log_every_iter)
             pipeline.run()
@@ -119,7 +118,7 @@ class Cleaner:
             pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self._get_documents()],
                                 mappers_factory=self._create_pipeline_mappers,
                                 output_reducer=self.reducer.output, batch_size=self.args.batch_size,
-                                parallel=self.args.parallel,
+                                parallel=self.args.parallel, parallel_streams=self.args.parallel,
                                 logger=self.logger if self.args.log_every_iter != -1 else None,
                                 log_every_iter=self.args.log_every_iter)
             pipeline.run()
@@ -129,7 +128,7 @@ class Cleaner:
             pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self.reducer.get_documents()],
                                 mappers_factory=self._create_pipeline_postmappers,
                                 output_reducer=self._output, batch_size=self.args.batch_size,
-                                parallel=self.args.parallel,
+                                parallel=self.args.parallel, parallel_streams=self.args.parallel,
                                 logger=self.logger if self.args.log_every_iter != -1 else None,
                                 log_every_iter=self.args.log_every_iter)
 
