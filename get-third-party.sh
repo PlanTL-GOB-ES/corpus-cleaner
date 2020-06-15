@@ -16,6 +16,8 @@ INSTALL_DATA=${PREFIX}/share" > Makefile.config
 make
 make install
 cd ../..
+rm onion-1.2.tar.gz
+
 
 # fasttext
 wget https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
