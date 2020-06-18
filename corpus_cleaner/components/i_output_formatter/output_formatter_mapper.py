@@ -9,7 +9,6 @@ class OutputFormatterMapper(CleanerComponent):
     def __init__(self, args: argparse.Namespace, output_formatter: OutputFormatter):
         super().__init__(args)
         self.output_formatter = output_formatter
-        self.output_formatter._init_writing()
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -23,6 +22,8 @@ class OutputFormatterMapper(CleanerComponent):
         raise self.output_formatter._write_document(document)
 
     def __call__(self, documents: Iterable[Document]):
+        self.output_formatter.init_writing()
         for document in documents:
             self.output_formatter._write_document(document)
+        self.output_formatter.end_writing()
 

@@ -44,3 +44,9 @@ class OutputFormatter(CleanerComponent):
 
     def __del__(self):
         self._end_writing()
+
+    def init_writing(self):
+        self._init_writing()
+
+    def end_writing(self):
+        self._end_writing()
