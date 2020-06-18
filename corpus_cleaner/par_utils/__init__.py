@@ -1,3 +1,3 @@
-from .par_utils import Pipeline, PipelineLogger
+from .par_utils import MappingPipeline, PipelineLogger, CollectingPipeline
 
-__all__ = ['Pipeline', 'PipelineLogger']
+__all__ = ['MappingPipeline', 'PipelineLogger', 'CollectingPipeline']

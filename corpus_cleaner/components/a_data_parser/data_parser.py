@@ -103,4 +103,8 @@ class DataParser(CleanerComponent):
     def parse(self) -> List[Iterable[Document]]:
         return self._parse()
 
+    def treat_file(self, idx_filepath: int, relative_filepath: str) -> Iterable[Document]:
+        return self._treat_file(idx_filepath, relative_filepath)
 
+    def get_idx_relative_filepaths(self) -> List[Tuple[int, str]]:
+        return list(enumerate(self._get_relative_filepaths()))

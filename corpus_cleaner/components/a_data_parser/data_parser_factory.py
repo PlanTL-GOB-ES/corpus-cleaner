@@ -4,6 +4,7 @@ from .fairseq_lm_parser import FairseqLMParser
 from .sentence_parser import SentenceParser
 from .onion_parser import OnionParser
 from .data_parser import DataParser
+from .data_parser_mapper import DataParserMapper
 import argparse
 from typing import Optional
 
@@ -29,3 +30,8 @@ class DataParserFactory:
             if input_format == 'onion':
                 return OnionParser(args, **kwargs)
             raise NotImplementedError()
+
+    @staticmethod
+    def get_parser_mapper(args: argparse.Namespace, input_format: Optional[str] = None, **kwargs) \
+            -> DataParserMapper:
+        return DataParserMapper(args, DataParserFactory.get_parser(args, input_format, **kwargs))

@@ -8,6 +8,7 @@ from typing import Iterable
 from typing import Optional
 import multiprocessing_logging
 import time
+from typing import Any
 try:
     from ray.util.multiprocessing import Pool
 except ImportError:
@@ -65,7 +66,7 @@ R = TypeVar('R')
 Q = TypeVar('Q')
 
 
-class Pipeline:
+class CollectingPipeline:
     def __init__(self, streamers: List[Generator[S, None, None]], mappers_factory: Callable[[], List[Callable[[S], S]]],
                  output_reducer: Callable[[Iterable[S]], None], batch_size: int, parallel: bool, parallel_streams: bool,
                  logger: Optional[PipelineLogger] = None, log_every_iter: int = 10, backend: str = 'mp'):
@@ -341,3 +342,100 @@ class Pipeline:
             if empty:
                 break
             yield batch
+
+
+class MappingPipeline:
+    def __init__(self, streams: List[S], mappers_factory: Callable[[], List[Callable[[S], S]]],
+                 parallel: bool, logger: Optional[PipelineLogger] = None, log_every_iter: int = 10,
+                 backend: str = 'mp'):
+        """
+        A simple class for parallelizing a set of transformations that are consecutively applied to a stream of data.
+        Notice that Multiprocessing's parallel map cannot work with generators, which makes it not usable when data is
+        to big to fit in memory. Inspired by MapReduce, but considerably simpler (and less powerful).
+        It is assumed that the transformations are independently applied to each object (ie. map-like).
+        The output is deterministic (ie. in parallel the result is exactly equal to the one that would be
+        obtained sequentially). Specifically, the output will have the following order: batch 1 of streamer 1, batch 1
+        of streamer 2,...
+        This class tries to handle the needs of severely I/O bound applications by parallelizing a list of streamers.
+        The parallelization strategy is as follows:
+            - The list of streamers will be used to generate a batch of objects that will be stored in memory.
+            - When the batch is ready, a parallel map will be applied to the batch, while the other streams prepare the
+            next batch running in background. So, the application iterates round robin the different streamers.
+            - Once the parallel map has been applied, the results are reduced (reduced as in folded) and output in
+            background.
+        :param streamers: A list of generators that yield objects. Typically, it will involve some I/O.
+        :param mappers_factory: A callable that returns a list of callable objects (functions or objects with the
+        __call__ method), which will be the mappers of the
+        :param output_reducer: A callable object or function that receives an iterable collection of objects, optionally
+         applies a reduction and outputs it (eg. it writes it to a file).
+        :param batch_size: The number of elements that will be stored in memory each time the mappers are applied.
+        Ideally, it should be as big as possible such that no out of memory errors are caused.
+        :param parallel: Whether to run the pipeline in parallel. By default, set to True.
+        :param logger: A standard logger (optional). If set,
+        :param log_every_iter: If the logger is set, the pipeline will log every log_every_iter iterations (int).
+        """
+
+        assert backend in ['mp', 'ray']
+        self.backend = backend
+
+        self.streams = streams
+        self.par_logger = logger
+
+        self.mappers_factory = mappers_factory
+        self.parallel = parallel
+        self.log_every_iter = log_every_iter
+        self.done = False
+        self.f_mappers = None
+
+    @staticmethod
+    def _initialize_mappers(mappers_factory):
+        """
+        Helper function to initialize the mappers (and, therefore, allow non-pickable callable to be passed to a
+        parallel map). The use of global, although not ideal, is safe in this case, and it is used as a workaraound
+        for initializing the mappers in each process.
+        :return:
+        """
+        G.F_MAPPERS = Composed(mappers_factory)
+
+    @staticmethod
+    def _map_f(x):
+        """
+        Helper function to call the composed mappers.
+        :param x: Object to be transformed.
+        :return: Result from the series of transformations.
+        """
+        return G.F_MAPPERS(x)
+
+    def run(self) -> Any:
+        """
+        Runs the pipeline with the aforementioned parallelization strategy if parallel is set to True. Otherwise, the
+        pipeline is executed sequentially.
+        :return:
+        """
+
+        assert not self.done
+        if self.par_logger:
+            pass
+        if self.parallel:
+            if self.par_logger:
+                t0 = time.time()
+                self.par_logger.logger.info(f'{self.__class__.__name__}: Initializing mappers')
+            if self.backend == 'mp':
+                with multiprocessing.Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory,)) \
+                        as pool:
+                            res = pool.map(self._map_f, self.streams)
+            else:
+                with multiprocessing.Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory,)) \
+                        as pool:
+                    res = pool.map(self._map_f, self.streams)
+        else:
+            self._initialize_mappers(self.mappers_factory)
+            res = []
+            for e in self.streams:
+                res.append(self._map_f(e))
+
+        if self.par_logger:
+            pass
+        self.done = True
+        return res
+

@@ -33,7 +33,7 @@ class OutputFormatter(CleanerComponent):
     def _output_format(self, documents: Iterable[Document]):
         if self.fd is None:
             self._init_writing()
-        for document in documents:#tqdm(documents):
+        for document in documents:
             if document is None:
                 continue
             self._write_document(document)
