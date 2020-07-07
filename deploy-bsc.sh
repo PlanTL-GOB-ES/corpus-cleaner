@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-USER="dummyuser"
-GROUP="dummygroup"
+USER="bsc88251"
+GROUP="bsc88"
 VERSION=$(date +"%d-%m-%Y")
 DIR_PATH="/gpfs/projects/${GROUP}/corpus-cleaner/${VERSION}"
 ssh ${USER}@dt01.bsc.es 'mkdir -p ' ${DIR_PATH}/data ${DIR_PATH}/output

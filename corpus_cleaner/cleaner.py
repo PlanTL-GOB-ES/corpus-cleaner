@@ -14,10 +14,7 @@ from typing import Iterable, List, Tuple
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 from corpus_cleaner.document import Document
 from collections import OrderedDict
-from pipel import Pipeline
-from pipel import PipelineLogger
-from typing import Generator
-from typing import cast
+from corpus_cleaner.par_utils import MappingPipeline, PipelineLogger
 import argparse
 import logging
 import os
@@ -50,11 +47,17 @@ class Cleaner:
         self.logger = PipelineLogger(logger)
         self.args.logger = self.logger
         self.mappers = MAPPERS
+        self.tmp_dir = os.path.join(args.output_path, 'tmp')
+        os.makedirs(self.tmp_dir)
         if args.components is not None:
             self.mappers = []
             for comp in MAPPERS:
                 if comp.__name__ in args.components:
                     self.mappers.append(comp)
+        self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
+                       [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
+                           args=None, output_format = 'onion',
+                           output_path=os.path.join(self.tmp_dir, str(os.getpid()) + '.onion'))]
         self.reducer = REDUCER
         if args.components is not None:
             self.reducer = None
@@ -76,10 +79,9 @@ class Cleaner:
         parser.add_argument('--components', type=str, help='Elements of the pipeline', nargs='+',
                             default=list(map(lambda x: x.__name__, MAPPERS + [REDUCER] + POSTMAPPERS)))
         parser.add_argument('--parallel', action='store_true', help='Run the cleaner in parallel')
-        parser.add_argument('--batch-size', type=int, default=100, help='Number of instances that are simultaneously'
-                                                                        'instantiated in memory')
-        parser.add_argument('--log-every-iter', type=int, default=10, help='Log the pipeline every N iterations'
+        parser.add_argument('--log-every-iter', type=int, default=-1, help='Log the pipeline every N iterations'
                                                                            '(-1, silent)')
+        parser.add_argument('--backend', type=str, default='mp', help='Parallel backend (mp or ray)')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -94,6 +96,11 @@ class Cleaner:
         parser = DataParserFactory.get_parser(self.args)
         return parser.parse()
 
+    def _get_paths(self) -> List[Tuple[int, str]]:
+        # self.logger.info('Parsing...')
+        parser = DataParserFactory.get_parser(self.args)
+        return parser.get_idx_relative_filepaths()
+
     def _create_pipeline_mappers(self) -> List[CleanerComponent]:
         return [component(self.args) for component in self.mappers]
 
@@ -107,34 +114,19 @@ class Cleaner:
 
     def clean(self):
         if self.reducer is None:
-            pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self._get_documents()],
-                                mappers_factory=self._create_pipeline_mappers,
-                                output_reducer=self._output, batch_size=self.args.batch_size,
-                                parallel=self.args.parallel,
-                                logger=self.logger if self.args.log_every_iter != -1 else None,
-                                log_every_iter=self.args.log_every_iter)
-            pipeline.run()
+            raise NotImplementedError()
         else:
+
             self.reducer = self.reducer(self.args)
-            pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self._get_documents()],
-                                mappers_factory=self._create_pipeline_mappers,
-                                output_reducer=self.reducer.output, batch_size=self.args.batch_size,
-                                parallel=self.args.parallel,
-                                logger=self.logger if self.args.log_every_iter != -1 else None,
-                                log_every_iter=self.args.log_every_iter)
+            pipeline = MappingPipeline(streams=self._get_paths(),
+                                       mappers_factory=self._create_pipeline_mappers,
+                                       parallel=self.args.parallel,
+                                       logger=self.logger if self.args.log_every_iter != -1 else None,
+                                       log_every_iter=self.args.log_every_iter,
+                                       backend=self.args.backend)
             pipeline.run()
 
             self.reducer.reduce()
 
-            pipeline = Pipeline(streamers=[cast(Generator, iterable) for iterable in self.reducer.get_documents()],
-                                mappers_factory=self._create_pipeline_postmappers,
-                                output_reducer=self._output, batch_size=self.args.batch_size,
-                                parallel=self.args.parallel,
-                                logger=self.logger if self.args.log_every_iter != -1 else None,
-                                log_every_iter=self.args.log_every_iter)
+            self._output(self.reducer.get_documents()[0])
 
-            pipeline.run()
-
-            # remove Onion temporary files
-            os.remove(self.reducer.onion_input_file)
-            os.remove(self.reducer.onion_output_file)

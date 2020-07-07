@@ -14,6 +14,7 @@ class DocumentFilter(CleanerComponentReducer):
         self.onion_input_file = onion_input_file
         self.onion_output_file = onion_output_file
         self.onion_path = os.path.join('lib', 'onion-1.2', 'bin', 'onion')
+        self.onion_tmp = os.path.join(args.output_path, 'tmp')
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -28,7 +29,9 @@ class DocumentFilter(CleanerComponentReducer):
         pass
 
     def _run_onion(self):
-        onion_command = f'{self.onion_path} -m -n 1 -t {self.document_deduplication_threshold} {self.onion_input_file}' \
+        cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_input_file
+        subprocess.run(cat_command, shell=True, check=True, universal_newlines=True)
+        onion_command = f'{self.onion_path} -m -n 1 -t {self.document_deduplication_threshold} {self.onion_input_file}'\
             f' > {self.onion_output_file}'
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 

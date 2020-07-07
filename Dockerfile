@@ -12,7 +12,7 @@ RUN  apt-get update \
   && apt-get install -y libjudy-dev \
   && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/TeMU-BSC/corpus-cleaner.git
+RUN git clone --single-branch --branch mn4-2 https://github.com/TeMU-BSC/corpus-cleaner.git
 
 RUN mkdir /cc
 
