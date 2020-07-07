@@ -18,9 +18,6 @@ class OutputFormatterMapper(CleanerComponent):
     def check_args(args: argparse.Namespace):
         pass
 
-    def _one_call_(self, document: Document):
-        raise self.output_formatter._write_document(document)
-
     def __call__(self, documents: Iterable[Document]):
         self.output_formatter.init_writing()
         for document in documents:

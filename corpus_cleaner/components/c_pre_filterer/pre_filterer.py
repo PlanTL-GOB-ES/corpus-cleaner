@@ -71,7 +71,6 @@ class PreFilterer(CleanerComponentMapper):
         self.remove_extra_spaces = not args.no_remove_extra_spaces if args.no_remove_extra_spaces is not None else not \
             no_remove_extra_spaces
         self.extra_spaces_pattern = None
-        self.double_punct_pattern = None
         self.replace_urls = not args.no_replace_urls if args.no_replace_urls is not None else not no_replace_urls
         self.urls_pattern = None
         self.char_length_filter = args.char_length_filter if args.char_length_filter is not None else char_length_filter
@@ -108,7 +107,7 @@ class PreFilterer(CleanerComponentMapper):
         return self.remove_hashtags_pattern.sub(' ', text)
 
     def _remove_tags(self, text):
-        return self.double_punct_pattern.sub('\\1', self.tags_pattern.sub(' ', self.p_tags_pattern.sub('. ', text)))
+        return self.tags_pattern.sub(' ', self.p_tags_pattern.sub('\n', text))
 
     def _remove_extra_spaces(self, text):
         replace = ' '
@@ -126,7 +125,6 @@ class PreFilterer(CleanerComponentMapper):
         # https://stackoverflow.com/questions/8376691/how-to-remove-hashtag-user-link-of-a-tweet-using-regular-expression
         if self.remove_hashtags_mentions:
             self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9]+)|(#(\w+))')
-            self.double_punct_pattern = re.compile('(\.|\?|!|)( \.)')
         if self.remove_tags:
             self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
             self.p_tags_pattern = re.compile('([.|?]*\s*)(<p>)+')
