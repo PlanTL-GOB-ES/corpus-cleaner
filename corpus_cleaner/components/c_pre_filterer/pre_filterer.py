@@ -242,11 +242,9 @@ class PreFilterer(CleanerComponentMapper):
         if self.remove_tags:
             document.content = self._remove_tags(document.content)
         if self.remove_tabs:
-            print(document.content)
             document.content = self._remove_tabs(document.content)
         if self.remove_extra_spaces:
             document.content = self._remove_extra_spaces(document.content)
-            print(document.content)
         if self.replace_urls:
             document.content = self._replace_urls(document.content)
         keep = True
