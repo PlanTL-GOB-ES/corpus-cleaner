@@ -17,5 +17,6 @@ regex==2020.2.20
 sacremoses==0.0.38
 sentence-splitter==1.4
 six==1.14.0
+textnorm==1.2
 tqdm==4.43.0
 wcwidth==0.1.8
