@@ -16,6 +16,7 @@ class PreFilterer(CleanerComponentMapper):
         parser.add_argument('--no-replace-emails', action='store_true', help='Avoid replacing email adresses with "[EMAIL]"')
         parser.add_argument('--no-remove-hashtags-mentions', action='store_true', help='Remove hashtags and mentions.')
         parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
+        parser.add_argument('--no-remove-tabs', action='store_true', help='Avoid removing tabs')
         parser.add_argument('--no-remove-extra-spaces', action='store_true', help='Avoid removing XML/HTML tags')
         parser.add_argument('--no-replace-urls', action='store_true', help='Avoid replacing URLs with "[URL]"')
         parser.add_argument('--char-length-filter', type=int, help='Minimum char length per document. Set to 0 not'
@@ -53,7 +54,7 @@ class PreFilterer(CleanerComponentMapper):
 
     def __init__(self, args: argparse.Namespace, no_replace_emails: bool = False,
                  no_remove_hashtags_mentions: bool = False, no_remove_tags: bool = False,
-                 no_remove_extra_spaces: bool = False, no_replace_urls: bool = False,
+                 no_remove_tabs: bool = False, no_remove_extra_spaces: bool = False, no_replace_urls: bool = False,
                  char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
                  lang_chars_filter: float = 0.1,
                  alphanum_filter: float = 0.3, uppercase_filter: float = 0.4,
@@ -68,6 +69,9 @@ class PreFilterer(CleanerComponentMapper):
         self.remove_hashtags_pattern = None
         self.remove_tags = not args.no_remove_tags if args.no_remove_tags is not None else not no_remove_tags
         self.tags_pattern = None
+        self.remove_tabs = not args.no_remove_tabs if args.no_remove_tabs is not None else not \
+            no_remove_tabs
+        self.tabs_pattern = None
         self.remove_extra_spaces = not args.no_remove_extra_spaces if args.no_remove_extra_spaces is not None else not \
             no_remove_extra_spaces
         self.extra_spaces_pattern = None
@@ -109,6 +113,10 @@ class PreFilterer(CleanerComponentMapper):
     def _remove_tags(self, text):
         return self.tags_pattern.sub(' ', self.p_tags_pattern.sub('\n', text))
 
+    def _remove_tabs(self, text):
+        replace = ' '
+        return self.tabs_pattern.sub(replace, text).strip()
+
     def _remove_extra_spaces(self, text):
         replace = ' '
         return self.extra_spaces_pattern.sub(replace, text).strip()
@@ -128,8 +136,10 @@ class PreFilterer(CleanerComponentMapper):
         if self.remove_tags:
             self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
             self.p_tags_pattern = re.compile('([.|?]*\s*)(<p>)+')
+        if self.remove_tabs:
+            self.tabs_pattern = re.compile(r'\t')
         if self.remove_extra_spaces:
-            self.extra_spaces_pattern = re.compile(r'\s+')
+            self.extra_spaces_pattern = re.compile(r'[ ]{2,}')
         if self.replace_urls:
             # slightly modified from: https://stackoverflow.com/questions/6718633/python-regular-expression-again-match-url
             # to account for: 1) words attached at the beginning and the end of the url
@@ -231,8 +241,12 @@ class PreFilterer(CleanerComponentMapper):
             document.content = self._remove_hashtags_mentions(document.content)
         if self.remove_tags:
             document.content = self._remove_tags(document.content)
+        if self.remove_tabs:
+            print(document.content)
+            document.content = self._remove_tabs(document.content)
         if self.remove_extra_spaces:
             document.content = self._remove_extra_spaces(document.content)
+            print(document.content)
         if self.replace_urls:
             document.content = self._replace_urls(document.content)
         keep = True
