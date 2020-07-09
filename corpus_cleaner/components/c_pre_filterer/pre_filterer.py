@@ -85,6 +85,7 @@ class PreFilterer(CleanerComponentMapper):
         self.alphabet = set([])
         for lang in self.lang_filter:
             self.alphabet.update(langs[lang]['alphabet'])
+            self.lang_chars = ("".join(char for char in self.alphabet if char.isalpha()))
         self.fasttext_lid = None
         self.initial_lang_filter_threshold = args.fast_lang_filter_threshold if args.initial_lang_filter_threshold is not \
                                                                              None else initial_lang_filter_threshold
@@ -121,7 +122,7 @@ class PreFilterer(CleanerComponentMapper):
         # https://www.tutorialspoint.com/Extracting-email-addresses-using-regular-expressions-in-Python
         if self.replace_emails:
             self.emails_pattern = re.compile(
-                '[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
+                rf'[{self.lang_chars}0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+') #allows language specific characters in the first part of the email
         # https://stackoverflow.com/questions/8376691/how-to-remove-hashtag-user-link-of-a-tweet-using-regular-expression
         if self.remove_hashtags_mentions:
             self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9]+)|(#(\w+))')
@@ -130,11 +131,8 @@ class PreFilterer(CleanerComponentMapper):
             self.p_tags_pattern = re.compile('([.|?]*\s*)(<p>)+')
         if self.replace_urls:
             # slightly modified from: https://stackoverflow.com/questions/6718633/python-regular-expression-again-match-url
-            # to account for: 1) words attached at the beginning and the end of the url
-            #                 2) mantaining period at the end to improve sentence splitter
-            # TODO: use a list of all the alphabet for each language instead of hard-coded accented characters
             self.urls_pattern = re.compile(
-                '((http|https)://)?[a-zA-Z0-9./?@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9&/?:@\-_=#()])*([áéóüñúí\w]+)?')
+                rf'((http|https)://)?([{self.lang_chars}0-9./?\\\\@-—_=#])+\.[a-z]{{2,6}}([{self.lang_chars}0-9&/\\\\+~?%:!@—_=#()-])*')
         if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
         if self.head_filter:
