@@ -29,7 +29,7 @@ class DataParser(CleanerComponent):
     def __init__(self, args: argparse.Namespace, input_path: Optional[str] = None,
                  extensions: Optional[Tuple[str]] = None,
                  encoding: str = 'auto', encoding_threshold: float = 0.9, encoding_error_policy: str = 'ignore',
-                 bytes_: bool = True):
+                 bytes_: bool = False):
         # TODO: Revisit defaults
         super().__init__(args)
         self.input_path = input_path if input_path is not None else args.input_path

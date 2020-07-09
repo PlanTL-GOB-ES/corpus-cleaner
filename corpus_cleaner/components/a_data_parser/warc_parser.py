@@ -27,11 +27,13 @@ from typing import BinaryIO, List
 #     data: july 2020
 # TODO: I believe this file should be refactored, annotated with types, pythonified, PEPified. I have just adapted it
 # to work with the rest of the pipeline
+# Additional notes: When parsing plain text files, we applied encoding guessing. Now, with binary files, we don't.
+# Also, we do NOT store the intermediate jsons, and nothing is really parameterized.
 
 class WARCParser(DataParser):
 
     def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.warc', '.warc.gz'), **kwargs):
-        super(WARCParser, self).__init__(args, input_path=args.input_path, extensions=extensions, **kwargs)
+        super(WARCParser, self).__init__(args, input_path=args.input_path, extensions=extensions, bytes_=True, **kwargs)
         self.file_data = {}
         self.error_msgs = ['404. That’s an error.', 'was not found on this server', '400. That’s an error.',
                            'The document has moved here.', 'You don\'t have permission to access',
