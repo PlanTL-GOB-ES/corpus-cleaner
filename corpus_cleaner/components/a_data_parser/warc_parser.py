@@ -100,19 +100,19 @@ class WARCParser(DataParser):
                         if node.attributes['name'] == 'keywords' and node.attributes['content'] is not None:
                             keyws.append(node.attributes['content'])
                 if selector == 'p':
-                    paragraphs.append(str(node.text(separator='\n')))
+                    paragraphs.append(str(" ".join(node.text(separator=' ').split())))
                 if selector == 'h1':
-                    heads.append(str(node.text(separator='\n')))
+                    heads.append(str(" ".join(node.text(separator=' ').split())))
                 if selector == 'h2':
-                    heads.append(str(node.text(separator='\n')))
+                    heads.append(str(" ".join(node.text(separator=' ').split())))
                 if selector == 'h3':
-                    heads.append(str(node.text(separator='\n')))
+                    heads.append(str(" ".join(node.text(separator=' ').split())))
                 if selector == 'h4':
-                    heads.append(str(node.text(separator='\n')))
+                    heads.append(str(" ".join(node.text(separator=' ').split())))
                 if selector == 'h5':
-                    heads.append(str(node.text(separator='\n')))
+                    heads.append(str(" ".join(node.text(separator=' ').split())))
                 if selector == 'h6':
-                    heads.append(str(node.text(separator='\n')))
+                    heads.append(str(" ".join(node.text(separator=' ').split())))
                 if selector == 'a' and 'href' in node.attributes and 'title' in node.attributes:
                     links.append(str(node.attributes['href']) + "\|" + str(node.attributes['title']))
 
