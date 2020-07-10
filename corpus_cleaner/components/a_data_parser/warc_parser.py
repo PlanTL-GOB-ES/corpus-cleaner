@@ -64,9 +64,7 @@ class WARCParser(DataParser):
                         try:
                             n_documents += 1
 
-                            if type(record[self.compulsory]) == str and re.search('[a-zA-Z]',
-                                                                             record[self.compulsory]) and self._ok_str(
-                                    record[self.compulsory]) == True:
+                            if re.search('[a-zA-Z]', paragraphs) and self._ok_str(paragraphs):
                                 yield Document(content=paragraphs, filename=relative_filepath, url=url,
                                                id_=f'{idx_filepath}-{n_documents+1}', keywords=keywords, heads=heads,
                                                title=titles)
