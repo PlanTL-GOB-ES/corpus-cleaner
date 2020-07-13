@@ -106,8 +106,7 @@ class PreFilterer(CleanerComponentMapper):
     # TODO: move the remove operations to a new component called CharFilter
     def _language_normalization(self, langs, text):
         if 'ca' in langs:
-            geminate_l_pattern = re.compile(r'l\.l')
-            return geminate_l_pattern.sub('l·l',text)
+            return self.geminate_l_pattern.sub('l·l',text)
         else:
             return text
 
@@ -130,6 +129,8 @@ class PreFilterer(CleanerComponentMapper):
 
     def _build_filters(self):
         # https://www.tutorialspoint.com/Extracting-email-addresses-using-regular-expressions-in-Python
+        if self.language_normalization:
+            self.geminate_l_pattern = re.compile(r'l\.l')
         if self.replace_emails:
             self.emails_pattern = re.compile(
                 rf'[{self.lang_chars}0-9_.+-]+@[a-zA-Z0-9-]+\.[a-z0-9-.]+') #allows language specific characters in the first part of the email
