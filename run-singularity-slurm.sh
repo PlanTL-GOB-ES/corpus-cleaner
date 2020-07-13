@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=corpuscleaner
-#SBATCH --output=corpuscleaner_%j.out
-#SBATCH --error=corpuscleaner_%j.err
+#SBATCH --output=logs/corpuscleaner_%j.out
+#SBATCH --error=logs/corpuscleaner_%j.err
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=48
 #SBATCH --time=2-00:00:00
