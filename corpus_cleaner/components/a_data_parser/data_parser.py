@@ -1,8 +1,8 @@
 from corpus_cleaner.document import Document
 from chardet.universaldetector import UniversalDetector  # TODO: Try UnicodeDammit, Magic...?
-from typing import TextIO
+from typing import TextIO, BinaryIO
 import os
-from typing import Tuple
+from typing import Tuple, Union
 from pathlib import Path
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 import argparse
@@ -28,7 +28,8 @@ class DataParser(CleanerComponent):
 
     def __init__(self, args: argparse.Namespace, input_path: Optional[str] = None,
                  extensions: Optional[Tuple[str]] = None,
-                 encoding: str = 'auto', encoding_threshold: float = 0.9, encoding_error_policy: str = 'ignore'):
+                 encoding: str = 'auto', encoding_threshold: float = 0.9, encoding_error_policy: str = 'ignore',
+                 bytes_: bool = False):
         # TODO: Revisit defaults
         super().__init__(args)
         self.input_path = input_path if input_path is not None else args.input_path
@@ -40,26 +41,34 @@ class DataParser(CleanerComponent):
         self.detector = UniversalDetector() if self.encoding == 'auto' else None
         self.info = []
         self.logger = args.logger
+        self.bytes = bytes_
 
     def _treat_file(self, idx_filepath: int, relative_filepath: str) -> Iterable[Document]:
-        gz = False
-        extension = os.path.splitext(relative_filepath)[1][1:].strip()
-        if extension == 'gz':
-            gz = True
         abs_path = os.path.join(self.input_path, relative_filepath)
-        enc, confidence_ok = self._guess_encoding(abs_path, gz=gz) if self.encoding == 'auto' else (self.encoding, True)
-        if not gz:
-            with open(abs_path, 'r', encoding=enc, errors=self.encoding_error_policy) as f:
-                for doc in self._parse_file(f, relative_filepath, idx_filepath):
-                    if enc != 'utf-8':
-                        pass  # TODO: Check possible problems when the original file was not utf-8
+        if self.bytes:
+            with open(abs_path, 'rb') as f:
+                for doc in self._parse_binary_file(f, relative_filepath, idx_filepath):
                     yield doc
         else:
-            with gzip.open(abs_path, 'rt', encoding=enc, errors=self.encoding_error_policy) as f:
-                for doc in self._parse_file(f, relative_filepath, idx_filepath):
-                    if enc != 'utf-8':
-                        pass  # TODO: Check possible problems when the original file was not utf-8
-                    yield doc
+            gz = False
+            extension = os.path.splitext(relative_filepath)[1][1:].strip()
+            if extension == 'gz':
+                gz = True
+            enc, confidence_ok = self._guess_encoding(abs_path, gz=gz) if self.encoding == 'auto' else (self.encoding,
+                                                                                                        True)
+            if not self.bytes:
+                if not gz:
+                    with open(abs_path, 'r', encoding=enc, errors=self.encoding_error_policy) as f:
+                        for doc in self._parse_file(f, relative_filepath, idx_filepath):
+                            if enc != 'utf-8':
+                                pass  # TODO: Check possible problems when the original file was not utf-8
+                            yield doc
+                else:
+                    with gzip.open(abs_path, 'rt', encoding=enc, errors=self.encoding_error_policy) as f:
+                        for doc in self._parse_file(f, relative_filepath, idx_filepath):
+                            if enc != 'utf-8':
+                                pass  # TODO: Check possible problems when the original file was not utf-8
+                            yield doc
 
     def _parse(self) -> List[Iterable[Document]]:
         parse_iterables = []
@@ -70,6 +79,10 @@ class DataParser(CleanerComponent):
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) ->\
             List[Iterable[Document]]:
         raise NotImplementedError()
+
+    def _parse_binary_file(self, fd: BinaryIO, relative_filepath: str, idx_filepath: int) ->\
+            List[Iterable[Document]]:
+        pass
 
     def _get_relative_filepaths(self) -> Iterable[str]:
         self.logger.logger.info('Getting relative filepaths')

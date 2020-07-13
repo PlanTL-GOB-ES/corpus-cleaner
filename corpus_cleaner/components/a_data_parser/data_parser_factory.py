@@ -3,6 +3,7 @@ from .bsc_crawl_json_parser import BSCCrawlJSONParser
 from .fairseq_lm_parser import FairseqLMParser
 from .sentence_parser import SentenceParser
 from .onion_parser import OnionParser
+from .warc_parser import WARCParser
 from .data_parser import DataParser
 from .data_parser_mapper import DataParserMapper
 import argparse
@@ -10,7 +11,7 @@ from typing import Optional
 
 
 class DataParserFactory:
-    VALID_INPUT_FORMATS = ['wikipedia', 'bsc-crawl-json', 'fairseq-lm', 'sentence']
+    VALID_INPUT_FORMATS = ['wikipedia', 'bsc-crawl-json', 'fairseq-lm', 'sentence', 'warc']
 
     @staticmethod
     def get_parser(args: argparse.Namespace, input_format: Optional[str] = None, **kwargs)\
@@ -24,8 +25,10 @@ class DataParserFactory:
                 return FairseqLMParser(args, **kwargs)
             elif args.input_format == 'sentence':
                 return SentenceParser(args, **kwargs)
+            elif args.input_format == 'warc':
+                return WARCParser(args, **kwargs)
             else:
-                raise NotImplementedError()
+                raise NotImplementedError(args.input_format)
         else:
             if input_format == 'onion':
                 return OnionParser(args, **kwargs)
