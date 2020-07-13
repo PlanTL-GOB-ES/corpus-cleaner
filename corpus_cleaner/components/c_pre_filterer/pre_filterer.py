@@ -14,6 +14,7 @@ class PreFilterer(CleanerComponentMapper):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
+        parser.add_argument('--no-language-normalization', action='store_true', help='Avoid applying language-specific normalization')
         parser.add_argument('--no-replace-emails', action='store_true', help='Avoid replacing email adresses with "[EMAIL]"')
         parser.add_argument('--no-remove-hashtags-mentions', action='store_true', help='Remove hashtags and mentions.')
         parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
@@ -52,7 +53,7 @@ class PreFilterer(CleanerComponentMapper):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace, no_replace_emails: bool = False,
+    def __init__(self, args: argparse.Namespace, no_language_normalization: bool = False, no_replace_emails: bool = False,
                  no_remove_hashtags_mentions: bool = False, no_remove_tags: bool = False,
                  no_space_normalization: bool = False, no_replace_urls: bool = False,
                  char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
@@ -62,6 +63,8 @@ class PreFilterer(CleanerComponentMapper):
                  initial_lang_filter_threshold: float = 0.3,
                  dictionary_filter: Optional[str] = None):
         super().__init__(args)
+        self.language_normalization = not args.no_language_normalization if args.no_language_normalization is \
+                                                                            not None else not no_language_normalization
         self.replace_emails = not args.no_replace_emails if args.no_replace_emails is not None else not no_replace_emails
         self.emails_pattern = None
         self.remove_hashtags_mentions = not args.no_remove_hashtags_mentions if args.no_remove_hashtags_mentions is \
@@ -85,6 +88,7 @@ class PreFilterer(CleanerComponentMapper):
         self.alphabet = set([])
         for lang in self.lang_filter:
             self.alphabet.update(langs[lang]['alphabet'])
+            self.lang_chars = ("".join(char for char in self.alphabet if char.isalpha()))
         self.fasttext_lid = None
         self.initial_lang_filter_threshold = args.fast_lang_filter_threshold if args.initial_lang_filter_threshold is not \
                                                                              None else initial_lang_filter_threshold
@@ -100,8 +104,14 @@ class PreFilterer(CleanerComponentMapper):
         self._build_filters()
 
     # TODO: move the remove operations to a new component called CharFilter
+    def _language_normalization(self, langs, text):
+        if 'ca' in langs:
+            return self.geminate_l_pattern.sub('l·l',text)
+        else:
+            return text
+
     def _replace_emails(self, text):
-        replace = '[EMAIL]'
+        replace = ' [EMAIL] '
         return self.emails_pattern.sub(replace, text)
 
     def _remove_hashtags_mentions(self, text):
@@ -114,14 +124,16 @@ class PreFilterer(CleanerComponentMapper):
         return normalize_space(text, preserve = ['\n'])
 
     def _replace_urls(self, text):
-        replace = ' [URL]'
+        replace = ' [URL] '
         return self.urls_pattern.sub(replace, text)
 
     def _build_filters(self):
         # https://www.tutorialspoint.com/Extracting-email-addresses-using-regular-expressions-in-Python
+        if self.language_normalization:
+            self.geminate_l_pattern = re.compile(r'l\.l')
         if self.replace_emails:
             self.emails_pattern = re.compile(
-                '[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
+                rf'[{self.lang_chars}0-9_.+-]+@[a-zA-Z0-9-]+\.[a-z0-9-.]+') #allows language specific characters in the first part of the email
         # https://stackoverflow.com/questions/8376691/how-to-remove-hashtag-user-link-of-a-tweet-using-regular-expression
         if self.remove_hashtags_mentions:
             self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9]+)|(#(\w+))')
@@ -130,11 +142,8 @@ class PreFilterer(CleanerComponentMapper):
             self.p_tags_pattern = re.compile('([.|?]*\s*)(<p>)+')
         if self.replace_urls:
             # slightly modified from: https://stackoverflow.com/questions/6718633/python-regular-expression-again-match-url
-            # to account for: 1) words attached at the beginning and the end of the url
-            #                 2) mantaining period at the end to improve sentence splitter
-            # TODO: use a list of all the alphabet for each language instead of hard-coded accented characters
             self.urls_pattern = re.compile(
-                '((http|https)://)?[a-zA-Z0-9./?@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9&/?:@\-_=#()])*([áéóüñúí\w]+)?')
+                rf'((http|https)://)?([{self.lang_chars}0-9./?\\\\@-—_=#])+\.[a-z]{{2,6}}\b([{self.lang_chars}0-9&/\\\\+~*?%:!@—_=#()-])*')
         if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
         if self.head_filter:
@@ -223,16 +232,18 @@ class PreFilterer(CleanerComponentMapper):
         return True
 
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
+        if self.language_normalization:
+            document.content = self._language_normalization(self.lang_filter,document.content)
         if self.replace_emails:
             document.content = self._replace_emails(document.content)
         if self.remove_hashtags_mentions:
             document.content = self._remove_hashtags_mentions(document.content)
         if self.remove_tags:
             document.content = self._remove_tags(document.content)
-        if self.space_normalization:
-            document.content = self._space_normalization(document.content)
         if self.replace_urls:
             document.content = self._replace_urls(document.content)
+        if self.space_normalization:
+            document.content = self._space_normalization(document.content)
         keep = True
         for filter_ in self.filters:
             keep = filter_(document)
