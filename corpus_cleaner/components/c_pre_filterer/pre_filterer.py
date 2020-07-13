@@ -14,6 +14,7 @@ class PreFilterer(CleanerComponentMapper):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
+        parser.add_argument('--no-language-normalization', action='store_true', help='Avoid applying language-specific normalization')
         parser.add_argument('--no-replace-emails', action='store_true', help='Avoid replacing email adresses with "[EMAIL]"')
         parser.add_argument('--no-remove-hashtags-mentions', action='store_true', help='Remove hashtags and mentions.')
         parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
@@ -52,7 +53,7 @@ class PreFilterer(CleanerComponentMapper):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace, no_replace_emails: bool = False,
+    def __init__(self, args: argparse.Namespace, no_language_normalization: bool = False, no_replace_emails: bool = False,
                  no_remove_hashtags_mentions: bool = False, no_remove_tags: bool = False,
                  no_space_normalization: bool = False, no_replace_urls: bool = False,
                  char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
@@ -62,6 +63,8 @@ class PreFilterer(CleanerComponentMapper):
                  initial_lang_filter_threshold: float = 0.3,
                  dictionary_filter: Optional[str] = None):
         super().__init__(args)
+        self.language_normalization = not args.no_language_normalization if args.no_language_normalization is \
+                                                                            not None else not no_language_normalization
         self.replace_emails = not args.no_replace_emails if args.no_replace_emails is not None else not no_replace_emails
         self.emails_pattern = None
         self.remove_hashtags_mentions = not args.no_remove_hashtags_mentions if args.no_remove_hashtags_mentions is \
@@ -101,6 +104,13 @@ class PreFilterer(CleanerComponentMapper):
         self._build_filters()
 
     # TODO: move the remove operations to a new component called CharFilter
+    def _language_normalization(self, langs, text):
+        if 'ca' in langs:
+            geminate_l_pattern = re.compile(r'l\.l')
+            return geminate_l_pattern.sub('l·l',text)
+        else:
+            return text
+
     def _replace_emails(self, text):
         replace = ' [EMAIL] '
         return self.emails_pattern.sub(replace, text)
@@ -221,6 +231,8 @@ class PreFilterer(CleanerComponentMapper):
         return True
 
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
+        if self.language_normalization:
+            document.content = self._language_normalization(self.lang_filter,document.content)
         if self.replace_emails:
             document.content = self._replace_emails(document.content)
         if self.remove_hashtags_mentions:
