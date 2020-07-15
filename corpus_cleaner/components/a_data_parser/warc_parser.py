@@ -47,29 +47,35 @@ class WARCParser(DataParser):
 
     def _parse_binary_file(self, fd: BinaryIO, relative_filepath: str, idx_filepath: int) -> \
             List[Iterable[Document]]:
-        warc_file = fd
-        n_documents = 0
-        for i, record in enumerate(ArchiveIterator(warc_file)):
-            if record.rec_type == 'response' and record.rec_headers.get_header('Content-Type').split(';')[0] == \
-                    'application/http':
-                if record.rec_headers.get_header('WARC-Target-URI')[-3:] in self.skip:
-                    continue
-                elif int(record.rec_headers.get_header('Content-Length')) > 10000000:
-                    pass
-                    #  print('Warning!' + record.rec_headers.get_header('WARC-Target-URI') +
-                    #      " Too big to be only text. Skipped")
-                else:
-                    url, paragraphs, heads, titles, keywords = self._read_doc(record)
-                    if url:
-                        try:
-                            n_documents += 1
 
-                            if re.search('[a-zA-Z]', paragraphs) and self._ok_str(paragraphs):
-                                yield Document(content=paragraphs, filename=relative_filepath, url=url,
-                                               id_=f'{idx_filepath}-{n_documents+1}', keywords=keywords, heads=heads,
-                                               title=titles)
-                        except:
-                            pass
+        try:
+            warc_file = fd
+            n_documents = 0
+            for i, record in enumerate(ArchiveIterator(warc_file)):
+                if record.rec_type == 'response' and record.rec_headers.get_header('Content-Type').split(';')[0] == \
+                        'application/http':
+                    if record.rec_headers.get_header('WARC-Target-URI')[-3:] in self.skip:
+                        continue
+                    elif int(record.rec_headers.get_header('Content-Length')) > 10000000:
+                        pass
+                        #  print('Warning!' + record.rec_headers.get_header('WARC-Target-URI') +
+                        #      " Too big to be only text. Skipped")
+                    else:
+                        url, paragraphs, heads, titles, keywords = self._read_doc(record)
+                        if url:
+                            try:
+                                n_documents += 1
+
+                                if re.search('[a-zA-Z]', paragraphs) and self._ok_str(paragraphs):
+                                    yield Document(content=paragraphs, filename=relative_filepath, url=url,
+                                                   id_=f'{idx_filepath}-{n_documents+1}', keywords=keywords,
+                                                   heads=heads, title=titles)
+                            except:
+                                pass
+        except:
+            # TODO: Properly debug the GeneratorExit in WARC
+            return
+        return
 
     def _ok_str(self, text):
         test = True

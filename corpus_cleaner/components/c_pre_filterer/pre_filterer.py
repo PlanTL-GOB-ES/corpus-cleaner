@@ -106,7 +106,7 @@ class PreFilterer(CleanerComponentMapper):
     # TODO: move the remove operations to a new component called CharFilter
     def _language_normalization(self, langs, text):
         if 'ca' in langs:
-            return self.geminate_l_pattern.sub('l·l',text)
+            return self.geminate_l_pattern.sub('l·l', text)
         else:
             return text
 
@@ -133,7 +133,8 @@ class PreFilterer(CleanerComponentMapper):
             self.geminate_l_pattern = re.compile(r'l\.l')
         if self.replace_emails:
             self.emails_pattern = re.compile(
-                rf'[{self.lang_chars}0-9_.+-]+@[a-zA-Z0-9-]+\.[a-z0-9-.]+') #allows language specific characters in the first part of the email
+                rf'[{self.lang_chars}0-9_.+-]+@[a-zA-Z0-9-]+\.[a-z0-9-.]+')
+            # allows language specific characters in the first part of the email
         # https://stackoverflow.com/questions/8376691/how-to-remove-hashtag-user-link-of-a-tweet-using-regular-expression
         if self.remove_hashtags_mentions:
             self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9]+)|(#(\w+))')
@@ -141,7 +142,8 @@ class PreFilterer(CleanerComponentMapper):
             self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
             self.p_tags_pattern = re.compile('([.|?]*\s*)(<p>)+')
         if self.replace_urls:
-            # slightly modified from: https://stackoverflow.com/questions/6718633/python-regular-expression-again-match-url
+            # slightly modified from:
+            # https://stackoverflow.com/questions/6718633/python-regular-expression-again-match-url
             self.urls_pattern = re.compile(
                 rf'((http|https)://)?([{self.lang_chars}0-9./?\\\\@-—_=#])+\.[a-z]{{2,6}}\b([{self.lang_chars}0-9&/\\\\+~*?%:!@—_=#()-])*')
         if self.char_length_filter > 0:
@@ -233,7 +235,7 @@ class PreFilterer(CleanerComponentMapper):
 
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
         if self.language_normalization:
-            document.content = self._language_normalization(self.lang_filter,document.content)
+            document.content = self._language_normalization(self.lang_filter, document.content)
         if self.replace_emails:
             document.content = self._replace_emails(document.content)
         if self.remove_hashtags_mentions:
@@ -244,6 +246,8 @@ class PreFilterer(CleanerComponentMapper):
             document.content = self._replace_urls(document.content)
         if self.space_normalization:
             document.content = self._space_normalization(document.content)
+        if len(document.content.split()) == 0:
+            return None
         keep = True
         for filter_ in self.filters:
             keep = filter_(document)
