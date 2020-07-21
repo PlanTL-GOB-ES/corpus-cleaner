@@ -137,7 +137,7 @@ class PreFilterer(CleanerComponentMapper):
             # allows language specific characters in the first part of the email
         # https://stackoverflow.com/questions/8376691/how-to-remove-hashtag-user-link-of-a-tweet-using-regular-expression
         if self.remove_hashtags_mentions:
-            self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9_]+)|(#(\w+_))')
+            self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9_]+)|(#[\w_]+)')
         if self.remove_tags:
             self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
             self.p_tags_pattern = re.compile('([.|?]*\s*)(<p>)+')
