@@ -139,7 +139,7 @@ class PreFilterer(CleanerComponentMapper):
             # allows language specific characters in the first part of the email
         # https://stackoverflow.com/questions/8376691/how-to-remove-hashtag-user-link-of-a-tweet-using-regular-expression
         if self.remove_hashtags_mentions:
-            self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9]+)|(#(\w+))')
+            self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9_]+)|(#[\w_]+)')
         if self.remove_tags:
             self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
             self.p_tags_pattern = re.compile('([.|?]*\s*)(<p>)+')
@@ -147,7 +147,7 @@ class PreFilterer(CleanerComponentMapper):
             # slightly modified from:
             # https://stackoverflow.com/questions/6718633/python-regular-expression-again-match-url
             self.urls_pattern = re.compile(
-                rf'((http|https)://)?([{self.lang_chars}0-9./?\\\\@-—_=#])+\.[a-z]{{2,6}}\b([{self.lang_chars}0-9&/\\\\+~*?%:!@—_=#()-])*')
+                rf'((http|https)://)?([{self.lang_chars}0-9./?\\\\@\-—_=#])+\.[a-z]{{2,6}}([{self.lang_chars}0-9&/\\\\+~*?%:!@—_=#()-])*')
         if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
         if self.head_filter:
