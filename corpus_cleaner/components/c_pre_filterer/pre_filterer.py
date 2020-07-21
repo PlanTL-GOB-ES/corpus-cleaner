@@ -123,6 +123,7 @@ class PreFilterer(CleanerComponentMapper):
     def _space_normalization(self, text):
         text = normalize_space(text, preserve=['\n'])
         text = self.punc_space_pattern.sub('\\2', text)
+        text = self.zero_width_space_pattern.sub('', text)
         return text
 
     def _replace_urls(self, text):
@@ -178,6 +179,7 @@ class PreFilterer(CleanerComponentMapper):
             self.filters.append(self._filter_by_dict)
         if self.space_normalization is not None:
             self.punc_space_pattern = re.compile("(\s)([!',:;?.])")
+            self.zero_width_space_pattern = re.compile('\u200b')
 
     def _filter_by_length(self, doc: Document):
         if len(doc.content) < self.char_length_filter:
