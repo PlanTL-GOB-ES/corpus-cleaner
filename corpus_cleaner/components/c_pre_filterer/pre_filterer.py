@@ -121,7 +121,9 @@ class PreFilterer(CleanerComponentMapper):
         return self.tags_pattern.sub(' ', self.p_tags_pattern.sub('\n', text))
 
     def _space_normalization(self, text):
-        return normalize_space(text, preserve = ['\n'])
+        text = normalize_space(text, preserve=['\n'])
+        text = self.punc_space_pattern.sub('\\2', text)
+        return text
 
     def _replace_urls(self, text):
         replace = ' [URL] '
@@ -174,6 +176,8 @@ class PreFilterer(CleanerComponentMapper):
         if self.dictionary_filter is not None:
             self.dictionary_filter_pattern = re.compile("|".join(self.dictionary_filter))
             self.filters.append(self._filter_by_dict)
+        if self.space_normalization is not None:
+            self.punc_space_pattern = re.compile("(\s)([!',:;?.])")
 
     def _filter_by_length(self, doc: Document):
         if len(doc.content) < self.char_length_filter:
