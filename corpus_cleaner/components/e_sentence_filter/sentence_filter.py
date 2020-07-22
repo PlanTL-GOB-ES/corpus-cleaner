@@ -59,7 +59,7 @@ class SentenceFilter(CleanerComponentMapper):
         self.filters = []
         self._get_filters()
         self.code_keywords_pattern = re.compile('\\b(var|function|const|if|else|script)\\b')
-        self.code_chars_pattern = re.compile('[;=&\[\]0-9()?!/\\\\]')
+        self.code_chars_pattern = re.compile('[;=&\[\](){}/\\\\]')
 
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
         sentences_filtered = []
