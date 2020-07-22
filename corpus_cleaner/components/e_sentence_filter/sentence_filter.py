@@ -22,6 +22,8 @@ class SentenceFilter(CleanerComponentMapper):
         parser.add_argument('--slow-lang-filter-threshold', type=float, help='If --lang-filter is set, minimum'
                                                                              'threshold for the slower lang identifier',
                             default=0.9)
+        parser.add_argument('--code-threshold', type=float, help='Threshold (percentage) of code-like chars and tokens'
+                                                            'to filter a sentence (-1 to deactivate)', default=0.25)
         parser.add_argument('--dictionary-filter-sen', type=str, help='Path to dictionary (plain text, one term per'
                                                                       'line of terms that should not appear in a'
                                                                       'sentence',
@@ -34,7 +36,9 @@ class SentenceFilter(CleanerComponentMapper):
 
     def __init__(self, args: argparse.Namespace, char_length_filter_sentence: int = 30, 
                  lang_filter: Union[Tuple[str], None] = None, slow_lang_filter_threshold: float = 0.90,
-                 profanity_check: bool = True, dictionary_filter: Optional[str] = None):
+                 code_threshold: float = 0.25,
+                 profanity_check: bool = False, dictionary_filter: Optional[str] = None):
+        # TODO: Review way of setting defaults, thresholds will never be None!
         super().__init__(args)
         self.char_length_filter_sentence = args.char_length_filter_sentence if args.char_length_filter_sentence is not \
             None else char_length_filter_sentence
@@ -44,6 +48,8 @@ class SentenceFilter(CleanerComponentMapper):
         self.fasttext_lid = None
         self.slow_lang_filter_threshold = args.slow_lang_filter_threshold if args.slow_lang_filter_threshold is not \
             None else slow_lang_filter_threshold
+        self.code_threshold = args.code_threshold if args.code_threshold is not None else code_threshold
+        self.lang_filter = args.code_threshold if args.lang_filter is not None else lang_filter
         self.dictionary_filter = \
             args.dictionary_filter_sen if args.dictionary_filter_sen is not None else dictionary_filter
         if self.dictionary_filter is not None:
@@ -52,6 +58,8 @@ class SentenceFilter(CleanerComponentMapper):
         self.dictionary_filter_pattern = None
         self.filters = []
         self._get_filters()
+        self.code_keywords_pattern = re.compile('(var|function|const)')
+        self.code_chars_pattern = re.compile('[;=&\[\]()]')
 
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
         sentences_filtered = []
@@ -71,6 +79,8 @@ class SentenceFilter(CleanerComponentMapper):
     def _get_filters(self):
         if self.char_length_filter_sentence is not None:
             self.filters.append(self._filter_by_char_len)
+        if self.code_threshold != -1:
+            self.filters.append(self._filter_by_code)
         if self.lang_filter is not None:
             self.fasttext_lid = fasttext.load_model(os.path.join('lib', 'lid.176.bin'))
             self.lang_id = LanguageIdentifier.from_modelstring(model, norm_probs=True)
@@ -84,6 +94,13 @@ class SentenceFilter(CleanerComponentMapper):
         if len(sentence) > self.char_length_filter_sentence:
             return True
         return False
+
+    def _filter_by_code(self, sentence: str) -> bool:
+        if len(re.findall(self.code_keywords_pattern, sentence)) / len(sentence.split()) > self.code_threshold:
+            return False
+        if len(re.findall(self.code_chars_pattern, sentence)) / len(sentence) > self.code_threshold:
+            return False
+        return True
         
     def _filter_by_lang(self, sentence: str) -> bool:
         res = self.fasttext_lid.predict(sentence.lower())
