@@ -51,8 +51,7 @@ class DataParser(CleanerComponent):
         self.url_filter = args.url_doc if args.url_doc is not None else url_filter
         if self.url_filter is not None:
             with open(self.url_filter, 'r') as f:
-                self.url_filter = [urlparse(line.strip()) for line in f.readlines()]
-                self.url_filter = sorted([re.sub("www\.", '.', url) for url in self.url_filter])
+                self.url_filter = [urlparse(re.sub("www\.", '.', line.strip())) for line in f.readlines()]
 
     def _check_url(self, url: str) -> bool:
         def url_belongs_to(u1, u2):
