@@ -13,7 +13,7 @@ import json
 import codecs
 from selectolax.parser import HTMLParser
 from time import time
-from typing import BinaryIO, List, Optional
+from typing import BinaryIO, List
 
 
 # BSC Soup from BSC for BNE
