@@ -69,7 +69,7 @@ class DataParser(CleanerComponent):
                     return False
                 i += 1
             return True
-        url = urlparse(re.sub("www\.", '.', url))
+        url = urlparse(re.sub("www\.", '', url))
         for url_to_keep in self.url_filter:
             if url_belongs_to(url, url_to_keep):
                 return True
