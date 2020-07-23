@@ -32,11 +32,6 @@ from typing import BinaryIO, List, Optional
 
 class WARCParser(DataParser):
 
-    @staticmethod
-    def add_args(parser: argparse.ArgumentParser):
-        super().add_args(parser)
-        parser.add_argument('--url-doc', type=str, help='Path to a url list (plain text, one url per line)'
-                                                        'that should be filtered and processed', default=None)
     def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.warc', '.warc.gz'), url_filter: Optional[str] = None, **kwargs):
         super(WARCParser, self).__init__(args, input_path=args.input_path, extensions=extensions, bytes_=True, **kwargs)
         self.file_data = {}
@@ -49,6 +44,7 @@ class WARCParser(DataParser):
         if self.url_filter is not None:
             with open(self.url_filter, 'r') as f:
                 self.url_filter = [line.strip() for line in f.readlines()]
+
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> \
             Iterable[Document]:
         raise RuntimeError('WARCParser should not parse plain text files')
@@ -77,12 +73,17 @@ class WARCParser(DataParser):
                                 n_documents += 1
 
                                 if re.search('[a-zA-Z]', paragraphs) and self._ok_str(paragraphs):
-                                    check_url_page = filename+url
-                                    for url_page in url_pages:
-                                        if check_url_page[:len(url_page)] == url_page:
-                                            yield Document(content=paragraphs, filename=relative_filepath, url=url,
-                                                           id_=f'{idx_filepath}-{n_documents+1}', keywords=keywords,
-                                                           heads=heads, title=titles)
+                                    if self.url_filter:
+                                        check_url_page = filename + url
+                                        for url_page in url_pages:
+                                            if check_url_page[:len(url_page)] == url_page:
+                                                yield Document(content=paragraphs, filename=relative_filepath, url=url,
+                                                               id_=f'{idx_filepath}-{n_documents+1}', keywords=keywords,
+                                                               heads=heads, title=titles)
+                                    else:
+                                        yield Document(content=paragraphs, filename=relative_filepath, url=url,
+                                                       id_=f'{idx_filepath}-{n_documents + 1}', keywords=keywords,
+                                                       heads=heads, title=titles)
                             except:
                                 pass
         except:

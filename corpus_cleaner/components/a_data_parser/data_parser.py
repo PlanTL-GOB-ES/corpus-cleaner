@@ -20,6 +20,8 @@ class DataParser(CleanerComponent):
                             'otherwise. If the encoding detector is not above this threshold, it assigns utf-8.')
         parser.add_argument('--encoding-error-policy', type=str, help='Encoding error policy (same options as open()',
                             default='ignore')
+        parser.add_argument('--url-doc', type=str, help='Path to a url list (plain text, one url per line)'
+                                                         'that should be filtered and processed', default=None)
 
     @staticmethod
     def check_args(args: argparse.Namespace):
