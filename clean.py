@@ -3,6 +3,7 @@ import logging
 import time
 import json
 from corpus_cleaner.cleaner import Cleaner
+from corpus_cleaner.dist_utils import prepare_dist
 import os
 import corpus_cleaner
 import sys
