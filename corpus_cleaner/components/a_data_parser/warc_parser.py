@@ -59,7 +59,7 @@ class WARCParser(DataParser):
         try:
             warc_file = fd
             filename = relative_filepath.replace(".warc.gz", "").replace("./", "")
-            url_pages = [url.replace("http://", "") for url in self.url_filter if filename in url]
+            url_pages = [re.sub("(https://|http://)","",url) for url in self.url_filter if filename in url]
             n_documents = 0
             for i, record in enumerate(ArchiveIterator(warc_file)):
                 if record.rec_type == 'response' and record.rec_headers.get_header('Content-Type').split(';')[0] == \
@@ -79,7 +79,6 @@ class WARCParser(DataParser):
                                 if re.search('[a-zA-Z]', paragraphs) and self._ok_str(paragraphs):
                                     check_url_page = filename+url
                                     for url_page in url_pages:
-                                        print(check_url_page)
                                         if check_url_page[:len(url_page)] == url_page:
                                             yield Document(content=paragraphs, filename=relative_filepath, url=url,
                                                            id_=f'{idx_filepath}-{n_documents+1}', keywords=keywords,
