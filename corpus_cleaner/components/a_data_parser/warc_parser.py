@@ -32,7 +32,8 @@ from typing import BinaryIO, List, Optional
 
 class WARCParser(DataParser):
 
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.warc', '.warc.gz'), url_filter: Optional[str] = None, **kwargs):
+    def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.warc', '.warc.gz'),
+                 url_filter: Optional[str] = None, **kwargs):
         super(WARCParser, self).__init__(args, input_path=args.input_path, extensions=extensions, bytes_=True, **kwargs)
         self.file_data = {}
         self.error_msgs = ['404. That’s an error.', 'was not found on this server', '400. That’s an error.',
@@ -44,6 +45,12 @@ class WARCParser(DataParser):
         if self.url_filter is not None:
             with open(self.url_filter, 'r') as f:
                 self.url_filter = [line.strip() for line in f.readlines()]
+
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        super().add_args(parser)
+        parser.add_argument('--url-doc', type=str, help='Path to a url list (plain text, one url per line)'
+                                                        'that should be filtered and processed', default=None)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> \
             Iterable[Document]:
