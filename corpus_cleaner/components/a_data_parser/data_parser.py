@@ -83,9 +83,8 @@ class DataParser(CleanerComponent):
                 for doc in self._parse_binary_file(f, relative_filepath, idx_filepath):
                     if self.url_filter is not None:
                         url = doc.url
-                        for url_page in url_pages:
-                            if check_url_page[:len(url_page)] == url_page:
-                                yield doc
+                        if self._check_url(url):
+                            yield doc
                     else:
                         yield doc
         else:
