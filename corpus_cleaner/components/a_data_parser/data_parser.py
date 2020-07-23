@@ -51,7 +51,11 @@ class DataParser(CleanerComponent):
         self.url_filter = args.url_doc if args.url_doc is not None else url_filter
         if self.url_filter is not None:
             with open(self.url_filter, 'r') as f:
-                self.url_filter = [urlparse(re.sub("www\.", '', line.strip())) for line in f.readlines()]
+                self.url_filter = [re.sub("www\.", '', line.strip()) for line in f.readlines()]
+                for idx, url in enumerate(self.url_filter):
+                    if len(re.findall("\w://", url)) == 0:
+                        self.url_filter[idx] = 'http://' + url
+                self.url_filter = [urlparse(url) for url in self.url_filter]
 
     def _check_url(self, url: str) -> bool:
         def url_belongs_to(u1, u2):
@@ -69,6 +73,9 @@ class DataParser(CleanerComponent):
                     return False
                 i += 1
             return True
+
+        if len(re.findall("\w://", url)) == 0:
+            url = 'http://' + url
         url = urlparse(re.sub("www\.", '', url))
         for url_to_keep in self.url_filter:
             if url_belongs_to(url, url_to_keep):
