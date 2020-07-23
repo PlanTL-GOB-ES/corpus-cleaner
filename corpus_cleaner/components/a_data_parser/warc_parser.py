@@ -13,7 +13,7 @@ import json
 import codecs
 from selectolax.parser import HTMLParser
 from time import time
-from typing import BinaryIO, List, Optional
+from typing import BinaryIO, List
 
 
 # BSC Soup from BSC for BNE
@@ -32,8 +32,7 @@ from typing import BinaryIO, List, Optional
 
 class WARCParser(DataParser):
 
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.warc', '.warc.gz'),
-                 url_filter: Optional[str] = None, **kwargs):
+    def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.warc', '.warc.gz'), **kwargs):
         super(WARCParser, self).__init__(args, input_path=args.input_path, extensions=extensions, bytes_=True, **kwargs)
         self.file_data = {}
         self.error_msgs = ['404. That’s an error.', 'was not found on this server', '400. That’s an error.',
@@ -41,16 +40,6 @@ class WARCParser(DataParser):
                            'The requested file could not be found.', 'You do not have permission to access']
         self.skip = ['mp4', 'mp3', 'jpg', 'png', 'svg', '.js']
         self.compulsory = 'p'
-        self.url_filter = args.url_doc if args.url_doc is not None else url_filter
-        if self.url_filter is not None:
-            with open(self.url_filter, 'r') as f:
-                self.url_filter = [line.strip() for line in f.readlines()]
-
-    @staticmethod
-    def add_args(parser: argparse.ArgumentParser):
-        super().add_args(parser)
-        parser.add_argument('--url-doc', type=str, help='Path to a url list (plain text, one url per line)'
-                                                        'that should be filtered and processed', default=None)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> \
             Iterable[Document]:
@@ -62,7 +51,6 @@ class WARCParser(DataParser):
         try:
             warc_file = fd
             filename = relative_filepath.replace(".warc.gz", "").replace("./", "")
-            url_pages = [re.sub("(https://|http://)","",url) for url in self.url_filter if filename in url]
             n_documents = 0
             for i, record in enumerate(ArchiveIterator(warc_file)):
                 if record.rec_type == 'response' and record.rec_headers.get_header('Content-Type').split(';')[0] == \
@@ -80,17 +68,10 @@ class WARCParser(DataParser):
                                 n_documents += 1
 
                                 if re.search('[a-zA-Z]', paragraphs) and self._ok_str(paragraphs):
-                                    if self.url_filter:
-                                        check_url_page = filename + url
-                                        for url_page in url_pages:
-                                            if check_url_page[:len(url_page)] == url_page:
-                                                yield Document(content=paragraphs, filename=relative_filepath, url=url,
+                                    complete_url = filename + url
+                                    yield Document(content=paragraphs, filename=relative_filepath, url=complete_url,
                                                                id_=f'{idx_filepath}-{n_documents+1}', keywords=keywords,
                                                                heads=heads, title=titles)
-                                    else:
-                                        yield Document(content=paragraphs, filename=relative_filepath, url=url,
-                                                       id_=f'{idx_filepath}-{n_documents + 1}', keywords=keywords,
-                                                       heads=heads, title=titles)
                             except:
                                 pass
         except:
