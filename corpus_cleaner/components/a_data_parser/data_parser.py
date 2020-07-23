@@ -65,7 +65,7 @@ class DataParser(CleanerComponent):
             while i < len(u2_path):
                 if i >= len(u1_path):
                     return False
-                if u1_path[i] != [u2_path]:
+                if u1_path[i] != u2_path[i]:
                     return False
                 i += 1
             return True
