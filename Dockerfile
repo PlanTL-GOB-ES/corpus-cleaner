@@ -10,6 +10,7 @@ RUN  apt-get update \
   && apt-get install -y python3-dev \
   && apt-get install -y python3-pip \
   && apt-get install -y libjudy-dev \
+  && apt-get install -y rsync \
   && rm -rf /var/lib/apt/lists/*
 
 RUN git clone --branch distributed --single-branch https://github.com/TeMU-BSC/corpus-cleaner.git
