@@ -86,10 +86,10 @@ worker_setup_commands: []
 # Command to start ray on the head node. You don't need to change this.
 head_start_ray_commands:
     - {singularity} ray stop"
-    - {singularity} ulimit -c unlimited && ray start --head --port=6379 --autoscaling-config=~/ray_bootstrap_config.yaml
+    - {singularity} ulimit -c unlimited && ray start --head --port=6379 --autoscaling-config=~/ray_bootstrap_config.yaml"
 
 # Command to start ray on worker nodes. You don't need to change this.
 worker_start_ray_commands:
-    - {singularity} ray stop
-    - {singularity} ray start --address=$RAY_HEAD_IP:6379
+    - {singularity} ray stop"
+    - {singularity} ray start --address=$RAY_HEAD_IP:6379"
 '''
