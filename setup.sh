@@ -8,3 +8,8 @@ source ${ENV_DIR}/bin/activate
 
 # Install python dependencies
 pip install -r "${SCRIPT_DIR}"/requirements.txt
+
+# Create git hook to run pytest when pushing
+cp pre-push .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+git init
