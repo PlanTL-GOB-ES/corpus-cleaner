@@ -65,9 +65,7 @@ class DocumentFilter(CleanerComponentReducer):
             f.write(awk)
         command = f"gawk -f {awk_path} {self.onion_output_file} > {self.onion_output_dedup_sentences_file}"
         subprocess.run(command, shell=True, check=True, universal_newlines=True)
-        print(command)
-
-        #os.remove(awk_path)
+        os.remove(awk_path)
 
     def _reduce(self):
         self._run_onion()
