@@ -11,15 +11,19 @@ class DocumentFilter(CleanerComponentReducer):
         # else..." pattern
         onion_input_file = os.path.join(args.output_path, 'input.onion')
         onion_output_file = os.path.join(args.output_path, 'output_deduplicate.onion.dedup')
-        super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=onion_output_file)
+        onion_output_dedup_sentences_file = os.path.join(args.output_path, 'output_deduplicate.onion.dedup.sentences')
+        remove_globally_repeated_sentences = args.remove_glob_rep_sen \
+            if args.remove_glob_rep_sen is not None else remove_globally_repeated_sentences
+        final_path = onion_output_file if not remove_globally_repeated_sentences else onion_output_dedup_sentences_file
+        super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path)
         self.document_deduplication_threshold = args.document_deduplication_threshold \
             if args.document_deduplication_threshold is not None else document_deduplication_threshold
-        self.remove_globally_repeated_sentences = args.remove_glob_rep_sen \
-            if args.remove_glob_rep_sen is not None else remove_globally_repeated_sentences
+        self.remove_globally_repeated_sentences = remove_globally_repeated_sentences
         self.onion_input_file = onion_input_file
         self.onion_output_file = onion_output_file
         self.onion_path = os.path.join('lib', 'onion-1.2', 'bin', 'onion')
         self.onion_tmp = os.path.join(args.output_path, 'tmp')
+        self.onion_output_dedup_sentences_file = onion_output_dedup_sentences_file
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -33,8 +37,7 @@ class DocumentFilter(CleanerComponentReducer):
     @staticmethod
     def check_args(args: argparse.Namespace):
         # TODO check custom args
-        if args.remove_glob_rep_sen and args.output_format not in ['fairseq-lm', 'sentence']:
-            raise RuntimeError("Can't use --remove-glob-rep-sen if --output-format not in ['fairseq-lm', 'sentence']")
+        pass
 
     def _run_onion(self):
         cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_input_file
@@ -44,8 +47,27 @@ class DocumentFilter(CleanerComponentReducer):
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
     def _run_remove_sentences(self):
-        subprocess.run(f"cat {os.path.join(args.output_path, 'output.txt')} | awk '!NF || !seen[$0]++' >"
-                       f"{os.path.join(args.output_path, 'output-dedup-sen.txt')}")
+        awk = '''{
+    switch($0)
+    {
+    case /0\\t\</:
+        { if(!seen[$0]++){ print;getline;print } else { getline;print } }
+        break
+
+    default:
+        print
+        break
+    }
+}
+'''
+        awk_path = os.path.join(self.args.output_path, 'script.awk')
+        with open(awk_path, 'w') as f:
+            f.write(awk)
+        command = f"gawk -f {awk_path} {self.onion_output_file} > {self.onion_output_dedup_sentences_file}"
+        subprocess.run(command, shell=True, check=True, universal_newlines=True)
+        print(command)
+
+        #os.remove(awk_path)
 
     def _reduce(self):
         self._run_onion()
