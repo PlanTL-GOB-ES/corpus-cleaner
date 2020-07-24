@@ -5,12 +5,17 @@ from ..cleaner_component_reducer import CleanerComponentReducer
 
 
 class DocumentFilter(CleanerComponentReducer):
-    def __init__(self, args: argparse.Namespace, document_deduplication_threshold: float = 0.5):
+    def __init__(self, args: argparse.Namespace, document_deduplication_threshold: float = 0.5,
+                 remove_globally_repeated_sentences: bool = False):
+        # TODO: Modify "args.document_deduplication_threshold if args.document_deduplication_threshold is not None
+        # else..." pattern
         onion_input_file = os.path.join(args.output_path, 'input.onion')
         onion_output_file = os.path.join(args.output_path, 'output_deduplicate.onion.dedup')
         super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=onion_output_file)
         self.document_deduplication_threshold = args.document_deduplication_threshold \
             if args.document_deduplication_threshold is not None else document_deduplication_threshold
+        self.remove_globally_repeated_sentences = args.remove_glob_rep_sen \
+            if args.remove_glob_rep_sen is not None else remove_globally_repeated_sentences
         self.onion_input_file = onion_input_file
         self.onion_output_file = onion_output_file
         self.onion_path = os.path.join('lib', 'onion-1.2', 'bin', 'onion')
@@ -22,11 +27,14 @@ class DocumentFilter(CleanerComponentReducer):
                             help='Threshold for document de-duplication, expressed as the percentage of sentences'
                                  'overlap between documents',
                             default=0.5)
+        parser.add_argument('--remove-glob-rep-sen', action='store_true',
+                            help='Whether to remove corpus-level repeated sentences')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
         # TODO check custom args
-        pass
+        if args.remove_glob_rep_sen and args.output_format not in ['fairseq-lm', 'sentence']:
+            raise RuntimeError("Can't use --remove-glob-rep-sen if --output-format not in ['fairseq-lm', 'sentence']")
 
     def _run_onion(self):
         cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_input_file
@@ -35,5 +43,11 @@ class DocumentFilter(CleanerComponentReducer):
             f' > {self.onion_output_file}'
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
+    def _run_remove_sentences(self):
+        subprocess.run(f"cat {os.path.join(args.output_path, 'output.txt')} | awk '!NF || !seen[$0]++' >"
+                       f"{os.path.join(args.output_path, 'output-dedup-sen.txt')}")
+
     def _reduce(self):
         self._run_onion()
+        if self.args.remove_glob_rep_sen:
+            self._run_remove_sentences()
