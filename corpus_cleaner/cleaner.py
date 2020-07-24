@@ -57,7 +57,7 @@ class Cleaner:
         self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
                        [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
                            args=None, output_format='onion',
-                           output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-'  + str(os.getpid()) + '.onion'))]
+                           output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
         self.reducer = REDUCER
         if args.components is not None:
             self.reducer = None

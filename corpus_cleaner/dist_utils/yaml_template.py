@@ -10,7 +10,7 @@ def get_yaml_template(nodes: int, user: str, master: str, slaves: List[str], sin
     empty = '{}'
     curly_l = '{'
     curly_r = '}'
-    return f''''# An unique identifier for the head node and workers of this cluster.
+    return f'''# An unique identifier for the head node and workers of this cluster.
 cluster_name: default
 
 ## NOTE: Typically for local clusters, min_workers == initial_workers == max_workers == len(worker_ips).
