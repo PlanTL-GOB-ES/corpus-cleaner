@@ -8,6 +8,8 @@ from corpus_cleaner.components.cleaner_component import CleanerComponent
 import argparse
 from typing import Iterable, List, Optional
 import gzip
+from urllib.parse import urlparse
+import re
 
 
 class DataParser(CleanerComponent):
@@ -20,16 +22,20 @@ class DataParser(CleanerComponent):
                             'otherwise. If the encoding detector is not above this threshold, it assigns utf-8.')
         parser.add_argument('--encoding-error-policy', type=str, help='Encoding error policy (same options as open()',
                             default='ignore')
+        parser.add_argument('--url-doc', type=str, help='Path to a url list (plain text, one url per line)'
+                                                        'that should be filtered and processed', default=None)
+
 
     @staticmethod
     def check_args(args: argparse.Namespace):
         # TODO check custom args
-        pass
+        if args.url_doc is not None and args.input_format not in ['bsc-crawl-json', 'warc']:
+            raise RuntimeError('--url-doc can only be used with --input-format bsc-crawl-json or warc')
 
     def __init__(self, args: argparse.Namespace, input_path: Optional[str] = None,
                  extensions: Optional[Tuple[str]] = None,
                  encoding: str = 'auto', encoding_threshold: float = 0.9, encoding_error_policy: str = 'ignore',
-                 bytes_: bool = False):
+                 bytes_: bool = False, url_filter: Optional[str] = None):
         # TODO: Revisit defaults
         super().__init__(args)
         self.input_path = input_path if input_path is not None else args.input_path
@@ -42,13 +48,51 @@ class DataParser(CleanerComponent):
         self.info = []
         self.logger = args.logger
         self.bytes = bytes_
+        self.url_filter = args.url_doc if args.url_doc is not None else url_filter
+        if self.url_filter is not None:
+            with open(self.url_filter, 'r') as f:
+                self.url_filter = [re.sub("www\.", '', line.strip()) for line in f.readlines()]
+                for idx, url in enumerate(self.url_filter):
+                    if len(re.findall("\w://", url)) == 0:
+                        self.url_filter[idx] = 'http://' + url
+                self.url_filter = [urlparse(url) for url in self.url_filter]
+
+    def _check_url(self, url: str) -> bool:
+        def url_belongs_to(u1, u2):
+            if u1.hostname != u2.hostname:
+                return False
+            u1_path = u1.path.split('/')
+            u2_path = u2.path.split('/')
+            if len(u2_path) == 0:
+                return True
+            i = 0
+            while i < len(u2_path):
+                if i >= len(u1_path):
+                    return False
+                if u1_path[i] != u2_path[i]:
+                    return False
+                i += 1
+            return True
+
+        if len(re.findall("\w://", url)) == 0:
+            url = 'http://' + url
+        url = urlparse(re.sub("www\.", '', url))
+        for url_to_keep in self.url_filter:
+            if url_belongs_to(url, url_to_keep):
+                return True
+        return False
 
     def _treat_file(self, idx_filepath: int, relative_filepath: str) -> Iterable[Document]:
         abs_path = os.path.join(self.input_path, relative_filepath)
         if self.bytes:
             with open(abs_path, 'rb') as f:
                 for doc in self._parse_binary_file(f, relative_filepath, idx_filepath):
-                    yield doc
+                    if self.url_filter is not None:
+                        url = doc.url
+                        if self._check_url(url):
+                            yield doc
+                    else:
+                        yield doc
         else:
             gz = False
             extension = os.path.splitext(relative_filepath)[1][1:].strip()
