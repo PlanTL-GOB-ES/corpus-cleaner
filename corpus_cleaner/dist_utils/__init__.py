@@ -1,3 +1,3 @@
-from .dist_utils import prepare_dist
+from .yaml_template import get_yaml_template
 
-__all__ = ['prepare_dist']
+__all__ = ['get_yaml_template']

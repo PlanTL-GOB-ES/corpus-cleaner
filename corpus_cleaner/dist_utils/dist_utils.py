@@ -17,4 +17,4 @@ def prepare_dist(output_dir: str):
         f.write(yaml)
     os.system(f'ray up {yaml_path}')
     for slave in slaves:
-        
+        pass

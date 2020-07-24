@@ -1,7 +1,7 @@
 from typing import List
 
 
-def get_yaml_template(nodes: int, user: str, master: str, slaves: List[str]):
+def get_yaml_template(nodes: int, user: str, master: str, slaves: List[str], singularity: str):
     assert nodes == 1 + len(slaves)
     slave_str = ''
     for slave in slaves:
@@ -85,11 +85,11 @@ worker_setup_commands: []
 
 # Command to start ray on the head node. You don't need to change this.
 head_start_ray_commands:
-    - ray stop
-    - ulimit -c unlimited && ray start --head --port=6379 --autoscaling-config=~/ray_bootstrap_config.yaml
+    - {singularity} ray stop"
+    - {singularity} ulimit -c unlimited && ray start --head --port=6379 --autoscaling-config=~/ray_bootstrap_config.yaml
 
 # Command to start ray on worker nodes. You don't need to change this.
 worker_start_ray_commands:
-    - ray stop
-    - ray start --address=$RAY_HEAD_IP:6379
+    - {singularity} ray stop
+    - {singularity} ray start --address=$RAY_HEAD_IP:6379
 '''
