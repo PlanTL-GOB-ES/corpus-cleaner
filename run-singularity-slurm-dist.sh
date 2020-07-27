@@ -20,8 +20,10 @@ hostlist=$(scontrol show hostname $SLURM_JOB_NODELIST)
 master=$(echo "${hostlist}" | head -n 1)
 hostlist=$(echo $hostlist | paste -sd " " -)
 
+work_dir=$(pwd)
+
 echo ${hostlist}
-yaml_path=$(singularity exec --writable-tmpfs --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output corpuscleaner-singularity.sif bash -c "cd /cc/corpus-cleaner && python3.6 dist.py $hostlist")
+yaml_path=$(singularity exec --writable-tmpfs --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output corpuscleaner-singularity.sif bash -c "cd /cc/corpus-cleaner && python3.6 dist.py $ $hostlist")
 singularity exec --writable-tmpfs --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output corpuscleaner-singularity.sif bash -c "cd /cc/corpus-cleaner && yes | ray up ${yaml_path} && yes | ray attach ${yaml_path} && python3.6 clean.py ${PARAMETERS}"
 
 
