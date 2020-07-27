@@ -1,0 +1,13 @@
+#! /bin/bash
+VENV="source venv/bin/activate"
+CMD="pytest"
+$VENV
+$CMD
+RESULT=$?
+echo $RESULT
+if [ $RESULT -ne 0 ]; then
+    echo "TEST FAIL! => $CMD"
+    exit 1
+fi
+exit 0
+
