@@ -14,6 +14,8 @@ module load singularity/3.5.2
 PARAMETERS="example-output --input-path data/toy_wiki --input-format wikipedia --output-format fairseq-lm --parallel --backend ray --lang-filter ca"
 
 
+ssh-copy-id localhost
+
 hostlist=$(scontrol show hostname $SLURM_JOB_NODELIST)
 master=$(echo "${hostlist}" | head -n 1)
 hostlist=$(echo $hostlist | paste -sd " " -)
