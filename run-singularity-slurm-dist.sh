@@ -14,8 +14,6 @@ module load singularity/3.5.2
 PARAMETERS="example-output --input-path data/toy_wiki --input-format wikipedia --output-format fairseq-lm --parallel --backend ray --lang-filter ca"
 
 
-ssh-copy-id localhost
-
 hostlist=$(scontrol show hostname $SLURM_JOB_NODELIST)
 master=$(echo "${hostlist}" | head -n 1)
 hostlist=$(echo $hostlist | paste -sd " " -)
@@ -23,8 +21,8 @@ hostlist=$(echo $hostlist | paste -sd " " -)
 work_dir=$(pwd)
 
 echo ${hostlist}
-yaml_path=$(singularity exec --writable-tmpfs --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output corpuscleaner-singularity.sif bash -c "cd /cc/corpus-cleaner && python3.6 dist.py $work_dir $hostlist")
-singularity exec --writable-tmpfs --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output corpuscleaner-singularity.sif bash -c "cd /cc/corpus-cleaner && ray up ${yaml_path} --yes && ray attach ${yaml_path} & sleep 60 && cd /cc/corpus-cleaner && RAY_ADDRESS=auto python3.6 clean.py ${PARAMETERS}"
+yaml_path=$(singularity exec instance://cc bash -c "cd /cc/corpus-cleaner && python3.6 dist.py $work_dir $hostlist")
+singularity exec instance://cc bash -c "cd /cc/corpus-cleaner && ray up ${yaml_path} --yes && ray attach ${yaml_path} & sleep 60 && cd /cc/corpus-cleaner && RAY_ADDRESS=auto python3.6 clean.py ${PARAMETERS}"
 
 
 wait
