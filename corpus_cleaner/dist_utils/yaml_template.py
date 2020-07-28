@@ -91,5 +91,5 @@ head_start_ray_commands:
 # Command to start ray on worker nodes. You don't need to change this.
 worker_start_ray_commands:
     - {singularity1} ray stop"
-    - {singularity2} ray start --address=$RAY_HEAD_IP:6379"
+    - {singularity2} ray start --address={master}:6379"
 '''
