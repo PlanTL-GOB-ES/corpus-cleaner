@@ -24,7 +24,7 @@ work_dir=$(pwd)
 
 echo ${hostlist}
 yaml_path=$(singularity exec --writable-tmpfs --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output corpuscleaner-singularity.sif bash -c "cd /cc/corpus-cleaner && python3.6 dist.py $work_dir $hostlist")
-singularity exec --writable-tmpfs --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output corpuscleaner-singularity.sif bash -c "cd /cc/corpus-cleaner && yes | ray up ${yaml_path} && yes | ray attach ${yaml_path} && python3.6 clean.py ${PARAMETERS}"
+singularity exec --writable-tmpfs --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output corpuscleaner-singularity.sif bash -c "cd /cc/corpus-cleaner && ray up ${yaml_path} --yes && ray attach ${yaml_path} & sleep 60 && cd /cc/corpus-cleaner && RAY_ADDRESS=auto python3.6 clean.py ${PARAMETERS}"
 
 
 wait
