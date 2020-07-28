@@ -6,11 +6,7 @@ from logging import Logger
 from typing import Optional
 import multiprocessing_logging
 from typing import Any
-try:
-    from ray.util.multiprocessing import Pool  # Optional requirement
-except ImportError:
-    pass
-
+import ray
 
 T = TypeVar('T')
 
@@ -128,7 +124,9 @@ class MappingPipeline:
                         as pool:
                             res = pool.map(self._map_f, self.streams)
             else:
-                with multiprocessing.Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory,)) \
+                ray.init(address='auto')
+                with ray.util.multiprocessing.Pool(initializer=self._initialize_mappers,
+                                                   initargs=(self.mappers_factory,)) \
                         as pool:
                     res = pool.map(self._map_f, self.streams)
         else:
