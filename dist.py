@@ -12,12 +12,12 @@ if __name__ == '__main__':
     timestamp = time.strftime("%Y-%m-%d-%H%M")
     yaml_path = os.path.join('output', f'config-{timestamp}.yaml')
     singularity = f'cd {work_dir}; module load singularity/3.5.2; ' \
-                  f'singularity shell --writable-tmpfs --bind $(realpath data):/cc/data --bind ' \
-                  f'$(realpath output):/cc/output corpuscleaner-singularity.sif bash -c "cd /cc/corpus-cleaner && '
+                  f'singularity instance start corpuscleaner-singularity.sif cc --writable-tmpfs --bind $(realpath data):/cc/data --bind ' \
+                  f'$(realpath output):/cc/output corpuscleaner-singularity.sif; singularity exec instance://cc bash -c "cd /cc/corpus-cleaner && '
 
     yaml = get_yaml_template(nodes=len(hosts), user=subprocess.getoutput('whoami'), master=master, slaves=slaves,
                              singularity=singularity)
-
+    # singularity instance start corpuscleaner-singularity.sif prova --writable-tmpfs --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output
     with open(yaml_path, 'w') as f:
         f.write(yaml)
     print(yaml_path)
