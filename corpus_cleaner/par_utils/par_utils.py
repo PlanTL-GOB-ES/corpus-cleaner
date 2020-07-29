@@ -125,7 +125,7 @@ class MappingPipeline:
                         as pool:
                             res = pool.map(self._map_f, self.streams)
             else:
-                ray.init(address='auto')
+                ray.init(address='auto', redis_password='5241590000000000')
                 with Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory,)) as pool:
                     res = pool.map(self._map_f, self.streams)
         else:
