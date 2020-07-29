@@ -7,15 +7,14 @@ import argparse
 import xml.etree.ElementTree as ET
 
 
-class DocParser(DataParser):
+class DocumentParser(DataParser):
     def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('*',), **kwargs):
-        super(DocParser, self).__init__(args, encoding='utf-8', input_path=args.output_path, extensions=extensions,
-                                        **kwargs)
+        super(DocumentParser, self).__init__(args, input_path=args.input_path, extensions=extensions, **kwargs)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:
         raw = ''
         for line in fd.readlines():
-            if line[0:5] == '<doc>':
+            if line[0:4] == '<doc':
                 if len(raw) > 0:
                     tree = ET.fromstring(raw)
                     content = ''.join([p.text + '\n' for p in tree.findall('p')])
