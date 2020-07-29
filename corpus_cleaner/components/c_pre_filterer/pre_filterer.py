@@ -27,12 +27,12 @@ class PreFilterer(CleanerComponentMapper):
                                                                           'common HTTP errors.')
         parser.add_argument('--digits_filter', type=float, help='Maximum allowed proportion of digit characters',
                             default=0.1)
-        parser.add_argument('--lang_chars_filter', type=float, help='Maximum allowed proportion of characters not'
+        parser.add_argument('--lang-chars-filter', type=float, help='Maximum allowed proportion of characters not'
                                                                     'belonging to the alphabet of the language',
                             default=0.1)
-        parser.add_argument('--alphanum_filter', type=float, help='Maximum allowed proportion of non-alphanumeric'
+        parser.add_argument('--alphanum-filter', type=float, help='Maximum allowed proportion of non-alphanumeric'
                                                                   'characters', default=0.3)
-        parser.add_argument('--uppercase_filter', type=float, help='Maximum allowed proportion of uppercase characters',
+        parser.add_argument('--uppercase-filter', type=float, help='Maximum allowed proportion of uppercase characters',
                             default=0.4)
         parser.add_argument('--alphabet-filter', type=str, help='Alphabets that should be present (eg. LATIN)',
                             nargs='+', default=['LATIN'])
