@@ -9,20 +9,33 @@
 #SBATCH --wait-all-nodes=1
 
 
-
-module load singularity/3.5.2
 PARAMETERS="example-output --input-path data/toy_wiki --input-format wikipedia --output-format fairseq-lm --parallel --backend ray --lang-filter ca"
 
 
+module load singularity/3.5.2
+
 hostlist=$(scontrol show hostname $SLURM_JOB_NODELIST)
 master=$(echo "${hostlist}" | head -n 1)
-hostlist=$(echo $hostlist | paste -sd " " -)
 
 work_dir=$(pwd)
 
 echo ${hostlist}
-yaml_path=$(singularity exec instance://cc bash -c "cd /cc/corpus-cleaner && python3.6 dist.py $work_dir $hostlist")
-singularity exec instance://cc bash -c "cd /cc/corpus-cleaner && ray up ${yaml_path} --yes && ray attach ${yaml_path} & sleep 60 && cd /cc/corpus-cleaner && RAY_ADDRESS=auto python3.6 clean.py ${PARAMETERS}"
+
+singularity instance start --writable-tmpfs --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output corpuscleaner-singularity.sif cc
+singularity exec instance://cc bash -c "ray start --head --port=6379"
+
+
+i=1
+while [ $i -lt $SLURM_JOB_NUM_NODES ]
+do
+  j=$(($i + 1))
+  host=$(echo "${hostlist}" | sed "${j}q;d")
+  echo $master  ${SLURM_JOB_NUM_NODES} ${i}
+  ssh -n "$host" "module load singularity/3.5.2; cd ${work_dir}; singularity instance start --writable-tmpfs --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output corpuscleaner-singularity.sif cc; ray start --address=<address>; singularity exec instance://cc bash -c \"ray start --address=${master}\"" &
+  ((i++))
+done
+
+singularity exec instance://cc bash -c "cd /cc/corpus-cleaner && RAY_ADDRESS=auto python3.6 clean.py ${PARAMETERS}"
 
 
 wait
