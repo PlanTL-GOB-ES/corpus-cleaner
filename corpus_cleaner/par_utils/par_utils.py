@@ -6,11 +6,9 @@ from logging import Logger
 from typing import Optional
 import multiprocessing_logging
 from typing import Any
-try:
-    from ray.util.multiprocessing import Pool  # Optional requirement
-except ImportError:
-    pass
-
+import ray
+from ray.util.multiprocessing import Pool
+import os
 
 T = TypeVar('T')
 
@@ -92,13 +90,15 @@ class MappingPipeline:
         self.f_mappers = None
 
     @staticmethod
-    def _initialize_mappers(mappers_factory):
+    def _initialize_mappers(mappers_factory, work_dir=None):
         """
         Helper function to initialize the mappers (and, therefore, allow non-pickable callable to be passed to a
         parallel map). The use of global, although not ideal, is safe in this case, and it is used as a workaraound
         for initializing the mappers in each process.
         :return:
         """
+        if work_dir is not None:
+            os.chdir(work_dir)  # needed for ray
         G.F_MAPPERS = Composed(mappers_factory)
 
     @staticmethod
@@ -123,13 +123,15 @@ class MappingPipeline:
         if self.parallel:
             if self.par_logger:
                 self.par_logger.logger.info(f'{self.__class__.__name__}: Initializing mappers')
+
             if self.backend == 'mp':
                 with multiprocessing.Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory,)) \
                         as pool:
                             res = pool.map(self._map_f, self.streams)
             else:
-                with multiprocessing.Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory,)) \
-                        as pool:
+                work_dir = os.getcwd()
+                ray.init(address='auto', redis_password='5241590000000000')
+                with Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory, work_dir)) as pool:
                     res = pool.map(self._map_f, self.streams)
         else:
             self._initialize_mappers(self.mappers_factory)
