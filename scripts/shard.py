@@ -31,8 +31,9 @@ def main():
         for file in files:
             index = 0
             while index < max_lines:
-                index = write_doc(file, filelines, fileline_index, boundary)
-            fileline_index = index
+                doc_len = write_doc(file, filelines, fileline_index, boundary)
+                index += doc_len
+                fileline_index = doc_len
     except IndexError:
         print("The boundary doesn't appear in the file you provided")
 main()
