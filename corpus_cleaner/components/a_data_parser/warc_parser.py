@@ -50,6 +50,7 @@ class WARCParser(DataParser):
 
         try:
             warc_file = fd
+            filename = relative_filepath.replace(".warc.gz", "").replace("./", "")
             n_documents = 0
             for i, record in enumerate(ArchiveIterator(warc_file)):
                 if record.rec_type == 'response' and record.rec_headers.get_header('Content-Type').split(';')[0] == \
@@ -67,9 +68,10 @@ class WARCParser(DataParser):
                                 n_documents += 1
 
                                 if re.search('[a-zA-Z]', paragraphs) and self._ok_str(paragraphs):
-                                    yield Document(content=paragraphs, filename=relative_filepath, url=url,
-                                                   id_=f'{idx_filepath}-{n_documents+1}', keywords=keywords,
-                                                   heads=heads, title=titles)
+                                    complete_url = filename + url
+                                    yield Document(content=paragraphs, filename=relative_filepath, url=complete_url,
+                                                               id_=f'{idx_filepath}-{n_documents+1}', keywords=keywords,
+                                                               heads=heads, title=titles)
                             except:
                                 pass
         except:

@@ -6,12 +6,13 @@ from .onion_parser import OnionParser
 from .warc_parser import WARCParser
 from .data_parser import DataParser
 from .data_parser_mapper import DataParserMapper
+from .document_parser import DocumentParser
 import argparse
 from typing import Optional
 
 
 class DataParserFactory:
-    VALID_INPUT_FORMATS = ['wikipedia', 'bsc-crawl-json', 'fairseq-lm', 'sentence', 'warc']
+    VALID_INPUT_FORMATS = ['wikipedia', 'bsc-crawl-json', 'fairseq-lm', 'sentence', 'warc', 'document']
 
     @staticmethod
     def get_parser(args: argparse.Namespace, input_format: Optional[str] = None, **kwargs)\
@@ -27,6 +28,8 @@ class DataParserFactory:
                 return SentenceParser(args, **kwargs)
             elif args.input_format == 'warc':
                 return WARCParser(args, **kwargs)
+            elif args.input_format == 'document':
+                return DocumentParser(args, **kwargs)
             else:
                 raise NotImplementedError(args.input_format)
         else:
