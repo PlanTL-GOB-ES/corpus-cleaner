@@ -31,7 +31,7 @@ class DocumentFilter(CleanerComponentReducer):
                             help='Threshold for document de-duplication, expressed as the percentage of sentences'
                                  'overlap between documents',
                             default=0.5)
-        parser.add_argument('--remove-glob-rep-sen', action='store_true',
+        parser.add_argument('--remove-glob-rep-sen', type=int,
                             help='Whether to remove corpus-level repeated sentences')
 
     @staticmethod
@@ -46,12 +46,12 @@ class DocumentFilter(CleanerComponentReducer):
             f' > {self.onion_output_file}'
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
-    def _run_remove_sentences(self):
+    def _run_remove_sentences(self,threshold):
         awk = '''{
     switch($0)
     {
     case /0\\t\</:
-        { if(!seen[$0]++){ print;getline;print } else { getline;print } }
+        { if(visited[$0]++ >= '''+str(threshold)+''') { print;getline;print } else { getline;print } }
         break
 
     default:
@@ -70,4 +70,4 @@ class DocumentFilter(CleanerComponentReducer):
     def _reduce(self):
         self._run_onion()
         if self.args.remove_glob_rep_sen:
-            self._run_remove_sentences()
+            self._run_remove_sentences(self.remove_globally_repeated_sentences)
