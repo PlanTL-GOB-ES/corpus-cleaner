@@ -16,7 +16,11 @@ class DocumentParser(DataParser):
         for line in fd.readlines():
             if line[0:4] == '<doc':
                 if len(raw) > 0:
-                    tree = ET.fromstring(raw)
+                    try:
+                        tree = ET.fromstring(raw)
+                    except ET.ParseError as e:
+                        raw = ''
+                        continue
                     content = ''.join([p.text + '\n' for p in tree.findall('p')])
                     sentences = None
                     filename = relative_filepath
