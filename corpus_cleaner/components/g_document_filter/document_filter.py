@@ -6,7 +6,7 @@ from ..cleaner_component_reducer import CleanerComponentReducer
 
 class DocumentFilter(CleanerComponentReducer):
     def __init__(self, args: argparse.Namespace, document_deduplication_threshold: float = 0.5,
-                 remove_globally_repeated_sentences: bool = False):
+                 remove_globally_repeated_sentences: int = 5):
         # TODO: Modify "args.document_deduplication_threshold if args.document_deduplication_threshold is not None
         # else..." pattern
         onion_input_file = os.path.join(args.output_path, 'input.onion')
@@ -18,7 +18,8 @@ class DocumentFilter(CleanerComponentReducer):
         super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path)
         self.document_deduplication_threshold = args.document_deduplication_threshold \
             if args.document_deduplication_threshold is not None else document_deduplication_threshold
-        self.remove_globally_repeated_sentences = remove_globally_repeated_sentences
+        self.remove_globally_repeated_sentences = args.remove_globally_repeated_sentences \
+            if args.remove_globally_repeated_sentences is not None else remove_globally_repeated_sentences
         self.onion_input_file = onion_input_file
         self.onion_output_file = onion_output_file
         self.onion_path = os.path.join('lib', 'onion-1.2', 'bin', 'onion')
@@ -31,8 +32,9 @@ class DocumentFilter(CleanerComponentReducer):
                             help='Threshold for document de-duplication, expressed as the percentage of sentences'
                                  'overlap between documents',
                             default=0.5)
-        parser.add_argument('--remove-glob-rep-sen', type=int,
-                            help='Whether to remove corpus-level repeated sentences')
+        parser.add_argument('--remove-glob-rep-sen', type=int, default=5,
+                            help='Whether to remove corpus-level repeated sentences (threshold of repetitions; -1'
+                                 'to deactivate)')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -68,5 +70,5 @@ class DocumentFilter(CleanerComponentReducer):
 
     def _reduce(self):
         self._run_onion()
-        if self.args.remove_glob_rep_sen:
+        if self.args.remove_glob_rep_sen != -1:
             self._run_remove_sentences(self.remove_globally_repeated_sentences)
