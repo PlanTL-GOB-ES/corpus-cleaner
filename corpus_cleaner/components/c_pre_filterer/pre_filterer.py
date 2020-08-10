@@ -8,6 +8,7 @@ import argparse
 import fasttext
 import os
 from corpus_cleaner.configs.langs import langs
+import regex
 
 
 class PreFilterer(CleanerComponentMapper):
@@ -47,6 +48,7 @@ class PreFilterer(CleanerComponentMapper):
                                                                       'line of terms that should not appear in a'
                                                                       'document',
                             default=None)
+        parser.add_argument('--seg-sentences', action='store_true', help='Segment wrongfully concatenated sentences.')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -61,7 +63,8 @@ class PreFilterer(CleanerComponentMapper):
                  alphanum_filter: float = 0.3, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
                  initial_lang_filter_threshold: float = 0.3,
-                 dictionary_filter: Optional[str] = None):
+                 dictionary_filter: Optional[str] = None,
+                 seg_sentences: bool = False):
         super().__init__(args)
         self.language_normalization = not args.no_language_normalization if args.no_language_normalization is \
                                                                             not None else not no_language_normalization
@@ -99,6 +102,7 @@ class PreFilterer(CleanerComponentMapper):
                 self.dictionary_filter = f.readlines()
 
         self.dictionary_filter_pattern = None
+        self.seg_sentences = args.seg_sentences if args.seg_sentences is not None else seg_sentences
         self.input_format = args.input_format
         self.filters = []
         self._build_filters()
@@ -180,6 +184,8 @@ class PreFilterer(CleanerComponentMapper):
         if self.space_normalization is not None:
             self.punc_space_pattern = re.compile("(\s)([!',:;?.])")
             self.zero_width_space_pattern = re.compile('\u200b')
+        if self.seg_sentences:
+            self.final_sentence_pattern = regex.compile(r"(\s)(\p{Ll}+)(\p{Lu})(\p{Ll}+)(\s)")
 
     def _filter_by_length(self, doc: Document):
         if len(doc.content) < self.char_length_filter:
@@ -252,6 +258,9 @@ class PreFilterer(CleanerComponentMapper):
             document.content = self._replace_urls(document.content)
         if self.space_normalization:
             document.content = self._space_normalization(document.content)
+        if self.seg_sentences:
+            document.content = self.final_sentence_pattern.subf("{1}{2}\n{3}{4}{5}", document.content)
+
         if len(document.content.split()) == 0:
             return None
         keep = True
