@@ -46,20 +46,19 @@ class DocumentFilter(CleanerComponentReducer):
             f' > {self.onion_output_file}'
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
-    def _run_remove_sentences(self,threshold):
+    def _run_remove_sentences(self, threshold: int):
         awk = '''{
     switch($0)
     {
     case /0\\t\</:
-        { if(visited[$0]++ >= '''+str(threshold)+''') { print;getline;print } else { getline;print } }
+        { if(!seen[$0]++ < ''' + str(threshold) + '''){ print;getline;print } else { getline;print } }
         break
-
     default:
         print
         break
     }
 }
-'''
+    '''
         awk_path = os.path.join(self.args.output_path, 'script.awk')
         with open(awk_path, 'w') as f:
             f.write(awk)
