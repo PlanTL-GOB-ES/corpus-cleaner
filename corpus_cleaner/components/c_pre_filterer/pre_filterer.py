@@ -15,7 +15,7 @@ class PreFilterer(CleanerComponentMapper):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        parser.add_argument('--no-language-normalization', action='store_true', help='Avoid applying language-specific normalization')
+        parser.add_argument('--no-language-normalization', action='store_true',help='Avoid applying language-specific normalization')
         parser.add_argument('--no-replace-emails', action='store_true', help='Avoid replacing email adresses with "[EMAIL]"')
         parser.add_argument('--no-remove-hashtags-mentions', action='store_true', help='Remove hashtags and mentions.')
         parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
@@ -128,6 +128,20 @@ class PreFilterer(CleanerComponentMapper):
         text = normalize_space(text, preserve=['\n'])
         text = self.punc_space_pattern.sub('\\2', text)
         text = self.zero_width_space_pattern.sub('', text)
+        text = self.punc_no_space_pattern.sub('\\1\\2 \\3', text)
+        text = self.quote_no_space_pattern1.sub('\\1 \\2\\3\\5', text)
+        text = self.quote_no_space_pattern2.sub('\\1\\2\\4 \\5', text)
+        return text
+
+    def fix(self, text):
+        text = normalize_space(text, preserve=['\n'])
+        text = self.punc_space_pattern.sub('\\2', text)
+        text = self.zero_width_space_pattern.sub('', text)
+        text = self.punc_no_space_pattern.sub('\\1\\2 \\3', text)
+        text = self.quote_no_space_pattern1.sub('\\1 \\2\\3\\5', text)
+        text = self.quote_no_space_pattern2.sub('\\1\\2\\4 \\5', text)
+        text = self.final_sentence_pattern1.subf("{1}{2}{3}\n{4}{5}{6}", text)
+        text = self.final_sentence_pattern2.subf("{1}{2}{3}\n{4}{5}{6}{7}", text)
         return text
 
     def _replace_urls(self, text):
@@ -183,9 +197,13 @@ class PreFilterer(CleanerComponentMapper):
             self.filters.append(self._filter_by_dict)
         if self.space_normalization is not None:
             self.punc_space_pattern = re.compile("(\s)([!',:;?.])")
+            self.punc_no_space_pattern = re.compile("(\w+|\"|')([!,:;?])([a-zA-Z]\w)")
+            self.quote_no_space_pattern1 = re.compile("(\w)([«“'\"])(\w+(\s\w+)*)(['\"”»])")
+            self.quote_no_space_pattern2 = re.compile("([«“'\"])(\w+(\s\w+)*)(['\"”»])(\w+)")
             self.zero_width_space_pattern = re.compile('\u200b')
         if self.seg_sentences:
-            self.final_sentence_pattern = regex.compile(r"(\s)(\p{Ll}+)(\p{Lu})(\p{Ll}+)(\s)")
+            self.final_sentence_pattern1 = regex.compile(r"(\s)(\p{Ll}+)([.!?:]*)(\p{Lu})(\p{Ll}+)([\s.,;:?!])")
+            self.final_sentence_pattern2 = regex.compile(r"(\s)(\p{Ll}+)([.!?:]+)('|\")(\p{Lu})(\p{Ll}+)([\s.,;:?!])")
 
     def _filter_by_length(self, doc: Document):
         if len(doc.content) < self.char_length_filter:
@@ -259,7 +277,8 @@ class PreFilterer(CleanerComponentMapper):
         if self.space_normalization:
             document.content = self._space_normalization(document.content)
         if self.seg_sentences:
-            document.content = self.final_sentence_pattern.subf("{1}{2}\n{3}{4}{5}", document.content)
+            document.content = self.final_sentence_pattern1.subf("{1}{2}{3}\n{4}{5}{6}", document.content)
+            document.content = self.final_sentence_pattern2.subf("{1}{2}{3}\n{4}{5}{6}{7}", document.content)
 
         if len(document.content.split()) == 0:
             return None
