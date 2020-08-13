@@ -24,7 +24,7 @@ class EncodingFixer(CleanerComponentMapper):
         #              max_decode_length=1000000)
         # Also: Consider adding heuristics from https://github.com/PlanTL-SANIDAD/utils/tree/master/FixEncodingErrors
 
-        document.content = ftfy.fix_text(document.content, normalization='NFKC')
+        document.content = ftfy.fix_text(document.content, normalization='NFKC').replace('\x92', "'")
         return document
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:

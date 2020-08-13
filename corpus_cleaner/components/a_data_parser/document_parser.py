@@ -5,11 +5,15 @@ from typing import TextIO
 from typing import Tuple
 import argparse
 import xml.etree.ElementTree as ET
+from xml.sax.saxutils import escape, unescape
+import re
 
 
 class DocumentParser(DataParser):
     def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('*',), **kwargs):
         super(DocumentParser, self).__init__(args, input_path=args.input_path, extensions=extensions, **kwargs)
+        self.url = re.compile('(url=\")(.*)(\"\s)')
+        self.tags = re.compile('<.*?>')
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:
         raw = ''
@@ -17,15 +21,24 @@ class DocumentParser(DataParser):
             if line[0:4] == '<doc':
                 if len(raw) > 0:
                     try:
-                        tree = ET.fromstring(raw)
+                        ls = raw.splitlines()
+                        l1 = ls[0]
+                        url = self.url.search(l1).group(2)
+                        escaped_url = escape(url)
+                        l1 = self.url.sub('\\1' + escaped_url + '\\3', l1)
+                        tree = ET.fromstring(l1 + '</doc>')
+                        content = ''
+                        for l in ls[1:-1]:
+                            if l.startswith('<p'):
+                                content += self.tags.sub('', l) + '\n'
                     except ET.ParseError as e:
+                        self.logger.logger.info(e)
                         raw = ''
                         continue
-                    content = ''.join([p.text + '\n' for p in tree.findall('p')])
                     sentences = None
                     filename = relative_filepath
                     title = None
-                    url = tree.attrib['url']
+                    url = unescape(tree.attrib['url'])
                     id_ = tree.attrib['id']
                     keywords = None
                     heads = None
