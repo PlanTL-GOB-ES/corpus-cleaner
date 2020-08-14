@@ -12,4 +12,4 @@ module purge && module load singularity/3.2.0
 
 PARAMETERS="example-output --input-path data/toy_wiki --input-format wikipedia --output-format fairseq-lm --lang-filter ca"
 
-bash run-singularity.sh ${PARAMETERS}
+bash run-singularity-legacy.sh ${PARAMETERS}
