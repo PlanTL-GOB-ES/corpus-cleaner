@@ -29,6 +29,8 @@ class SentenceFilter(CleanerComponentMapper):
                                                                       'line of terms that should not appear in a'
                                                                       'sentence',
                             default=None)
+        parser.add_argument('--no-dedup-same-doc-sentences', action='store_true',
+                            help='Do not eduplicate sentences in the same document.')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -38,7 +40,8 @@ class SentenceFilter(CleanerComponentMapper):
     def __init__(self, args: argparse.Namespace, char_length_filter_sentence: int = 30,
                  lang_filter: Union[Tuple[str], None] = None, slow_lang_filter_threshold: float = 0.90,
                  code_threshold: float = 0.25,
-                 profanity_check: bool = False, dictionary_filter: Optional[str] = None):
+                 profanity_check: bool = False, dictionary_filter: Optional[str] = None,
+                 dedup_same_doc_sentences: bool = True):
         # TODO: Review way of setting defaults, thresholds will never be None!
         super().__init__(args)
         self.char_length_filter_sentence = args.char_length_filter_sentence if args.char_length_filter_sentence is not \
@@ -60,11 +63,15 @@ class SentenceFilter(CleanerComponentMapper):
         self._get_filters()
         self.code_keywords_pattern = re.compile('\\b(var|function|const|if|else|script)\\b')
         self.code_chars_pattern = re.compile('[;=&\[\](){}/\\\\]')
+        self.dedup_same_doc_sentences = \
+            not args.no_dedup_same_doc_sentences if args.no_dedup_same_doc_sentences is not None else dedup_same_doc_sentences
 
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
         sentences_filtered = []
-        # first, de-duplicate sentences
-        sentences_deduplicate = OrderedSet(document.sentences).items
+        sentences_deduplicate = document.sentences
+        if self.dedup_same_doc_sentences:
+            # first, de-duplicate sentences
+            sentences_deduplicate = OrderedSet(document.sentences).items
         for sent in sentences_deduplicate:
             # keep only sentences that are not filtered out by all the filters
             if all(_filter(sent) for _filter in self.filters):
