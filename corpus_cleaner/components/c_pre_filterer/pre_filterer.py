@@ -8,13 +8,14 @@ import argparse
 import fasttext
 import os
 from corpus_cleaner.configs.langs import langs
+import regex
 
 
 class PreFilterer(CleanerComponentMapper):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        parser.add_argument('--no-language-normalization', action='store_true', help='Avoid applying language-specific normalization')
+        parser.add_argument('--no-language-normalization', action='store_true',help='Avoid applying language-specific normalization')
         parser.add_argument('--no-replace-emails', action='store_true', help='Avoid replacing email adresses with "[EMAIL]"')
         parser.add_argument('--no-remove-hashtags-mentions', action='store_true', help='Remove hashtags and mentions.')
         parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
@@ -47,6 +48,7 @@ class PreFilterer(CleanerComponentMapper):
                                                                       'line of terms that should not appear in a'
                                                                       'document',
                             default=None)
+        parser.add_argument('--seg-sentences', action='store_true', help='Segment wrongfully concatenated sentences.')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -61,7 +63,8 @@ class PreFilterer(CleanerComponentMapper):
                  alphanum_filter: float = 0.3, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
                  initial_lang_filter_threshold: float = 0.3,
-                 dictionary_filter: Optional[str] = None):
+                 dictionary_filter: Optional[str] = None,
+                 seg_sentences: bool = False):
         super().__init__(args)
         self.language_normalization = not args.no_language_normalization if args.no_language_normalization is \
                                                                             not None else not no_language_normalization
@@ -99,6 +102,7 @@ class PreFilterer(CleanerComponentMapper):
                 self.dictionary_filter = f.readlines()
 
         self.dictionary_filter_pattern = None
+        self.seg_sentences = args.seg_sentences if args.seg_sentences is not None else seg_sentences
         self.input_format = args.input_format
         self.filters = []
         self._build_filters()
@@ -124,6 +128,20 @@ class PreFilterer(CleanerComponentMapper):
         text = normalize_space(text, preserve=['\n'])
         text = self.punc_space_pattern.sub('\\2', text)
         text = self.zero_width_space_pattern.sub('', text)
+        text = self.punc_no_space_pattern.sub('\\1\\2 \\3', text)
+        text = self.quote_no_space_pattern1.sub('\\1 \\2\\3\\5', text)
+        text = self.quote_no_space_pattern2.sub('\\1\\2\\4 \\5', text)
+        return text
+
+    def fix(self, text):
+        text = normalize_space(text, preserve=['\n'])
+        text = self.punc_space_pattern.sub('\\2', text)
+        text = self.zero_width_space_pattern.sub('', text)
+        text = self.punc_no_space_pattern.sub('\\1\\2 \\3', text)
+        text = self.quote_no_space_pattern1.sub('\\1 \\2\\3\\5', text)
+        text = self.quote_no_space_pattern2.sub('\\1\\2\\4 \\5', text)
+        text = self.final_sentence_pattern1.subf("{1}{2}{3}\n{4}{5}{6}", text)
+        text = self.final_sentence_pattern2.subf("{1}{2}{3}\n{4}{5}{6}{7}", text)
         return text
 
     def _replace_urls(self, text):
@@ -179,7 +197,13 @@ class PreFilterer(CleanerComponentMapper):
             self.filters.append(self._filter_by_dict)
         if self.space_normalization is not None:
             self.punc_space_pattern = re.compile("(\s)([!',:;?.])")
+            self.punc_no_space_pattern = re.compile("(\w+|\"|')([!,:;?])([a-zA-Z]\w)")
+            self.quote_no_space_pattern1 = re.compile("(\w)([«“'\"])(\w+(\s\w+)*)(['\"”»])")
+            self.quote_no_space_pattern2 = re.compile("([«“'\"])(\w+(\s\w+)*)(['\"”»])(\w+)")
             self.zero_width_space_pattern = re.compile('\u200b')
+        if self.seg_sentences:
+            self.final_sentence_pattern1 = regex.compile(r"(\s)(\p{Ll}+)([.!?:]*)(\p{Lu})(\p{Ll}+)([\s.,;:?!])")
+            self.final_sentence_pattern2 = regex.compile(r"(\s)(\p{Ll}+)([.!?:]+)('|\")(\p{Lu})(\p{Ll}+)([\s.,;:?!])")
 
     def _filter_by_length(self, doc: Document):
         if len(doc.content) < self.char_length_filter:
@@ -252,6 +276,10 @@ class PreFilterer(CleanerComponentMapper):
             document.content = self._replace_urls(document.content)
         if self.space_normalization:
             document.content = self._space_normalization(document.content)
+        if self.seg_sentences:
+            document.content = self.final_sentence_pattern1.subf("{1}{2}{3}\n{4}{5}{6}", document.content)
+            document.content = self.final_sentence_pattern2.subf("{1}{2}{3}\n{4}{5}{6}{7}", document.content)
+
         if len(document.content.split()) == 0:
             return None
         keep = True
