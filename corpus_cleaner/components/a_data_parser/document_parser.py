@@ -23,10 +23,29 @@ class DocumentParser(DataParser):
                     try:
                         ls = raw.splitlines()
                         l1 = ls[0]
-                        url = self.url.search(l1).group(2)
-                        escaped_url = escape(url)
-                        l1 = self.url.sub('\\1' + escaped_url + '\\3', l1)
-                        tree = ET.fromstring(l1 + '</doc>')
+                        url_search = self.url.search(l1)
+                        if url_search:
+                            url = url_search.group(2)
+                            escaped_url = escape(url)
+                            l1 = self.url.sub('\\1' + escaped_url + '\\3', l1)
+                            tree = ET.fromstring(l1 + '</doc>')
+                            sentences = None
+                            filename = relative_filepath
+                            title = None
+                            url = unescape(tree.attrib['url'])
+                            id_ = tree.attrib['id']
+                            keywords = None
+                            heads = None
+                            language = None
+                        else:
+                            sentences = None
+                            filename = relative_filepath
+                            title = None
+                            url = None
+                            id_ = None
+                            keywords = None
+                            heads = None
+                            language = None
                         content = ''
                         for l in ls[1:-1]:
                             if l.startswith('<p'):
@@ -35,14 +54,6 @@ class DocumentParser(DataParser):
                         self.logger.logger.info(e)
                         raw = ''
                         continue
-                    sentences = None
-                    filename = relative_filepath
-                    title = None
-                    url = unescape(tree.attrib['url'])
-                    id_ = tree.attrib['id']
-                    keywords = None
-                    heads = None
-                    language = None
 
                     yield Document(content=content, sentences=sentences, filename=filename, title=title, url=url,
                                    id_=id_, keywords=keywords, heads=heads, language=language)
