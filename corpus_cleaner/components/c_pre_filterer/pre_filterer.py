@@ -146,7 +146,7 @@ class PreFilterer(CleanerComponentMapper):
 
     def _replace_urls(self, text):
         replace = ' [URL] '
-        return self.urls_pattern.sub(replace, text)
+        return self.urls_pattern2.sub(replace, self.urls_pattern.sub(replace, text))
 
     def _build_filters(self):
         # https://www.tutorialspoint.com/Extracting-email-addresses-using-regular-expressions-in-Python
@@ -161,12 +161,13 @@ class PreFilterer(CleanerComponentMapper):
             self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9_]+)|(#[\w_]+)')
         if self.remove_tags:
             self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
-            self.p_tags_pattern = re.compile('([.|?]*\s*)(<p>)+')
+            self.p_tags_pattern = re.compile('(\s*)(<p>)+')
         if self.replace_urls:
             # slightly modified from:
             # https://stackoverflow.com/questions/6718633/python-regular-expression-again-match-url
             self.urls_pattern = re.compile(
-                rf'((http|https)://)?([{self.lang_chars}0-9./?\\\\@\-—_=#])+\.[a-z]{{2,6}}([{self.lang_chars}0-9&/\\\\+~*?%:!@—_=#()-])*')
+                rf'(@)?((http|https)://)?([{self.lang_chars}0-9./?\\\\@\-—_=#])+\.[a-z]{{2,6}}([{self.lang_chars}0-9&/\\\\+~*?%:!@—_=#()-])*')
+            self.urls_pattern2 = re.compile('(\[URL\]\.?\w*\s*)+')
         if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
         if self.head_filter:
