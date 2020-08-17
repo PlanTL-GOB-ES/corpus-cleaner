@@ -50,7 +50,7 @@ class DocumentParser(DataParser):
                         for l in ls[1:-1]:
                             if l.startswith('<p'):
                                 content += self.tags.sub('', l) + '\n'
-                    except ET.ParseError as e:
+                    except BaseException as e:
                         self.logger.logger.info(e)
                         raw = ''
                         continue
