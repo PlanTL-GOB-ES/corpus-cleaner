@@ -82,6 +82,7 @@ class Cleaner:
         parser.add_argument('--log-every-iter', type=int, default=-1, help='Log the pipeline every N iterations'
                                                                            '(-1, silent)')
         parser.add_argument('--backend', type=str, default='mp', help='Parallel backend (mp or ray)')
+        parser.add_argument('--only-reduce', action='store_true', help='Only document filter')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -116,15 +117,15 @@ class Cleaner:
         if self.reducer is None:
             raise NotImplementedError()
         else:
-
-            self.reducer = self.reducer(self.args)
-            pipeline = MappingPipeline(streams=self._get_paths(),
-                                       mappers_factory=self._create_pipeline_mappers,
-                                       parallel=self.args.parallel,
-                                       logger=self.logger if self.args.log_every_iter != -1 else None,
-                                       log_every_iter=self.args.log_every_iter,
-                                       backend=self.args.backend)
-            pipeline.run()
+            if not self.args.only_reduce:
+                self.reducer = self.reducer(self.args)
+                pipeline = MappingPipeline(streams=self._get_paths(),
+                                           mappers_factory=self._create_pipeline_mappers,
+                                           parallel=self.args.parallel,
+                                           logger=self.logger if self.args.log_every_iter != -1 else None,
+                                           log_every_iter=self.args.log_every_iter,
+                                           backend=self.args.backend)
+                pipeline.run()
 
             self.reducer.reduce()
 

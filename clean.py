@@ -73,10 +73,14 @@ def main():
 
     os.makedirs(output_dir, exist_ok=True)
 
-    logger = init_logger(os.path.join(output_dir, 'clean.log'))
-
-    with open(os.path.join(output_dir, 'args.json'), 'w') as f:
-        json.dump(args.__dict__, f, indent=2)
+    if not args.only_reduce:
+        logger = init_logger(os.path.join(output_dir, 'clean.log'))
+        with open(os.path.join(output_dir, 'args.json'), 'w') as f:
+            json.dump(args.__dict__, f, indent=2)
+    else:
+        logger = init_logger(os.path.join(output_dir, 'clean_reduce.log'))
+        with open(os.path.join(output_dir, 'args_reduce.json'), 'w') as f:
+            json.dump(args.__dict__, f, indent=2)
 
     logging.info(output_dir)
 

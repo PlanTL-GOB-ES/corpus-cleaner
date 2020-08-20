@@ -244,8 +244,11 @@ class PreFilterer(CleanerComponentMapper):
 
     def _filter_by_alphabet(self, doc: Document):
         # TODO: Check thresholds?
-        if len(self.ad.detect_alphabet(doc.content).intersection(set(self.alphabet_filter))) == 0:
-            return False
+        try:
+            if len(self.ad.detect_alphabet(doc.content).intersection(set(self.alphabet_filter))) == 0:
+                return False
+        except:
+            return True
         return True
 
     def _filter_by_lang(self, doc: Document):
