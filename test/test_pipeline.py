@@ -14,4 +14,4 @@ def test_file_exists():
     assert (os.path.getsize(filename) > 0) == True, "Output file is empty"
 
 def test_file_length():
-    assert (os.path.getsize(filename) == 29481) == True, "Output file doesn't have the expected size"
+    assert (os.path.getsize(filename) == 29256) == True, "Output file doesn't have the expected size"
