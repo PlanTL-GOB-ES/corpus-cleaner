@@ -135,7 +135,7 @@ class Cleaner:
                 pipeline.run()
 
             else:
-                self.reducer = self.reducer(self.args)
+                self.reducer = self.reducer(self.args, output_path=self.args.input_path)
 
             self.reducer.reduce()
 
