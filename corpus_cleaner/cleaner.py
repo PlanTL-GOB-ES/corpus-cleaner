@@ -19,6 +19,8 @@ import argparse
 import logging
 import os
 from . import __version__
+from typing import Optional
+from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 
 MAPPERS = [
     EncodingFixer, PreFilterer,
@@ -60,7 +62,12 @@ class Cleaner:
                             args=None, output_format='onion',
                             output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
         else:
-            self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + \
+            class SentencePacker(CleanerComponentMapper):
+                def apply(self, document: Optional[Document]) -> Optional[Document]:
+                    document.sentences = document.content.splitlines()
+                    return document
+
+            self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + [SentencePacker] + \
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
                             args=None, output_format='onion',
                             output_path=os.path.join(self.tmp_dir,  os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
