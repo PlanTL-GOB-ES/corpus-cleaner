@@ -63,8 +63,9 @@ class Cleaner:
                             output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
         else:
             class SentencePacker(CleanerComponentMapper):
+
                 def apply(self, document: Optional[Document]) -> Optional[Document]:
-                    document.sentences = document.content.splitlines()
+                    document.sentences = [sen for sen in document.content.splitlines() if len(sen.split()) > 0]
                     return document
 
             self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + [SentencePacker] + \
