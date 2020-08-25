@@ -54,10 +54,16 @@ class Cleaner:
             for comp in MAPPERS:
                 if comp.__name__ in args.components:
                     self.mappers.append(comp)
-        self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
-                       [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                           args=None, output_format='onion',
-                           output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
+        if not self.args.only_reduce:
+            self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
+                           [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
+                            args=None, output_format='onion',
+                            output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
+        else:
+            self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + \
+                           [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
+                            args=None, output_format='onion',
+                            output_path=os.path.join(self.tmp_dir,  os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
         self.reducer = REDUCER
         if args.components is not None:
             self.reducer = None
@@ -83,6 +89,7 @@ class Cleaner:
                                                                            '(-1, silent)')
         parser.add_argument('--backend', type=str, default='mp', help='Parallel backend (mp or ray)')
         parser.add_argument('--only-reduce', action='store_true', help='Only document filter')
+        parser.add_argument('--only-reduce-output', action='store_true', help='Only document filter for output files')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -117,7 +124,7 @@ class Cleaner:
         if self.reducer is None:
             raise NotImplementedError()
         else:
-            if not self.args.only_reduce:
+            if not self.args.only_reduce_output:
                 self.reducer = self.reducer(self.args)
                 pipeline = MappingPipeline(streams=self._get_paths(),
                                            mappers_factory=self._create_pipeline_mappers,
@@ -126,6 +133,9 @@ class Cleaner:
                                            log_every_iter=self.args.log_every_iter,
                                            backend=self.args.backend)
                 pipeline.run()
+
+            else:
+                self.reducer = self.reducer(self.args)
 
             self.reducer.reduce()
 

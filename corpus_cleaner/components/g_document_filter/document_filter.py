@@ -2,20 +2,23 @@ import subprocess
 import argparse
 import os
 from ..cleaner_component_reducer import CleanerComponentReducer
+from typing import Optional
 
 
 class DocumentFilter(CleanerComponentReducer):
     def __init__(self, args: argparse.Namespace, document_deduplication_threshold: float = 0.5,
-                 remove_glob_rep_sen: int = 5):
+                 remove_glob_rep_sen: int = 5, output_path: Optional[str] = None):
         # TODO: Modify "args.document_deduplication_threshold if args.document_deduplication_threshold is not None
         # else..." pattern
-        onion_input_file = os.path.join(args.output_path, 'input.onion')
-        onion_output_file = os.path.join(args.output_path, 'output_deduplicate.onion.dedup')
-        onion_output_dedup_sentences_file = os.path.join(args.output_path, 'output_deduplicate.onion.dedup.sentences')
+        out_path = output_path if output_path is not None else args.output_path
+        onion_input_file = os.path.join(out_path, 'input.onion')
+        onion_output_file = os.path.join(out_path, 'output_deduplicate.onion.dedup')
+        onion_output_dedup_sentences_file = os.path.join(out_path, 'output_deduplicate.onion.dedup.sentences')
         remove_globally_repeated_sentences = args.remove_glob_rep_sen \
             if args.remove_glob_rep_sen is not None else remove_glob_rep_sen
         final_path = onion_output_file if not remove_globally_repeated_sentences else onion_output_dedup_sentences_file
         super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path)
+        self.output_path = out_path
         self.document_deduplication_threshold = args.document_deduplication_threshold \
             if args.document_deduplication_threshold is not None else document_deduplication_threshold
         self.remove_glob_rep_sen = args.remove_glob_rep_sen \
@@ -23,7 +26,7 @@ class DocumentFilter(CleanerComponentReducer):
         self.onion_input_file = onion_input_file
         self.onion_output_file = onion_output_file
         self.onion_path = os.path.join('lib', 'onion-1.2', 'bin', 'onion')
-        self.onion_tmp = os.path.join(args.output_path, 'tmp')
+        self.onion_tmp = os.path.join(out_path, 'tmp')
         self.onion_output_dedup_sentences_file = onion_output_dedup_sentences_file
 
     @staticmethod
@@ -61,7 +64,7 @@ class DocumentFilter(CleanerComponentReducer):
     }
 }
     '''
-        awk_path = os.path.join(self.args.output_path, 'script.awk')
+        awk_path = os.path.join(self.output_path, 'script.awk')
         with open(awk_path, 'w') as f:
             f.write(awk)
         command = f"gawk -f {awk_path} {self.onion_output_file} > {self.onion_output_dedup_sentences_file}"
