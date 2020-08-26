@@ -19,7 +19,7 @@ class WikipediaParser(DataParser):
         url = ''
         title = ''
         first = True
-        for line in fd.readlines():
+        for line in fd:
             parsed_line = line.split()
             if len(parsed_line) == 0:
                 continue

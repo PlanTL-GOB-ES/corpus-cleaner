@@ -13,7 +13,7 @@ class OnionParser(DataParser):
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:
         doc_sentences = []
-        for line in fd.readlines():
+        for line in fd:
             line_index, line = line.split('\t')
             # ignore the first two lines with the start tags
             if line.startswith('<doc>') or line.startswith('<p>') or line.startswith('</p>'):
