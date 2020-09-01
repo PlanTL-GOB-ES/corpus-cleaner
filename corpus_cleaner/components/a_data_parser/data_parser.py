@@ -137,7 +137,7 @@ class DataParser(CleanerComponent):
                     os.path.join(self.input_path, '**', f'*{extension}' if '*' not in extension else extension),
                     recursive=True):
                 if os.path.isfile(path):
-                    relative_paths.append(os.path.join(os.path.relpath(path.parents[0], self.input_path), path.name))
+                    relative_paths.append(path)
         return relative_paths
 
     def _guess_encoding(self, path: str, gz: bool):
