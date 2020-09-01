@@ -16,7 +16,7 @@ class SentenceParser(DataParser):
         url = None
         title = None
         i = 1
-        for line in fd.readlines():
+        for line in fd:
             line = line.strip()
             if len(line) == 0:
                 continue

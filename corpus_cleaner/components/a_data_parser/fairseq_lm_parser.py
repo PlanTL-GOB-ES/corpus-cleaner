@@ -19,7 +19,7 @@ class FairseqLMParser(DataParser):
         title = ''
         first = True
         i = 1
-        for line in fd.readlines():
+        for line in fd:
             line = line.strip()
             if first and len(line) == 0:
                 continue

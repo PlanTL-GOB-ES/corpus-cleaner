@@ -17,7 +17,7 @@ class DocumentParser(DataParser):
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:
         raw = ''
-        for line in fd.readlines():
+        for line in fd:
             if line[0:4] == '<doc':
                 if len(raw) > 0:
                     try:

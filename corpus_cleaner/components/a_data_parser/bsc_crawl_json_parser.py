@@ -15,7 +15,7 @@ class BSCCrawlJSONParser(DataParser):
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) ->\
             Iterable[Document]:
-        for idx, line in enumerate(fd.readlines()):
+        for idx, line in enumerate(fd):
             j = json.loads(line)
             url = j['url']
             keywords = j['url']
