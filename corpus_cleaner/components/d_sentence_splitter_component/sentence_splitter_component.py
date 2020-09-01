@@ -24,9 +24,14 @@ class SentenceSplitterComponent(CleanerComponentMapper):
             splitter = self.splitter_dict[document.language]
         elif document.language is None:
             if self.args.lang_filter is not None:
-                self.splitter_dict[self.args.lang_filter[0]] = \
-                    sentence_splitter.SentenceSplitter(language=self.args.lang_filter[0])
-                splitter = self.splitter_dict[self.args.lang_filter[0]]
+                try:
+                    self.splitter_dict[self.args.lang_filter[0]] = \
+                        sentence_splitter.SentenceSplitter(language=self.args.lang_filter[0])
+                    splitter = self.splitter_dict[self.args.lang_filter[0]]
+                except:
+                    self.splitter_dict['en'] = \
+                        sentence_splitter.SentenceSplitter(language='en')
+                    splitter = self.splitter_dict['en']
             else:
                 self.splitter_dict['en'] = \
                     sentence_splitter.SentenceSplitter(language='en')
