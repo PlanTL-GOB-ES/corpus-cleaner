@@ -4,6 +4,7 @@ from typing import TextIO, BinaryIO
 import os
 from typing import Tuple, Union
 from pathlib import Path
+import glob
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 import argparse
 from typing import Iterable, List, Optional
@@ -132,7 +133,9 @@ class DataParser(CleanerComponent):
         self.logger.logger.info('Getting relative filepaths')
         relative_paths = []
         for extension in self.extensions:
-            for path in Path(self.input_path).rglob(f'*{extension}' if '*' not in extension else extension):
+            for path in glob.glob(
+                    os.path.join(self.input_path, '**', f'*{extension}' if '*' not in extension else extension),
+                    recursive=True):
                 if os.path.isfile(path):
                     relative_paths.append(os.path.join(os.path.relpath(path.parents[0], self.input_path), path.name))
         return relative_paths
