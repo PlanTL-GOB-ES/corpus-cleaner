@@ -4,11 +4,14 @@ from corpus_cleaner.document import Document
 from typing import TextIO
 from typing import Tuple
 import argparse
+from typing import Optional
 
 
 class OnionParser(DataParser):
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('.dedup',), **kwargs):
-        super(OnionParser, self).__init__(args, encoding='utf-8', input_path=args.output_path,
+    def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('.dedup',), input_path: Optional[str] = None,
+                 **kwargs):
+        super(OnionParser, self).__init__(args, encoding='utf-8',
+                                          input_path=args.output_path if input_path is None else input_path,
                                           extensions=extensions, **kwargs)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:

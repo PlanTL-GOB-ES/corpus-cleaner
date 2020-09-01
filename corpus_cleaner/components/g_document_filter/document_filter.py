@@ -18,7 +18,8 @@ class DocumentFilter(CleanerComponentReducer):
         remove_globally_repeated_sentences = args.remove_glob_rep_sen \
             if args.remove_glob_rep_sen is not None else remove_glob_rep_sen
         final_path = onion_output_file if not remove_globally_repeated_sentences else onion_output_dedup_sentences_file
-        super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path)
+        super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path,
+                         input_path=out_path)
         self.output_path = out_path
         self.document_deduplication_threshold = args.document_deduplication_threshold \
             if args.document_deduplication_threshold is not None else document_deduplication_threshold

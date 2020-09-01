@@ -3,17 +3,18 @@ from corpus_cleaner.document import Document
 from . import CleanerComponent
 from .i_output_formatter import OutputFormatterFactory
 from .a_data_parser import DataParserFactory
-from typing import List
+from typing import List, Optional
 
 
 class CleanerComponentReducer(CleanerComponent):
 
-    def __init__(self, args: argparse.Namespace, format_: str, tmp_file: str, final_path: str):
+    def __init__(self, args: argparse.Namespace, format_: str, tmp_file: str, final_path: str,
+                 input_path: Optional[str]):
         super().__init__(args)
         self.format = format_
         self.tmp_file = tmp_file
         self.final_path = final_path
-        self.data_parser = DataParserFactory.get_parser(args, input_format=self.format)
+        self.data_parser = DataParserFactory.get_parser(args, input_format=self.format, input_path=input_path)
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
