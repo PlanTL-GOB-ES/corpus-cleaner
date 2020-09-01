@@ -52,9 +52,9 @@ class DocumentFilter(CleanerComponentReducer):
     def _run_onion(self):
         cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_input_file
         subprocess.run(cat_command, shell=True, check=True, universal_newlines=True)
-        onion_command = f'{self.onion_path} -m -n 1 -t {self.document_deduplication_threshold} \
-        -b {self.dedup_buffer} {self.onion_input_file}'\
-            f' > {self.onion_output_file}'
+        onion_command = f'{self.onion_path} -m -n 1 -t {self.document_deduplication_threshold} -b '
+        f'{self.dedup_buffer} {self.onion_input_file}'
+        f' > {self.onion_output_file}'
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
     def _run_remove_sentences(self, threshold: int):
