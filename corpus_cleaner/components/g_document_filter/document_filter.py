@@ -7,6 +7,7 @@ from typing import Optional
 
 class DocumentFilter(CleanerComponentReducer):
     def __init__(self, args: argparse.Namespace, document_deduplication_threshold: float = 0.5,
+                 dedup_buffer: int = 16777216,
                  remove_glob_rep_sen: int = 5, output_path: Optional[str] = None):
         # TODO: Modify "args.document_deduplication_threshold if args.document_deduplication_threshold is not None
         # else..." pattern
@@ -23,6 +24,8 @@ class DocumentFilter(CleanerComponentReducer):
             if args.document_deduplication_threshold is not None else document_deduplication_threshold
         self.remove_glob_rep_sen = args.remove_glob_rep_sen \
             if args.remove_glob_rep_sen is not None else remove_glob_rep_sen
+        self.dedup_buffer = args.dedup_buffer \
+            if args.dedup_buffer is not None else dedup_buffer
         self.onion_input_file = onion_input_file
         self.onion_output_file = onion_output_file
         self.onion_path = os.path.join('lib', 'onion-1.2', 'bin', 'onion')
@@ -38,6 +41,8 @@ class DocumentFilter(CleanerComponentReducer):
         parser.add_argument('--remove-glob-rep-sen', type=int, default=5,
                             help='Whether to remove corpus-level repeated sentences (threshold of repetitions; -1'
                                  'to deactivate)')
+        parser.add_argument('--dedup-buffer', type=int, default=16777216,
+                            help='Deduplication buffer size, in bytes (default: 16777216)')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -47,7 +52,8 @@ class DocumentFilter(CleanerComponentReducer):
     def _run_onion(self):
         cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_input_file
         subprocess.run(cat_command, shell=True, check=True, universal_newlines=True)
-        onion_command = f'{self.onion_path} -m -n 1 -t {self.document_deduplication_threshold} {self.onion_input_file}'\
+        onion_command = f'{self.onion_path} -m -n 1 -t {self.document_deduplication_threshold} \
+        -b {self.dedup_buffer} {self.onion_input_file}'\
             f' > {self.onion_output_file}'
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
