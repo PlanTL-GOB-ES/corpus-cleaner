@@ -3,7 +3,7 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 data_dir=${data_dir}
-exclude_names=${exclude_names:-.txt}
+exclude_names=${exclude_names}
 sample_size=${sample_size}
 number_files=${number_files}
 seed=${seed:-42}
@@ -18,9 +18,14 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
+# handle arguments values
 total_number_files=$(ls ${data_dir} | wc -l)
 if [[ -z "${number_files}" ]]; then
   number_files=${total_number_files}
+fi
+
+if [[ -z "${exclude_names}" ]]; then
+  exclude_names=false
 fi
 
 # Generates random seed for shuffling
@@ -37,8 +42,13 @@ function random_files_sample(){
     exclude_names=$3
     seed=$4
 
-    find ${data_dir} -type f -not -name "*${exclude_names}*" | \
-      shuf -n ${number_files} --random-source=<(get_seeded_random ${seed})
+    if [[ ${exclude_names} == "false" ]]; then
+        find ${data_dir} -type f | \
+         shuf -n ${number_files} --random-source=<(get_seeded_random ${seed})
+    else
+        find ${data_dir} -type f -not -name "*${exclude_names}*" | \
+          shuf -n ${number_files} --random-source=<(get_seeded_random ${seed})
+    fi
 }
 
 function random_lines_sample(){
@@ -57,7 +67,8 @@ function count_file_lines(){
 
 # 1: select the files to extract from
 files=$(random_files_sample ${data_dir} ${number_files} ${exclude_names})
-echo "Selected files: ${files}"
+echo "Selected ${number_files} files"
+echo "${files}"
 
 # 2: count the total number of lines, the minimum number of lines and the number of lines to extract per files
 total_lines=$(cat ${files} | sed '/^$/d' | wc -l)
