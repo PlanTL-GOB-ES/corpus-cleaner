@@ -84,7 +84,7 @@ class DataParser(CleanerComponent):
         return False
 
     def _treat_file(self, idx_filepath: int, relative_filepath: str) -> Iterable[Document]:
-        abs_path = os.path.join(self.input_path, relative_filepath)
+        abs_path = os.path.join(relative_filepath)
         if self.bytes:
             with open(abs_path, 'rb') as f:
                 for doc in self._parse_binary_file(f, relative_filepath, idx_filepath):
@@ -137,7 +137,7 @@ class DataParser(CleanerComponent):
                     os.path.join(self.input_path, '**', f'*{extension}' if '*' not in extension else extension),
                     recursive=True):
                 if os.path.isfile(path):
-                    relative_paths.append(os.path.join(os.path.relpath(path.parents[0], self.input_path), path.name))
+                    relative_paths.append(path)
         return relative_paths
 
     def _guess_encoding(self, path: str, gz: bool):

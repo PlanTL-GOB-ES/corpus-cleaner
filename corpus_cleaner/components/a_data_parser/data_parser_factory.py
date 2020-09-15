@@ -15,7 +15,8 @@ class DataParserFactory:
     VALID_INPUT_FORMATS = ['wikipedia', 'bsc-crawl-json', 'fairseq-lm', 'sentence', 'warc', 'document']
 
     @staticmethod
-    def get_parser(args: argparse.Namespace, input_format: Optional[str] = None, **kwargs)\
+    def get_parser(args: argparse.Namespace, input_format: Optional[str] = None, input_path: Optional[str] = None,
+                   **kwargs)\
             -> DataParser:
         if input_format is None:
             if args.input_format == 'wikipedia':
@@ -34,7 +35,8 @@ class DataParserFactory:
                 raise NotImplementedError(args.input_format)
         else:
             if input_format == 'onion':
-                return OnionParser(args, **kwargs)
+                args.encoding = 'utf-8'
+                return OnionParser(args, input_path=input_path, **kwargs)
             raise NotImplementedError()
 
     @staticmethod
