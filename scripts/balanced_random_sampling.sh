@@ -47,7 +47,7 @@ function random_lines_sample(){
     number_lines=$3
     seed=$4
 
-    cat ${file} | sed '/^$/d' | shuf -n  ${number_lines} --random-source=<(get_seeded_random ${seed})
+    cat ${file} | sed '/^$/d' | shuf -n  ${number_lines} --random-source=<(get_seeded_random ${seed}) | sort | uniq
 }
 
 function count_file_lines(){
