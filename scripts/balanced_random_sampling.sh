@@ -57,7 +57,7 @@ function random_lines_sample(){
     number_lines=$3
     seed=$4
 
-    cat ${file} | sed '/^$/d' | shuf -n  ${number_lines} --random-source=<(get_seeded_random ${seed}) | sort | uniq
+    cat ${file} | sed '/^$/d' | sort | uniq | shuf -n  ${number_lines} --random-source=<(get_seeded_random ${seed})
 }
 
 function count_file_lines(){
@@ -92,5 +92,7 @@ for file in ${files}; do
     random_lines_sample ${file} ${sample_size} ${number_lines_sample} ${seed} >> ${output_file}
 done
 
+echo "Removing duplicates from the final sample"
+sort -u ${output_file} -o ${output_file}
 sample_lines=$(count_file_lines ${output_file})
 echo "Sampled ${sample_lines} total lines into file: $(realpath ${output_file})"
