@@ -197,12 +197,13 @@ class PreFilterer(CleanerComponentMapper):
             self.dictionary_filter_pattern = re.compile("|".join(self.dictionary_filter))
             self.filters.append(self._filter_by_dict)
         if self.space_normalization is not None:
-            self.punc_space_pattern = re.compile("(\s)([!',:;?.])")
             self.punc_no_space_pattern = re.compile("(\w+|\"|')([!,:;?])([a-zA-Z]\w)")
             if self.lang_filter == ['ca']:
+                self.punc_space_pattern = re.compile("(\s)([!,:;?.])")
                 self.quote_no_space_pattern1 = re.compile("(\w)([«“\"])(\w+(\s\w+)*)([\"”»])")
                 self.quote_no_space_pattern2 = re.compile("([«“\"])(\w+(\s\w+)*)([\"”»])(\w+)")
             else:
+                self.punc_space_pattern = re.compile("(\s)([!',:;?.])")
                 self.quote_no_space_pattern1 = re.compile("(\w)([«“'\"])(\w+(\s\w+)*)(['\"”»])")
                 self.quote_no_space_pattern2 = re.compile("([«“'\"])(\w+(\s\w+)*)(['\"”»])(\w+)")
             self.zero_width_space_pattern = re.compile('\u200b')
