@@ -98,6 +98,8 @@ class Cleaner:
         parser.add_argument('--backend', type=str, default='mp', help='Parallel backend (mp or ray)')
         parser.add_argument('--only-reduce', action='store_true', help='Only document filter')
         parser.add_argument('--only-reduce-output', action='store_true', help='Only document filter for output files')
+        parser.add_argument('--debug-errors-mode', action='store_true',
+                            help='Activate the debug error mode to compare the original and cleaned sentences')
 
     @staticmethod
     def check_args(args: argparse.Namespace):

@@ -60,28 +60,14 @@ class SentenceFilter(CleanerComponentMapper):
                 self.dictionary_filter = [line.strip() for line in f.readlines()]
         self.dictionary_filter_pattern = None
         self.filters = []
-        self._get_filters()
         self.code_keywords_pattern = re.compile('\\b(var|function|const|if|else|script)\\b')
         self.code_chars_pattern = re.compile('[;=&\[\](){}/\\\\]')
         self.dedup_same_doc_sentences = \
             not args.no_dedup_same_doc_sentences if args.no_dedup_same_doc_sentences is not None else dedup_same_doc_sentences
+        self.debug_errors_mode = args.debug_errors_mode
+        self.sentences_duplicate = None
 
-    def _filter(self, document: Optional[Document]) -> Optional[Document]:
-        sentences_filtered = []
-        sentences_deduplicate = document.sentences
-        if self.dedup_same_doc_sentences:
-            # first, de-duplicate sentences
-            sentences_deduplicate = OrderedSet(document.sentences).items
-        for sent in sentences_deduplicate:
-            # keep only sentences that are not filtered out by all the filters
-            if all(_filter(sent) for _filter in self.filters):
-                sentences_filtered.append(sent)
-        # return the document if contains at least one sentence
-        if sentences_filtered:
-            document.sentences = sentences_filtered
-            return document
-        else:
-            return None
+        self._get_filters()
 
     def _get_filters(self):
         if self.char_length_filter_sentence is not None:
@@ -96,6 +82,8 @@ class SentenceFilter(CleanerComponentMapper):
         if self.dictionary_filter is not None:
             self.dictionary_filter_pattern = re.compile("|".join(self.dictionary_filter))
             self.filters.append(self._filter_by_dict)
+        if self.dedup_same_doc_sentences:
+            self.filters.append(self._filter_by_duplicate)
 
     def _filter_by_char_len(self, sentence: str) -> bool:
         if len(sentence) > self.char_length_filter_sentence:
@@ -125,7 +113,40 @@ class SentenceFilter(CleanerComponentMapper):
             return False
         return True
 
+    # TODO: check if this new implementation work properly
+    def _filter_by_duplicate(self, sentence: str) -> bool:
+        if sentence in self.sentences_duplicate:
+            return False
+        return True
+
+    def _filter(self, document: Optional[Document], debug: bool) -> Optional[Document]:
+        sentences = []
+        # For each document, get the set of duplicate sentences to remove
+        self.sentences_duplicate = set(sentence for sentence in document.sentences
+                                       if document.sentences.count(sentence) > 1)
+        for sentence in document.sentences:
+            keep = True
+            for filter_ in self.filters:
+                keep = filter_(sentence)
+                if not keep:
+                    # if debug, keep an empty sentence as cleaned
+                    if debug:
+                        sentences.append('')
+                    break
+            if keep:
+                sentences.append(sentence)
+        # In normal model, return the document only when all the sentences are not empty
+        if all(len(sentence) > 1 for sentence in sentences):
+            document.sentences = sentences
+            return document
+        else:
+            # if debug mode is on, return also document with
+            if debug:
+                document.sentences = sentences
+                return document
+        return None
+
     def apply(self, document: Optional[Document]) -> Optional[Document]:
-        return self._filter(document)
+        return self._filter(document, self.debug_errors_mode)
 
 # TODO: UDP. homoglyphs in prefilterer
