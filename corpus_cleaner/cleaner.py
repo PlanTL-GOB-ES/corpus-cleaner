@@ -73,7 +73,7 @@ class Cleaner:
                             args=None, output_format='onion',
                             output_path=os.path.join(self.tmp_dir,  os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
         self.reducer = REDUCER if not args.debug_errors_mode else DummyReducer
-        if args.components is not None:
+        if args.components is not None and not args.debug_errors_mode:
             self.reducer = None
             for comp in args.components:
                 if comp == REDUCER.__name__:

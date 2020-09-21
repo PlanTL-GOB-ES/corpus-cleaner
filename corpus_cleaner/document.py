@@ -28,19 +28,19 @@ class Document:
     def attr_str(self) -> str:
         res = []
         if self.title is not None:
-            res.append(('title', self.title))
+            res.append(('title', self.title.replace('\n', ' ')))
         if self.url is not None:
-            res.append(('url', self.url))
+            res.append(('url', self.url.replace('\n', ' ')))
         if self.id is not None:
-            res.append(('id', self.id))
+            res.append(('id', self.id.replace('\n', ' ')))
         if self.heads is not None:
-            res.append(('heads', self.heads))
+            res.append(('heads', self.heads.replace('\n', ' ')))
         if self.keywords is not None:
-            res.append(('keywords', self.keywords))
+            res.append(('keywords', self.keywords.replace('\n', ' ')))
         if self.filename is not None:
-            res.append(('filename', self.filename))
+            res.append(('filename', self.filename.replace('\n', ' ')))
         if self.language is not None:
-            res.append(('language', self.language))
+            res.append(('language', self.language.replace('\n', ' ')))
         s = ''
         for e in res:
             s += f'{e[0]}="{e[1]}" '
