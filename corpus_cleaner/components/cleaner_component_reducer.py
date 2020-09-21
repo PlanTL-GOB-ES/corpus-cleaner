@@ -44,7 +44,7 @@ class CleanerComponentReducer(CleanerComponent):
 class DummyReducer(CleanerComponentReducer):
     def __init__(self, args: argparse.Namespace, output_path: Optional[str] = None):
         out_path = output_path if output_path is not None else args.output_path
-        onion_input_file = os.path.join(out_path, 'input.onion')
+        onion_input_file = os.path.join(out_path, 'input.onion.debug')
         final_path = onion_input_file
         super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path,
                          input_path=out_path)

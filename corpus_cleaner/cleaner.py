@@ -72,8 +72,8 @@ class Cleaner:
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
                             args=None, output_format='onion',
                             output_path=os.path.join(self.tmp_dir,  os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
-        self.reducer = REDUCER if not args.debug_errors_mode else DummyReducer
-        if args.components is not None and not args.debug_errors_mode:
+        self.reducer = REDUCER if not args.debug else DummyReducer
+        if args.components is not None and not args.debug:
             self.reducer = None
             for comp in args.components:
                 if comp == REDUCER.__name__:
@@ -98,7 +98,7 @@ class Cleaner:
         parser.add_argument('--backend', type=str, default='mp', help='Parallel backend (mp or ray)')
         parser.add_argument('--only-reduce', action='store_true', help='Only document filter')
         parser.add_argument('--only-reduce-output', action='store_true', help='Only document filter for output files')
-        parser.add_argument('--debug-errors-mode', action='store_true',
+        parser.add_argument('--debug', action='store_true',
                             help='Activate the debug error mode to compare the original and cleaned sentences')
 
     @staticmethod

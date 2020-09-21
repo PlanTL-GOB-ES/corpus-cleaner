@@ -8,7 +8,8 @@ from typing import Optional
 
 
 class OnionParser(DataParser):
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('.dedup',), input_path: Optional[str] = None,
+    def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('.dedup', '.debug'),
+                 input_path: Optional[str] = None,
                  **kwargs):
         super(OnionParser, self).__init__(args, encoding='utf-8',
                                           input_path=args.output_path if input_path is None else input_path,
@@ -18,7 +19,8 @@ class OnionParser(DataParser):
         doc_sentences = []
         doc = Document(content='')
         for line in fd:
-            line_index, line = line.split('\t')
+            if not self.debug:
+                line_index, line = line.split('\t')
             # ignore the first two lines with the start tags
             if line.startswith('<doc'):
                 sp = line.split()
@@ -35,5 +37,5 @@ class OnionParser(DataParser):
                 yield doc
                 doc_sentences = []
             else:
-                if line_index == '0':
+                if self.debug or line_index == '0':
                     doc_sentences.append(line.strip())

@@ -108,7 +108,6 @@ class PreFilterer(CleanerComponentMapper):
         self.seg_sentences = args.seg_sentences if args.seg_sentences is not None else seg_sentences
         self.input_format = args.input_format
         self.filters = []
-        self.debug_errors_mode = args.debug_errors_mode
         self._build_filters()
 
     # TODO: implement decorator that register the name of the operation (replace/filter) applied to each sentence
@@ -305,14 +304,11 @@ class PreFilterer(CleanerComponentMapper):
             keep = filter_(document)
             if not keep:
                 # if debug, keep an empty document as cleaned
-                if self.debug_errors_mode:
+                if self.debug:
                     document.content = ''
                 break
-        if keep:
+        if keep or self.debug:
             return document
-        else:
-            if self.debug_errors_mode:
-                return document
         return None
 
         # TODO: make sure decorator is implemented before using these lines

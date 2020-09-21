@@ -64,7 +64,7 @@ class SentenceFilter(CleanerComponentMapper):
         self.code_chars_pattern = re.compile('[;=&\[\](){}/\\\\]')
         self.dedup_same_doc_sentences = \
             not args.no_dedup_same_doc_sentences if args.no_dedup_same_doc_sentences is not None else dedup_same_doc_sentences
-        self.debug_errors_mode = args.debug_errors_mode
+        self.debug = args.debug
         self.sentences_duplicate = None
 
         self._get_filters()
@@ -130,7 +130,7 @@ class SentenceFilter(CleanerComponentMapper):
                 keep = filter_(sentence)
                 if not keep:
                     # if debug, keep an empty sentence as cleaned
-                    if self.debug_errors_mode:
+                    if self.debug:
                         sentences.append('')
                     break
             if keep:
@@ -141,7 +141,7 @@ class SentenceFilter(CleanerComponentMapper):
             return document
         else:
             # if debug mode is on, return also document with
-            if self.debug_errors_mode:
+            if self.debug:
                 document.sentences = sentences
                 return document
         return None
