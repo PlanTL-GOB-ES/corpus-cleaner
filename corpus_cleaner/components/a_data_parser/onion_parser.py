@@ -26,7 +26,7 @@ class OnionParser(DataParser):
                     doc = Document.parse_str(sp[1:-1])
                 else:
                     doc = Document(content='')
-            if line.startswith('<p>') or line.startswith('</p>'):
+            elif line.startswith('<p>') or line.startswith('</p>'):
                 continue
             # empty the document sentences list when a new document is reached and return the document object
             elif line.startswith('</doc>'):
