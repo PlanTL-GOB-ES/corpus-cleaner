@@ -4,6 +4,8 @@ from . import CleanerComponent
 from .i_output_formatter import OutputFormatterFactory
 from .a_data_parser import DataParserFactory
 from typing import List, Optional
+import os
+import subprocess
 
 
 class CleanerComponentReducer(CleanerComponent):
@@ -37,3 +39,28 @@ class CleanerComponentReducer(CleanerComponent):
         # self.logger.info('Outputting...')
         output_formatter = OutputFormatterFactory.get_output_formatter(self.args, self.format, self.tmp_file)
         output_formatter.apply(documents)
+
+
+class DummyReducer(CleanerComponentReducer):
+    def __init__(self, args: argparse.Namespace, output_path: Optional[str] = None):
+        out_path = output_path if output_path is not None else args.output_path
+        onion_input_file = os.path.join(out_path, 'input.onion')
+        final_path = onion_input_file
+        super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path,
+                         input_path=out_path)
+        self.output_path = out_path
+        self.onion_input_file = onion_input_file
+        self.onion_output_file = final_path
+        self.onion_tmp = os.path.join(out_path, 'tmp')
+
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser):
+        pass
+
+    @staticmethod
+    def check_args(args: argparse.Namespace):
+        pass
+
+    def _reduce(self):
+        cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_input_file
+        subprocess.run(cat_command, shell=True, check=True, universal_newlines=True)
