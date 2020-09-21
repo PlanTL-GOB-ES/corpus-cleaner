@@ -119,7 +119,7 @@ class SentenceFilter(CleanerComponentMapper):
             return False
         return True
 
-    def _filter(self, document: Optional[Document], debug: bool) -> Optional[Document]:
+    def _filter(self, document: Optional[Document]) -> Optional[Document]:
         sentences = []
         # For each document, get the set of duplicate sentences to remove
         self.sentences_duplicate = set(sentence for sentence in document.sentences
@@ -130,7 +130,7 @@ class SentenceFilter(CleanerComponentMapper):
                 keep = filter_(sentence)
                 if not keep:
                     # if debug, keep an empty sentence as cleaned
-                    if debug:
+                    if self.debug_errors_mode:
                         sentences.append('')
                     break
             if keep:
@@ -141,12 +141,12 @@ class SentenceFilter(CleanerComponentMapper):
             return document
         else:
             # if debug mode is on, return also document with
-            if debug:
+            if self.debug_errors_mode:
                 document.sentences = sentences
                 return document
         return None
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
-        return self._filter(document, self.debug_errors_mode)
+        return self._filter(document)
 
 # TODO: UDP. homoglyphs in prefilterer

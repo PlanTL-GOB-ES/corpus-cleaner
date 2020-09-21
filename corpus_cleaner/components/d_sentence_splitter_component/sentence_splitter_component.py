@@ -20,7 +20,7 @@ class SentenceSplitterComponent(CleanerComponentMapper):
         self.splitter_dict = {}
         self.debug_errors_mode = args.debug_errors_mode
 
-    def _split(self, document: Optional[Document], debug: bool) -> Optional[Document]:
+    def _split(self, document: Optional[Document]) -> Optional[Document]:
         if document.language in self.splitter_dict:
             splitter = self.splitter_dict[document.language]
         elif document.language is None:
@@ -42,7 +42,7 @@ class SentenceSplitterComponent(CleanerComponentMapper):
             self.splitter_dict[document.language] = sentence_splitter.SentenceSplitter(language=document.language)
             splitter = self.splitter_dict[document.language]
 
-        if not document.content and debug:
+        if not document.content and self.debug_errors_mode:
             # If the document received is empty since has been filtered out in the previous step,
             # but the debug mode is activated, store a number of empty cleaned sentences equal to
             # the number of lines in the original content
@@ -56,4 +56,4 @@ class SentenceSplitterComponent(CleanerComponentMapper):
         return document
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
-        return self._split(document, self.debug_errors_mode)
+        return self._split(document)

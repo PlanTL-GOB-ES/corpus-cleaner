@@ -276,7 +276,7 @@ class PreFilterer(CleanerComponentMapper):
             return False
         return True
 
-    def _filter(self, document: Optional[Document], debug: bool) -> Optional[Document]:
+    def _filter(self, document: Optional[Document]) -> Optional[Document]:
         if self.language_normalization:
             document.content = self._language_normalization(self.lang_filter, document.content)
         if self.replace_emails:
@@ -300,15 +300,27 @@ class PreFilterer(CleanerComponentMapper):
             keep = filter_(document)
             if not keep:
                 # if debug, keep an empty document as cleaned
-                if debug:
+                if self.debug_errors_mode:
                     document.content = ''
                 break
         if keep:
             return document
         else:
-            if debug:
+            if self.debug_errors_mode:
                 return document
         return None
 
+        # TODO: make sure decorator is implemented before using these lines
+        # for filter_ in self.filters:
+        #     keep = filter_(document)
+        #     if not keep:
+        #         break
+        # if keep or self.debug_errors_mode:
+        #     return document
+        # return None
+        ##########################
+
+
+
     def apply(self, document: Optional[Document]) -> Optional[Document]:
-        return self._filter(document, self.debug_errors_mode)
+        return self._filter(document)
