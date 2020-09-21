@@ -325,7 +325,5 @@ class PreFilterer(CleanerComponentMapper):
         # return None
         ##########################
 
-
-
     def apply(self, document: Optional[Document]) -> Optional[Document]:
         return self._filter(document)

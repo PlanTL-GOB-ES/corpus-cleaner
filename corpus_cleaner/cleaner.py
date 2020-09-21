@@ -15,6 +15,7 @@ from corpus_cleaner.components.cleaner_component import CleanerComponent
 from corpus_cleaner.document import Document
 from collections import OrderedDict
 from corpus_cleaner.par_utils import MappingPipeline, PipelineLogger
+from corpus_cleaner.components.cleaner_component_reducer import DummyReducer
 import argparse
 import logging
 import os
@@ -26,7 +27,6 @@ MAPPERS = [
     EncodingFixer, PreFilterer,
     SentenceSplitterComponent, SentenceFilter, Normalizer
 ]
-
 REDUCER = DocumentFilter
 
 POSTMAPPERS = [DocumentOrganizer]
@@ -72,7 +72,7 @@ class Cleaner:
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
                             args=None, output_format='onion',
                             output_path=os.path.join(self.tmp_dir,  os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
-        self.reducer = REDUCER
+        self.reducer = REDUCER if not args.debug_errors_mode else DummyReducer
         if args.components is not None:
             self.reducer = None
             for comp in args.components:

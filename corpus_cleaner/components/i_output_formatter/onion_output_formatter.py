@@ -15,7 +15,8 @@ class OnionOutputFormatter(OutputFormatter):
 
     def _write_document(self, document: Document):
         if document is not None:
-            doc_onion = self.start_doc_tag + document.attr_str() + '\n'.join(document.sentences) + self.end_doc_tag
+            doc_onion = self.start_doc_tag + document.attr_str() + self.start_p_tag + '\n'.join(document.sentences) + \
+                        self.end_doc_tag
             self.fd.writelines(doc_onion)
 
     def _end_writing(self):
