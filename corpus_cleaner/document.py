@@ -30,6 +30,8 @@ class Document:
             res.append(('url', self.url))
         if self.id is not None:
             res.append(('id', self.id))
+        if self.heads is not None:
+            res.append(('heads', self.heads))
         if self.keywords is not None:
             res.append(('keywords', self.keywords))
         if self.filename is not None:
@@ -73,7 +75,7 @@ class Document:
                         url=get_att('url'),
                         id_=get_att('id'),
                         keywords=get_att('keywords'),
-                        heads=None,
+                        heads=get_att('heads'),
                         language=get_att('language')
                         )
 
