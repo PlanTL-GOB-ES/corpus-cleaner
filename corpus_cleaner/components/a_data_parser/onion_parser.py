@@ -16,15 +16,23 @@ class OnionParser(DataParser):
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:
         doc_sentences = []
+        doc = Document(content='')
         for line in fd:
             line_index, line = line.split('\t')
             # ignore the first two lines with the start tags
-            if line.startswith('<doc>') or line.startswith('<p>') or line.startswith('</p>'):
+            if line.startswith('<doc'):
+                sp = line.split()
+                if len(sp) > 2:
+                    doc = Document.parse_str(sp[1:-1])
+                else:
+                    doc = Document(content='')
+            if line.startswith('<p>') or line.startswith('</p>'):
                 continue
             # empty the document sentences list when a new document is reached and return the document object
             elif line.startswith('</doc>'):
                 # TODO: add the raw content for each document with the Onion tags
-                yield Document(content='', sentences=doc_sentences)
+                doc.sentences = doc_sentences
+                yield doc
                 doc_sentences = []
             else:
                 if line_index == '0':

@@ -175,7 +175,7 @@ class PreFilterer(CleanerComponentMapper):
             # slightly modified from:
             # https://stackoverflow.com/questions/6718633/python-regular-expression-again-match-url
             self.urls_pattern = re.compile(
-                rf'(@)?((http|https)://)?([{self.lang_chars}0-9./?\\\\@\-—_=#])+\.[a-z]{{2,6}}([{self.lang_chars}0-9&/\\\\+~*?%:!@—_=#()-])*')
+                rf'\((@)?((http|https)://)?([{self.lang_chars}0-9./?\\\\@\-—_=#])+\.[a-z]{{2,6}}([{self.lang_chars}0-9&/\\\\+~*?%:!@—_=#()-])*')
             self.urls_pattern2 = re.compile('(\[URL\]\.?\w*\s*)+')
         if self.char_length_filter > 0:
             self.filters.append(self._filter_by_length)
@@ -206,10 +206,15 @@ class PreFilterer(CleanerComponentMapper):
             self.dictionary_filter_pattern = re.compile("|".join(self.dictionary_filter))
             self.filters.append(self._filter_by_dict)
         if self.space_normalization is not None:
-            self.punc_space_pattern = re.compile("(\s)([!',:;?.])")
             self.punc_no_space_pattern = re.compile("(\w+|\"|')([!,:;?])([a-zA-Z]\w)")
-            self.quote_no_space_pattern1 = re.compile("(\w)([«“'\"])(\w+(\s\w+)*)(['\"”»])")
-            self.quote_no_space_pattern2 = re.compile("([«“'\"])(\w+(\s\w+)*)(['\"”»])(\w+)")
+            if self.lang_filter == ['ca']:
+                self.punc_space_pattern = re.compile("(\s)([!,:;?.])")
+                self.quote_no_space_pattern1 = re.compile("(\w)([«“\"])(\w+(\s\w+)*)([\"”»])")
+                self.quote_no_space_pattern2 = re.compile("([«“\"])(\w+(\s\w+)*)([\"”»])(\w+)")
+            else:
+                self.punc_space_pattern = re.compile("(\s)([!',:;?.])")
+                self.quote_no_space_pattern1 = re.compile("(\w)([«“'\"])(\w+(\s\w+)*)(['\"”»])")
+                self.quote_no_space_pattern2 = re.compile("([«“'\"])(\w+(\s\w+)*)(['\"”»])(\w+)")
             self.zero_width_space_pattern = re.compile('\u200b')
         if self.seg_sentences:
             self.final_sentence_pattern1 = regex.compile(r"(\s)(\p{Ll}+)([.!?:]*)(\p{Lu})(\p{Ll}+)([\s.,;:?!])")
