@@ -51,7 +51,9 @@ class SentenceSplitterComponent(CleanerComponentMapper):
         else:
             document.sentences = [sent for sent in splitter.split(document.content)]
             document.sentences_orig = [sent for sent in splitter.split(document.content_orig)]
-
+            # Return None the original sentences are not aligned to the cleaned sentences
+            if not len(document.sentences) == len(document.sentences_orig):
+                return None
         return document
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
