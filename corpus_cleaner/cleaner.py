@@ -59,7 +59,7 @@ class Cleaner:
         if not self.args.only_reduce:
             self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                            args=None, output_format='onion',
+                            args=self.args, output_format='onion',
                             output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
         else:
             class SentencePacker(CleanerComponentMapper):
@@ -70,7 +70,7 @@ class Cleaner:
 
             self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + [SentencePacker] + \
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                            args=None, output_format='onion',
+                            args=self.args, output_format='onion',
                             output_path=os.path.join(self.tmp_dir,  os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
         self.reducer = REDUCER if not args.debug else DummyReducer
         if args.components is not None and not args.debug:

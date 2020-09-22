@@ -12,8 +12,7 @@ class OutputFormatterFactory:
 
     @staticmethod
     def get_output_formatter(args: argparse.Namespace, output_format: Optional[str] = None,
-                             output_path: Optional[str] = None, **kwargs) ->\
-            OutputFormatter:
+                             output_path: Optional[str] = None, **kwargs) -> OutputFormatter:
         if output_format is None:
             if args.output_format == 'fairseq-lm':
                 return FairseqLMOutputFormatter(args, **kwargs)
@@ -29,7 +28,6 @@ class OutputFormatterFactory:
 
     @staticmethod
     def get_output_formatter_mapper(args: argparse.Namespace, output_format: Optional[str] = None,
-                                    output_path: Optional[str] = None, **kwargs) -> \
-            OutputFormatterMapper:
+                                    output_path: Optional[str] = None, **kwargs) -> OutputFormatterMapper:
         return OutputFormatterMapper(args, OutputFormatterFactory.get_output_formatter(args, output_format, output_path,
                                                                                        **kwargs))
