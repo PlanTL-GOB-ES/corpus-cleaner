@@ -15,6 +15,7 @@ from corpus_cleaner.components.cleaner_component import CleanerComponent
 from corpus_cleaner.document import Document
 from collections import OrderedDict
 from corpus_cleaner.par_utils import MappingPipeline, PipelineLogger
+from corpus_cleaner.components.cleaner_component_reducer import DummyReducer
 import argparse
 import logging
 import os
@@ -26,7 +27,6 @@ MAPPERS = [
     EncodingFixer, PreFilterer,
     SentenceSplitterComponent, SentenceFilter, Normalizer
 ]
-
 REDUCER = DocumentFilter
 
 POSTMAPPERS = [DocumentOrganizer]
@@ -59,7 +59,7 @@ class Cleaner:
         if not self.args.only_reduce:
             self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                            args=None, output_format='onion',
+                            args=self.args, output_format='onion',
                             output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
         else:
             class SentencePacker(CleanerComponentMapper):
@@ -70,10 +70,10 @@ class Cleaner:
 
             self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + [SentencePacker] + \
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                            args=None, output_format='onion',
+                            args=self.args, output_format='onion',
                             output_path=os.path.join(self.tmp_dir,  os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
-        self.reducer = REDUCER
-        if args.components is not None:
+        self.reducer = REDUCER if not args.debug else DummyReducer
+        if args.components is not None and not args.debug:
             self.reducer = None
             for comp in args.components:
                 if comp == REDUCER.__name__:
@@ -98,6 +98,8 @@ class Cleaner:
         parser.add_argument('--backend', type=str, default='mp', help='Parallel backend (mp or ray)')
         parser.add_argument('--only-reduce', action='store_true', help='Only document filter')
         parser.add_argument('--only-reduce-output', action='store_true', help='Only document filter for output files')
+        parser.add_argument('--debug', action='store_true',
+                            help='Activate the debug error mode to compare the original and cleaned sentences')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
