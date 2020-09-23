@@ -38,4 +38,4 @@ class OnionParser(DataParser):
                 doc_sentences = []
             else:
                 if self.debug or line_index == '0':
-                    doc_sentences.append(line.strip())
+                    doc_sentences.append(line.strip('\n'))
