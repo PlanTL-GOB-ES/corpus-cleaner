@@ -136,7 +136,7 @@ class SentenceFilter(CleanerComponentMapper):
             if keep:
                 sentences.append(sentence)
         # In normal model, return the document only when all the sentences are not empty
-        if all(len(sentence) > 1 for sentence in sentences):
+        if not '' in sentences and len(sentences) > 0:
             document.sentences = sentences
             return document
         else:
