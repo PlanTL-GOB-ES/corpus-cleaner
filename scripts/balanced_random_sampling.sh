@@ -84,7 +84,7 @@ echo "Total number of lines: ${total_lines}"
 
 # 3: Sample number_lines_sample from each files
 echo "Balanced sampling..."
-output_file=$(basename ${data_dir})_sample
+output_file=$(basename ${data_dir})_sample.txt
 echo -n > ${output_file}
 
 for file in ${files}; do
