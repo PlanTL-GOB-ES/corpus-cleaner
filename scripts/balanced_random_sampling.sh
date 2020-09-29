@@ -91,16 +91,17 @@ fi
 # 1: select the files to extract from
 files=$(find_files "${data_dirs}" "${exclude_names}")
 files_sample=$(random_files_sample "${files}" ${number_files} ${seed})
-echo -e "Selected ${number_files} files:\n${files_sample}"
+number_files_sample=$(echo ${files_sample} | wc -w)
+echo -e "Selected ${number_files_sample} files:\n${files_sample}"
 
 # 2: count the total number of lines, the minimum number of lines and the number of lines to extract per files
 total_lines=$(cat ${files_sample} | sed '/^$/d' | wc -l)
 min_lines_number=$(wc -l ${files_sample} | grep -oP "^\s*[0-9]*" | sort | head -n 1)
-number_lines_sample=$(echo "${sample_size}/${number_files}" | bc )
+number_lines_sample=$(echo "${sample_size}/${number_files_sample}" | bc )
 echo "number lines sample: ${number_lines_sample}"
 echo "minimum number of lines: ${min_lines_number}"
 if [[ ${number_lines_sample} -gt ${min_lines_number} ]]; then
-   echo "Number of samples lines per files greater than minimum number of lines available."
+   echo "Number of samples lines per files greater than minimum number of lines available." \
         "Set sample_size argument to smaller value"
    exit 0
 fi
