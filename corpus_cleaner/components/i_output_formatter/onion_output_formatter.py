@@ -2,7 +2,7 @@ from .output_formatter import OutputFormatter
 from corpus_cleaner.document import Document
 import argparse
 
-SEPARATOR = "\t"
+SEPARATOR = "|||"
 
 
 class OnionOutputFormatter(OutputFormatter):
