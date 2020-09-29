@@ -70,6 +70,11 @@ function count_file_lines(){
 
 
 # handle arguments values before to perform the sampling
+if [[ ${number_files} -gt ${sample_size} ]]; then
+    echo "Set number_files value to a value smaller or equal to sample_size value"
+    exit 0
+fi
+
 if [[ -z "${exclude_names}" ]]; then
   exclude_names=false
 fi
