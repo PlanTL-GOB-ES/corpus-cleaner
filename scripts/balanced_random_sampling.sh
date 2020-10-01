@@ -100,7 +100,7 @@ else
 fi
 
 datetime=$(date '+%d-%m-%Y_%H-%M-%S');
-log_file=${SCRIPT_DIR}/sample_${datetime}.log
+log_file=$(dirname ${output_file})/sample_${datetime}.log
 
 # 1: select the files to extract from
 number_dirs=$(echo ${data_dirs} | wc -w)
