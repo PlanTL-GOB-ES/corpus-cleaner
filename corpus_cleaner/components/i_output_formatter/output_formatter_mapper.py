@@ -20,7 +20,16 @@ class OutputFormatterMapper(CleanerComponent):
 
     def __call__(self, documents: Iterable[Document]):
         self.output_formatter.init_writing()
+        written_documents = []
         for document in documents:
             self.output_formatter._write_document(document)
+            if document.url and document.id:
+                id_ = (document.filename, document.id, document.url)
+            elif document.id:
+                id_ = (document.filename, document.id)
+            else:
+                id_ = (document.filename,)
+            written_documents.append(id_)
         self.output_formatter.end_writing()
+        return written_documents
 

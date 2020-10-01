@@ -33,6 +33,7 @@ class Composed:
         object.
         """
         self.functions = functions()
+        self.target = self.functions[-1].__class__.__name__
 
     def __call__(self, arg: T) -> T:
         """
@@ -127,17 +128,22 @@ class MappingPipeline:
             if self.backend == 'mp':
                 with multiprocessing.Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory,)) \
                         as pool:
-                            res = pool.map(self._map_f, self.streams)
+                            res = pool.imap(self._map_f, self.streams)
             else:
                 work_dir = os.getcwd()
                 ray.init(address='auto', redis_password='5241590000000000')
                 with Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory, work_dir)) as pool:
-                    res = pool.map(self._map_f, self.streams)
+                    res = pool.imap(self._map_f, self.streams)
+            if self.par_logger:
+                for e in res:
+                    self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target}')
         else:
             self._initialize_mappers(self.mappers_factory)
             res = []
             for e in self.streams:
                 res.append(self._map_f(e))
+                if self.par_logger:
+                    self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target}')
 
         if self.par_logger:
             self.par_logger.logger.info(f'{self.__class__.__name__}: Mapping pipeline executed')
