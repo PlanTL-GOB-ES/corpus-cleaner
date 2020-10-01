@@ -2,6 +2,7 @@ import argparse
 import random
 import logging
 import os
+from ordered_set import OrderedSet
 
 SCRIPT_DIR = os.path.realpath(__file__)
 
@@ -31,7 +32,7 @@ class ErrorSampler:
         assert all(len(line.split(f"{self.separator}")) == 2 for line in lines), \
             "Please input a file in a TAB-separated format obtained from the pipeline executed in debug mode"
 
-        return list(set(lines))
+        return lines
 
     # 2. Classify sentences in two classes ERROR/NO ERROR
     def classify(self, input_file):
@@ -46,10 +47,9 @@ class ErrorSampler:
                 self.sentences_errors['no_error'].append(sent_orig)
 
     def sample(self, output_file):
-        random.seed(self.sampling_seed)  # set fixed random seed
-
         # Define a balanced sampling for the ERROR and NO_ERROR classes
         logging.info("Trying balanced sampling from the 'error' and 'no_error' class")
+        random.seed(self.sampling_seed)  # set fixed random for reproducibility
         sentences_per_error_type = round(self.sample_size / 2)
         sample_sentences = []
         for error, sentences in self.sentences_errors.items():
@@ -63,7 +63,7 @@ class ErrorSampler:
 
             sample_sentences.extend(random_sentences)
 
-        sample_sentences = list(set(sample_sentences))
+        sample_sentences = list(OrderedSet(sample_sentences))
 
         with open(output_file, 'w') as of:
             of.write('\n'.join(sample_sentences))
