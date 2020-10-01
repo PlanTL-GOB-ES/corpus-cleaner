@@ -13,7 +13,7 @@ import regex
 
 # TODO: implement decorator that register the name of the operation (replace/filter) applied to each sentence
 #       That information will be used to list the operations applied to the sentences during the cleaning process
-def debug_operation(func):
+def debug_filter(func):
     def debug(self, doc):
         if self.debug:
             keep = func(self, doc)
@@ -230,13 +230,13 @@ class PreFilterer(CleanerComponentMapper):
             self.final_sentence_pattern1 = regex.compile(r"(\s)(\p{Ll}+)([.!?:]*)(\p{Lu})(\p{Ll}+)([\s.,;:?!])")
             self.final_sentence_pattern2 = regex.compile(r"(\s)(\p{Ll}+)([.!?:]+)('|\")(\p{Lu})(\p{Ll}+)([\s.,;:?!])")
 
-    @debug_operation
+    @debug_filter
     def _filter_by_length(self, doc: Document):
         if len(doc.content) < self.char_length_filter:
             return False
         return True
 
-    @debug_operation
+    @debug_filter
     def _filter_by_heads(self, doc: Document):
         if doc.heads is not None:
             for token in ['found', '404', 'robots.txt', 'error', 'trouvée']:
@@ -244,20 +244,20 @@ class PreFilterer(CleanerComponentMapper):
                     return False
         return True
 
-    @debug_operation
+    @debug_filter
     def _filter_by_digits(self, doc: Document):
         if sum(c.isdigit() for c in doc.content) / len(doc.content) > self.digits_filter:
             return False
         return True
 
-    @debug_operation
+    @debug_filter
     def _filter_by_alphanum(self, doc: Document):
         concat_content = ''.join(doc.content.split())
         if (1 - (sum(c.isalnum() for c in concat_content) / len(concat_content))) > self.alphanum_filter:
             return False
         return True
 
-    @debug_operation
+    @debug_filter
     def _filter_by_lang_chars(self, doc: Document):
         concat_content = ''.join(doc.content.split())
         if (1 - (sum(c in self.alphabet for c in concat_content) /
@@ -265,13 +265,13 @@ class PreFilterer(CleanerComponentMapper):
             return False
         return True
 
-    @debug_operation
+    @debug_filter
     def _filter_by_uppercase(self, doc: Document):
         if sum(c.isupper() for c in doc.content) / len(doc.content) > self.uppercase_filter:
             return False
         return True
 
-    @debug_operation
+    @debug_filter
     def _filter_by_alphabet(self, doc: Document):
         # TODO: Check thresholds?
         try:
@@ -281,7 +281,7 @@ class PreFilterer(CleanerComponentMapper):
             return True
         return True
 
-    @debug_operation
+    @debug_filter
     def _filter_by_lang(self, doc: Document):
         content = self.url_placeholder_pattern.sub('', doc.content)
         content = self.no_eols_pattern.sub('. ', content)
@@ -293,7 +293,7 @@ class PreFilterer(CleanerComponentMapper):
             return True
         return False
 
-    @debug_operation
+    @debug_filter
     def _filter_by_dict(self, doc: Document):
         if self.dictionary_filter_pattern.search(doc.content):
             return False
@@ -323,10 +323,6 @@ class PreFilterer(CleanerComponentMapper):
         for filter_ in self.filters:
             keep = filter_(document)
             if not keep:
-                # # if debug, keep an empty document as cleaned
-                # if self.debug:
-                #     document.content = ''
-                #     # document.operations.append(filter_.__name__)
                 break
         if keep or self.debug:
             return document

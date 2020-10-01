@@ -14,7 +14,7 @@ class Document:
                  keywords: Optional[str] = None,
                  heads: Optional[str] = None,
                  language: Optional[str] = None,
-                 operations: Optional[List] = None):
+                 operations: Optional[List] = []):
         self.content = content
         self.content_orig = content
         self.sentences = sentences
