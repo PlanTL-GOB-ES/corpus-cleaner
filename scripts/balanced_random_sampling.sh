@@ -83,18 +83,20 @@ if [[ ${sample_size} -lt ${number_files} ]]; then
 fi
 
 if [[ -z "${exclude_names}" ]]; then
-  exclude_names=false
+    exclude_names=false
 fi
 
 if [[ -z "${sample_size}" ]]; then
-  sample_size=1000
+    sample_size=1000
 fi
 
 if [[ -z "${output_file}" ]]; then
-  output_file=${SCRIPT_DIR}/sample.${sample_size}.txt
-  if [[ ${debug} == "true" ]]; then
-    output_file=${SCRIPT_DIR}/sample.${sample_size}.debug.txt
-  fi
+    output_file=${SCRIPT_DIR}/sample.${sample_size}.txt
+    if [[ ${debug} == "true" ]]; then
+      output_file=${SCRIPT_DIR}/sample.${sample_size}.debug.txt
+    fi
+else
+    mkdir -p $(dirname ${output_file})
 fi
 
 datetime=$(date '+%d-%m-%Y_%H-%M-%S');
@@ -112,7 +114,7 @@ for data_dir in ${data_dirs}; do
 done
 number_files_sample=$(echo ${files_sample} | wc -w)
 total_lines=$(cat ${files_sample} | sed '/^$/d' | wc -l)
-echo -e "Selected ${number_files_sample} files with total number of lines: ${total_lines}" | tee -a ${log_file}
+echo -e "Sampled ${number_files_sample} files with total number of lines: ${total_lines}" | tee -a ${log_file}
 
 # 2: Sample number_lines_sample from each files
 number_lines_sample=$(echo "${sample_size}/${number_files_sample}" | bc )
