@@ -124,13 +124,14 @@ class SentenceFilter(CleanerComponentMapper):
         # For each document, get the set of duplicate sentences to remove
         self.sentences_duplicate = set(sentence for sentence in document.sentences
                                        if document.sentences.count(sentence) > 1)
-        for sentence in document.sentences:
+        for sentence_idx, sentence in enumerate(document.sentences):
             keep = True
             for filter_ in self.filters:
                 keep = filter_(sentence)
                 if not keep:
                     # if debug, keep an empty sentence as cleaned
                     if self.debug:
+                        document.operations[sentence_idx].append(filter_.__name__)
                         sentences.append('EMPTY')
                     break
             if keep:
