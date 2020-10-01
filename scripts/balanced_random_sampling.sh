@@ -8,6 +8,7 @@ sample_size=${sample_size}
 number_files=${number_files}
 output_file=${output_file}
 check_min_number_lines=${check_min_number_lines:-false}
+debug=${debug:-false}
 seed=${seed:-42}
 
 # add named arguments from: https://brianchildress.co/named-parameters-in-bash/
@@ -85,6 +86,9 @@ fi
 
 if [[ -z "${output_file}" ]]; then
   output_file=${SCRIPT_DIR}/sample.${sample_size}.txt
+  if [[ ${debug} == "true" ]]; then
+    output_file=${SCRIPT_DIR}/sample.${sample_size}.debug.txt
+  fi
 fi
 
 total_number_files=$(find_files "${data_dirs}" "${exclude_names}" | wc -l)
@@ -123,10 +127,16 @@ echo -n > ${output_file}
 
 for file in ${files_sample}; do
     echo "Attempting to sample ${number_lines_sample} lines from file file: ${file} ($(count_file_lines ${file}) lines)"
+    if [[ ${debug} == "true" ]]; then
+        echo -e "\nFILE: ${file}" >> ${output_file}
+    fi
     random_lines_sample ${file} ${sample_size} ${number_lines_sample} ${seed} >> ${output_file}
+
 done
 
-echo "Removing duplicates from the final sample"
-sort -u ${output_file} -o ${output_file}
+if [[ ${debug} != "true" ]]; then
+    echo "Removing duplicates from the final sample"
+    sort -u ${output_file} -o ${output_file}
+fi
 sample_lines=$(count_file_lines ${output_file})
 echo "Sampled ${sample_lines} total lines into file: $(realpath ${output_file})"
