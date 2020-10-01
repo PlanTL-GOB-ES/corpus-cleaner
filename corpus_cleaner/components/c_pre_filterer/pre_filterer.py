@@ -18,8 +18,8 @@ def debug_filter(func):
         if self.debug:
             keep = func(self, doc)
             if not keep:
-                doc.operations.append(func.__name__)
-                doc.content = ''
+                doc.doc_ops.append(func.__name__)
+                doc.content = 'EMPTY'
             return keep
         else:
             return func(self, doc)
@@ -129,28 +129,38 @@ class PreFilterer(CleanerComponentMapper):
     # TODO: move the remove operations to a new component called CharFilter
     def _language_normalization(self, langs, text):
         if 'ca' in langs:
-            return self.geminate_l_pattern.sub('l·l', text)
+            text, subs = self.geminate_l_pattern.subn('l·l', text)
+            return text, bool(subs)
         else:
-            return text
+            return text, False
 
     def _replace_emails(self, text):
         replace = ' [EMAIL] '
-        return self.emails_pattern.sub(replace, text)
+        text, subs = self.emails_pattern.subn(replace, text)
+        return text, bool(subs)
 
     def _remove_hashtags_mentions(self, text):
-        return self.remove_hashtags_pattern.sub(' ', text)
+        text, subs = self.remove_hashtags_pattern.subn(' ', text)
+        return text, bool(subs)
 
     def _remove_tags(self, text):
-        return self.tags_pattern.sub(' ', self.p_tags_pattern.sub('\n', text))
+        text, subs = self.tags_pattern.subn(' ', self.p_tags_pattern.sub('\n', text))
+        return text, bool(subs)
 
     def _space_normalization(self, text):
         text = normalize_space(text, preserve=['\n'])
-        text = self.punc_space_pattern.sub('\\2', text)
+        subs_all = []
+        text, subs = self.punc_space_pattern.subn('\\2', text)
+        subs_all.append(subs)
         text = self.zero_width_space_pattern.sub('', text)
+        subs_all.append(subs)
         text = self.punc_no_space_pattern.sub('\\1\\2 \\3', text)
+        subs_all.append(subs)
         text = self.quote_no_space_pattern1.sub('\\1 \\2\\3\\5', text)
+        subs_all.append(subs)
         text = self.quote_no_space_pattern2.sub('\\1\\2\\4 \\5', text)
-        return text
+        subs_all.append(subs)
+        return text, any(subs_all)
 
     def fix(self, text):
         text = normalize_space(text, preserve=['\n'])
@@ -163,9 +173,18 @@ class PreFilterer(CleanerComponentMapper):
         text = self.final_sentence_pattern2.subf("{1}{2}{3}\n{4}{5}{6}{7}", text)
         return text
 
+    def _seg_sentences(self, text):
+        subs_all = []
+        text, subs = self.final_sentence_pattern1.subfn("{1}{2}{3}\n{4}{5}{6}", text)
+        subs_all.append(subs)
+        text, subs = self.final_sentence_pattern2.subfn("{1}{2}{3}\n{4}{5}{6}{7}", text)
+        subs_all.append(subs)
+        return text, any(subs_all)
+
     def _replace_urls(self, text):
         replace = ' [URL] '
-        return self.urls_pattern2.sub(replace, self.urls_pattern.sub(replace, text))
+        text, subs = self.urls_pattern2.subn(replace, self.urls_pattern.sub(replace, text))
+        return text, bool(subs)
 
     def _build_filters(self):
         # https://www.tutorialspoint.com/Extracting-email-addresses-using-regular-expressions-in-Python
@@ -300,25 +319,41 @@ class PreFilterer(CleanerComponentMapper):
         return True
 
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
-        document.operations = []
+        # TODO: 1. implement replace functions that receives as input the Document
+        #       2. implement a decorator for the replace functions like the decorator for filters
+        document.doc_ops = []
         if self.language_normalization:
-            document.content = self._language_normalization(self.lang_filter, document.content)
+            document.content, subs = self._language_normalization(self.lang_filter, document.content)
+            if self.debug and subs:
+                document.doc_ops.append(self._language_normalization.__name__)
         if self.replace_emails:
-            document.content = self._replace_emails(document.content)
+            document.content, subs = self._replace_emails(document.content)
+            if self.debug and subs:
+                document.doc_ops.append(self._replace_emails.__name__)
         if self.remove_hashtags_mentions:
-            document.content = self._remove_hashtags_mentions(document.content)
+            document.content, subs = self._remove_hashtags_mentions(document.content)
+            if self.debug and subs:
+                document.doc_ops.append(self._remove_hashtags_mentions.__name__)
         if self.remove_tags:
-            document.content = self._remove_tags(document.content)
+            document.content, subs = self._remove_tags(document.content)
+            if self.debug and subs:
+                document.doc_ops.append(self._remove_tags.__name__)
         if self.replace_urls:
-            document.content = self._replace_urls(document.content)
+            document.content, subs = self._replace_urls(document.content)
+            if self.debug and subs:
+                document.doc_ops.append(self._replace_urls.__name__)
         if self.space_normalization:
-            document.content = self._space_normalization(document.content)
+            document.content, subs = self._space_normalization(document.content)
+            if self.debug and subs:
+                document.doc_ops.append(self._space_normalization.__name__)
         if self.seg_sentences:
-            document.content = self.final_sentence_pattern1.subf("{1}{2}{3}\n{4}{5}{6}", document.content)
-            document.content = self.final_sentence_pattern2.subf("{1}{2}{3}\n{4}{5}{6}{7}", document.content)
+            document.content, subs = self._seg_sentences(document.content)
+            if self.debug and subs:
+                document.doc_ops.append(self._seg_sentences.__name__)
 
         if len(document.content.split()) == 0:
             return None
+
         keep = True
         for filter_ in self.filters:
             keep = filter_(document)
@@ -327,16 +362,6 @@ class PreFilterer(CleanerComponentMapper):
         if keep or self.debug:
             return document
         return None
-
-        # TODO: make sure decorator is implemented before using these lines
-        # for filter_ in self.filters:
-        #     keep = filter_(document)
-        #     if not keep:
-        #         break
-        # if keep or self.debug_errors_mode:
-        #     return document
-        # return None
-        ##########################
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
         return self._filter(document)

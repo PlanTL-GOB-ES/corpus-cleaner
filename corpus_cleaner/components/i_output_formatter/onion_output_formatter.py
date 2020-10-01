@@ -20,8 +20,12 @@ class OnionOutputFormatter(OutputFormatter):
     def _write_document(self, document: Document):
         if document is not None:
             if self.debug:
-                sentences = [f'{sent_orig}{self.separator}{sent_clean}'
-                             for sent_orig, sent_clean in zip(document.sentences_orig, document.sentences)]
+                # TODO: extract the operarions for each sentence in the document
+                operations = [", ".join(document.doc_ops)]
+                sentences = [f'{sent_orig}{self.separator}{sent_clean}{self.separator}{operation}'
+                             for sent_orig, sent_clean, operation in zip(document.sentences_orig,
+                                                                         document.sentences,
+                                                                         operations)]
             else:
                 sentences = document.sentences
             doc_onion = self.start_doc_tag + document.attr_str() + self.start_p_tag + '\n'.join(sentences) + \

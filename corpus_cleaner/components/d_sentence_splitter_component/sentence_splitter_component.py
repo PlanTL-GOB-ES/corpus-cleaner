@@ -46,7 +46,7 @@ class SentenceSplitterComponent(CleanerComponentMapper):
             # but the debug mode is activated, store a number of empty cleaned sentences equal to
             # the number of lines in the original content
             empty_sentences_number = len(document.content_orig.splitlines())
-            document.sentences = [''] * empty_sentences_number
+            document.sentences = ['EMPTY'] * empty_sentences_number
             document.sentences_orig = [document.content_orig]
         else:
             document.sentences = [sent for sent in splitter.split(document.content)]

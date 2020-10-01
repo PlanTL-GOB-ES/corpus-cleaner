@@ -14,7 +14,7 @@ class Document:
                  keywords: Optional[str] = None,
                  heads: Optional[str] = None,
                  language: Optional[str] = None,
-                 operations: Optional[List] = []):
+                 doc_ops: Optional[List] = None):
         self.content = content
         self.content_orig = content
         self.sentences = sentences
@@ -26,7 +26,7 @@ class Document:
         self.heads = heads
         self.filename = filename
         self.language = language
-        self.operations = operations
+        self.doc_ops = doc_ops
 
     def attr_str(self) -> str:
         res = []

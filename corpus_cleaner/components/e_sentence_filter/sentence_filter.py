@@ -131,7 +131,7 @@ class SentenceFilter(CleanerComponentMapper):
                 if not keep:
                     # if debug, keep an empty sentence as cleaned
                     if self.debug:
-                        sentences.append('')
+                        sentences.append('EMPTY')
                     break
             if keep:
                 sentences.append(sentence)
