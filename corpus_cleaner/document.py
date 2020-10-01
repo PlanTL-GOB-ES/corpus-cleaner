@@ -1,6 +1,7 @@
 from typing import List
 from typing import Optional
 
+
 class Document:
     def __init__(self,
                  content: str,
@@ -12,7 +13,8 @@ class Document:
                  id_: Optional[str] = None,
                  keywords: Optional[str] = None,
                  heads: Optional[str] = None,
-                 language: Optional[str] = None):
+                 language: Optional[str] = None,
+                 operations: Optional[List] = None):
         self.content = content
         self.content_orig = content
         self.sentences = sentences
@@ -24,6 +26,7 @@ class Document:
         self.heads = heads
         self.filename = filename
         self.language = language
+        self.operations = operations
 
     def attr_str(self) -> str:
         res = []
@@ -81,4 +84,3 @@ class Document:
                         heads=get_att('heads'),
                         language=get_att('language')
                         )
-
