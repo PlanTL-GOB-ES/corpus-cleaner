@@ -113,12 +113,12 @@ class SentenceFilter(CleanerComponentMapper):
             return False
         return True
 
-    # TODO: check if this new implementation work properly
     def _filter_by_duplicate(self, sentence: str) -> bool:
         if sentence in self.sentences_duplicate:
             return False
         return True
 
+    # TODO: add decorators to register the filters
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
         sentences = []
         # For each document, get the set of duplicate sentences to remove

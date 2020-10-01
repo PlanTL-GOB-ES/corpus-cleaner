@@ -18,7 +18,7 @@ def debug_filter(func):
         if self.debug:
             keep = func(self, doc)
             if not keep:
-                doc.doc_ops.append(func.__name__)
+                doc.operations.append(func.__name__)
                 doc.content = 'EMPTY'
             return keep
         else:
@@ -321,35 +321,35 @@ class PreFilterer(CleanerComponentMapper):
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
         # TODO: 1. implement replace functions that receives as input the Document
         #       2. implement a decorator for the replace functions like the decorator for filters
-        document.doc_ops = []
+        document.operations = []
         if self.language_normalization:
             document.content, subs = self._language_normalization(self.lang_filter, document.content)
             if self.debug and subs:
-                document.doc_ops.append(self._language_normalization.__name__)
+                document.operations.append(self._language_normalization.__name__)
         if self.replace_emails:
             document.content, subs = self._replace_emails(document.content)
             if self.debug and subs:
-                document.doc_ops.append(self._replace_emails.__name__)
+                document.operations.append(self._replace_emails.__name__)
         if self.remove_hashtags_mentions:
             document.content, subs = self._remove_hashtags_mentions(document.content)
             if self.debug and subs:
-                document.doc_ops.append(self._remove_hashtags_mentions.__name__)
+                document.operations.append(self._remove_hashtags_mentions.__name__)
         if self.remove_tags:
             document.content, subs = self._remove_tags(document.content)
             if self.debug and subs:
-                document.doc_ops.append(self._remove_tags.__name__)
+                document.operations.append(self._remove_tags.__name__)
         if self.replace_urls:
             document.content, subs = self._replace_urls(document.content)
             if self.debug and subs:
-                document.doc_ops.append(self._replace_urls.__name__)
+                document.operations.append(self._replace_urls.__name__)
         if self.space_normalization:
             document.content, subs = self._space_normalization(document.content)
             if self.debug and subs:
-                document.doc_ops.append(self._space_normalization.__name__)
+                document.operations.append(self._space_normalization.__name__)
         if self.seg_sentences:
             document.content, subs = self._seg_sentences(document.content)
             if self.debug and subs:
-                document.doc_ops.append(self._seg_sentences.__name__)
+                document.operations.append(self._seg_sentences.__name__)
 
         if len(document.content.split()) == 0:
             return None
