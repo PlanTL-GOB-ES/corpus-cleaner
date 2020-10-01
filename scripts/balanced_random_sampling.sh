@@ -30,21 +30,21 @@ get_seeded_random()
 }
 
 function find_files(){
-    data_dirs=$1
+    data_dir=$1
     exclude_names=$2
 
-    for data_dir in "${data_dirs}"; do
-        if [[ ${exclude_names} == "false" ]]; then
-            find ${data_dir} -type f
-        else
-            # add options dynamically
-            command="find ${data_dir} -type f"
-            for name in ${exclude_names}; do
-                command+=" -not -name \"*${name}\""
-            done
-            eval ${command}
-        fi
-    done
+#    for data_dir in "${data_dirs}"; do
+    if [[ ${exclude_names} == "false" ]]; then
+        find ${data_dir} -type f
+    else
+        # add options dynamically
+        command="find ${data_dir} -type f"
+        for name in ${exclude_names}; do
+            command+=" -not -name \"*${name}\""
+        done
+        eval ${command}
+    fi
+#    done
 }
 
 function random_files_sample(){
@@ -71,8 +71,14 @@ function count_file_lines(){
 
 
 # handle arguments values before to perform the sampling
-if [[ ${number_files} -gt ${sample_size} ]]; then
-    echo "Set number_files value to a value smaller or equal to sample_size value"
+number_dirs=$(echo ${data_dirs} | wc -w)
+if [[ ${number_files} -lt ${number_dirs} ]]; then
+    echo "Set number_files to a larger number than number_dirs"
+    exit 0
+fi
+
+if [[ ${sample_size} -lt ${number_files} ]]; then
+    echo "Set sample_size to a larger number than number_files"
     exit 0
 fi
 
@@ -91,24 +97,27 @@ if [[ -z "${output_file}" ]]; then
   fi
 fi
 
-total_number_files=$(find_files "${data_dirs}" "${exclude_names}" | wc -l)
-if [[ -z "${number_files}" ]]; then
-  number_files=${total_number_files}
-fi
+#total_number_files=$(find_files "${data_dirs}" "${exclude_names}" | wc -l)
+#if [[ -z "${number_files}" ]]; then
+#  number_files=${total_number_files}
+#fi
 
 # 1: select the files to extract from
+number_dirs=$(echo ${data_dirs} | wc -w)
+number_files_dir=$(echo "${number_files}/${number_dirs}" | bc )
 # The pipe command is necessary to find and shuffle in the case of huge number of files
-files_sample=$(find_files "${data_dirs}" "${exclude_names}" | \
-  shuf -n ${number_files} --random-source=<(get_seeded_random ${seed}))
-#files_sample=$(random_files_sample "${files}" ${number_files} ${seed})
+for data_dir in ${data_dirs}; do
+    echo "Attempting to sample ${number_files_dir} files from directory: ${data_dir} ($(find_files "${data_dir}" "${exclude_names}" | wc -l)) files"
+    files_sample+=" "
+    files_sample+=$(find_files "${data_dir}" "${exclude_names}" | \
+        shuf -n ${number_files_dir} --random-source=<(get_seeded_random ${seed}))
+done
 number_files_sample=$(echo ${files_sample} | wc -w)
-echo -e "Selected ${number_files_sample} files:\n${files_sample}"
-
-# 2: count the number of lines to extract per file
 total_lines=$(cat ${files_sample} | sed '/^$/d' | wc -l)
-number_lines_sample=$(echo "${sample_size}/${number_files_sample}" | bc )
-echo "number lines sample: ${number_lines_sample}"
+echo -e "Selected ${number_files_sample} files with total number of lines: ${total_lines}"
 
+# 2: Sample number_lines_sample from each files
+number_lines_sample=$(echo "${sample_size}/${number_files_sample}" | bc )
 # Optionally, check if all files have the minimum number of lines
 if [[ ${check_min_number_lines} == "true" ]]; then
     min_lines_number=$(wc -l ${files_sample} | grep -oP "^\s*[0-9]*" | sort | head -n 1)
@@ -119,14 +128,11 @@ if [[ ${check_min_number_lines} == "true" ]]; then
        exit 0
     fi
 fi
-echo "Total number of lines: ${total_lines}"
 
-# 3: Sample number_lines_sample from each files
 echo "Balanced sampling..."
 echo -n > ${output_file}
-
 for file in ${files_sample}; do
-    echo "Attempting to sample ${number_lines_sample} lines from file file: ${file} ($(count_file_lines ${file}) lines)"
+    echo "Attempting to sample ${number_lines_sample} lines from file: ${file} ($(count_file_lines ${file}) lines)"
     if [[ ${debug} == "true" ]]; then
         echo -e "\nFILE: ${file}" >> ${output_file}
     fi
