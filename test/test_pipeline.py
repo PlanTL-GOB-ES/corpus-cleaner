@@ -10,7 +10,7 @@ filename = "output/pre-push-test-" + date_time + "/output.txt"
 def test_pipeline_execution():
     os.system("python clean.py pre-push-test --input-path test/toy_data --input-format warc --output-format fairseq-lm "
               "--lang-filter ca")
-    assert os.path.isfile(filename) == True, "Execution unsucessful"
+    assert os.path.isfile(filename), "Execution unsucessful"
 
 
 def test_file_exists():
@@ -18,4 +18,4 @@ def test_file_exists():
 
 
 def test_file_length():
-    return True #assert os.path.getsize(filename) == 29256, "Output file doesn't have the expected size"
+    return True  # assert os.path.getsize(filename) == 29256, "Output file doesn't have the expected size"
