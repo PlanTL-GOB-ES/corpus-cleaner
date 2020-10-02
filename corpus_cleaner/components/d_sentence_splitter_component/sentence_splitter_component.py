@@ -51,7 +51,7 @@ class SentenceSplitterComponent(CleanerComponentMapper):
         else:
             document.sentences = [sent for sent in splitter.split(document.content)]
             document.sentences_orig = [sent for sent in splitter.split(document.content_orig)]
-            if len(document.sentences) > 1:
+            if len(document.sentences) > 1 and self.debug:
                 # TODO: add the name of the operations from the function's name
                 document.operations.append("_sentence_splitter")
 
@@ -60,6 +60,7 @@ class SentenceSplitterComponent(CleanerComponentMapper):
                 return None
 
         # add operations for each sentence in the document
+        # TODO: assign the operations to document and sentences separately
         document.operations = [document.operations] * len(document.sentences)
         return document
 

@@ -162,16 +162,16 @@ class PreFilterer(CleanerComponentMapper):
         subs_all.append(subs)
         return text, any(subs_all)
 
-    def fix(self, text):
-        text = normalize_space(text, preserve=['\n'])
-        text = self.punc_space_pattern.sub('\\2', text)
-        text = self.zero_width_space_pattern.sub('', text)
-        text = self.punc_no_space_pattern.sub('\\1\\2 \\3', text)
-        text = self.quote_no_space_pattern1.sub('\\1 \\2\\3\\5', text)
-        text = self.quote_no_space_pattern2.sub('\\1\\2\\4 \\5', text)
-        text = self.final_sentence_pattern1.subf("{1}{2}{3}\n{4}{5}{6}", text)
-        text = self.final_sentence_pattern2.subf("{1}{2}{3}\n{4}{5}{6}{7}", text)
-        return text
+    # def fix(self, text):
+    #     text = normalize_space(text, preserve=['\n'])
+    #     text = self.punc_space_pattern.sub('\\2', text)
+    #     text = self.zero_width_space_pattern.sub('', text)
+    #     text = self.punc_no_space_pattern.sub('\\1\\2 \\3', text)
+    #     text = self.quote_no_space_pattern1.sub('\\1 \\2\\3\\5', text)
+    #     text = self.quote_no_space_pattern2.sub('\\1\\2\\4 \\5', text)
+    #     text = self.final_sentence_pattern1.subf("{1}{2}{3}\n{4}{5}{6}", text)
+    #     text = self.final_sentence_pattern2.subf("{1}{2}{3}\n{4}{5}{6}{7}", text)
+    #     return text
 
     def _seg_sentences(self, text):
         subs_all = []
