@@ -18,4 +18,6 @@ def test_file_exists():
 
 
 def test_file_length():
-    return True  # assert os.path.getsize(filename) == 29256, "Output file doesn't have the expected size"
+    with open(filename) as fn:
+        lines = fn.readlines()
+    assert len(lines) == 268, "Output file doesn't have the expected number of lines (268)"
