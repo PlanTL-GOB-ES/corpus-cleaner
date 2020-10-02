@@ -86,7 +86,7 @@ class MappingPipeline:
         self.parallel = parallel
         self.log_every_iter = log_every_iter
         if self.par_logger:
-            raise NotImplementedError('No pipeline logging implemented')
+            pass#raise NotImplementedError('No pipeline logging implemented')
         self.done = False
         self.f_mappers = None
 
@@ -124,26 +124,30 @@ class MappingPipeline:
         if self.parallel:
             if self.par_logger:
                 self.par_logger.logger.info(f'{self.__class__.__name__}: Initializing mappers')
+                self._initialize_mappers(self.mappers_factory)  # Initialize in local
 
             if self.backend == 'mp':
                 with multiprocessing.Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory,)) \
                         as pool:
-                            res = pool.imap(self._map_f, self.streams)
+                            res = pool.imap_unordered(self._map_f, self.streams)
             else:
                 work_dir = os.getcwd()
                 ray.init(address='auto', redis_password='5241590000000000')
                 with Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory, work_dir)) as pool:
-                    res = pool.imap(self._map_f, self.streams)
+                    res = pool.imap_unordered(self._map_f, self.streams)
             if self.par_logger:
-                for e in res:
-                    self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target}')
+                for idx, e in enumerate(res):
+                    if self.par_logger and idx % self.log_every_iter == 0:
+                        self.par_logger.logger.info(
+                            f'Processed {e} into {G.F_MAPPERS.target} ({idx}/{len(self.streams)})')
+
         else:
             self._initialize_mappers(self.mappers_factory)
             res = []
-            for e in self.streams:
+            for idx, e in enumerate(self.streams):
                 res.append(self._map_f(e))
-                if self.par_logger:
-                    self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target}')
+                if self.par_logger and idx % self.log_every_iter == 0:
+                    self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} ({idx}/{len(self.streams)}')
 
         if self.par_logger:
             self.par_logger.logger.info(f'{self.__class__.__name__}: Mapping pipeline executed')

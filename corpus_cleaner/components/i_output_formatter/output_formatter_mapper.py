@@ -31,5 +31,5 @@ class OutputFormatterMapper(CleanerComponent):
                 id_ = (document.filename,)
             written_documents.append(id_)
         self.output_formatter.end_writing()
-        return written_documents
+        return document.filename#written_documents
 

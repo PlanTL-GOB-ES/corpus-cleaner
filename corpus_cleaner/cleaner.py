@@ -136,6 +136,12 @@ class Cleaner:
         else:
             if not self.args.only_reduce_output:
                 self.reducer = self.reducer(self.args)
+                components_str = self.args.input_format + ' -> '
+                for idx, c in enumerate(self.mappers):
+                    if idx not in [0, len(self.mappers) - 1]:
+                        components_str += c.__name__ + ' -> '
+                components_str += 'onion'
+                self.logger.logger.info(components_str)
                 pipeline = MappingPipeline(streams=self._get_paths(),
                                            mappers_factory=self._create_pipeline_mappers,
                                            parallel=self.args.parallel,
@@ -147,7 +153,10 @@ class Cleaner:
             else:
                 self.reducer = self.reducer(self.args, output_path=os.path.join(self.args.input_path))
 
+            self.logger.logger.info(f'Reducing with {self.reducer.__class__.__name__}')
             self.reducer.reduce()
 
+            self.logger.logger.info(f'onion -> {self.args.output_format}')
+            self.logger.logger.info('Writing deduplicated documents')
             self._output(self.reducer.get_documents()[0])
 
