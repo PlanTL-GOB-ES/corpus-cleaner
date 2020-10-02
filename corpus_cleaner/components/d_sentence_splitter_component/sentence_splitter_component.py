@@ -46,19 +46,20 @@ class SentenceSplitterComponent(CleanerComponentMapper):
             # but the debug mode is activated, store a number of empty cleaned sentences equal to
             # the number of lines in the original content
             empty_sentences_number = len(document.content_orig.splitlines())
-            document.sentences = ['EMPTY'] * empty_sentences_number
+            document.sentences = [''] * empty_sentences_number
             document.sentences_orig = [document.content_orig]
         else:
             document.sentences = [sent for sent in splitter.split(document.content)]
             document.sentences_orig = [sent for sent in splitter.split(document.content_orig)]
             if len(document.sentences) > 1:
-                document.content_ops.append("_sentence_splitter")
+                document.operations.append("_sentence_splitter")
 
-            # add operations for each sentence in the document
-            document.operations = [document.operations] * len(document.sentences)
             # Return None the original sentences are not aligned to the cleaned sentences
             if not len(document.sentences) == len(document.sentences_orig):
                 return None
+
+        # add operations for each sentence in the document
+        document.operations = [document.operations] * len(document.sentences)
         return document
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:

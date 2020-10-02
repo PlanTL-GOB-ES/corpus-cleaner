@@ -19,7 +19,7 @@ def debug_filter(func):
             keep = func(self, doc)
             if not keep:
                 doc.operations.append(func.__name__)
-                doc.content = 'EMPTY'
+                doc.content = ''
             return keep
         else:
             return func(self, doc)

@@ -131,8 +131,10 @@ class SentenceFilter(CleanerComponentMapper):
                 if not keep:
                     # if debug, keep an empty sentence as cleaned
                     if self.debug:
-                        document.operations[sentence_idx].append(filter_.__name__)
-                        sentences.append('EMPTY')
+                        # register operation only if the sentence is not empty
+                        if sentence:
+                            document.operations[sentence_idx].append(filter_.__name__)
+                        sentences.append('')
                     break
             if keep:
                 sentences.append(sentence)
