@@ -41,27 +41,28 @@ class SentenceSplitterComponent(CleanerComponentMapper):
             self.splitter_dict[document.language] = sentence_splitter.SentenceSplitter(language=document.language)
             splitter = self.splitter_dict[document.language]
 
-        if not document.content and self.debug:
-            # If the document received is empty since has been filtered out in the previous step,
-            # but the debug mode is activated, store a number of empty cleaned sentences equal to
-            # the number of lines in the original content
-            empty_sentences_number = len(document.content_orig.splitlines())
-            document.sentences = [''] * empty_sentences_number
-            document.sentences_orig = [document.content_orig]
-        else:
-            document.sentences = [sent for sent in splitter.split(document.content)]
-            document.sentences_orig = [sent for sent in splitter.split(document.content_orig)]
-            if len(document.sentences) > 1 and self.debug:
-                # TODO: add the name of the operations from the function's name
-                document.operations.append("_sentence_splitter")
+        if self.debug:
+            if not document.content:
+                # If the document received is empty since has been filtered out in the previous step,
+                # but the debug mode is activated, store a number of empty cleaned sentences equal to
+                # the number of lines in the original content
+                empty_sentences_number = len(document.content_orig.splitlines())
+                document.sentences = [''] * empty_sentences_number
+                document.sentences_orig = [document.content_orig]
+            else:
+                document.sentences = [sent for sent in splitter.split(document.content)]
+                document.sentences_orig = [sent for sent in splitter.split(document.content_orig)]
+                if len(document.sentences) > 1 and self.debug:
+                    # TODO: add the name of the operations from the function's name
+                    document.operations.append("_sentence_splitter")
 
-            # Return None the original sentences are not aligned to the cleaned sentences
-            if not len(document.sentences) == len(document.sentences_orig):
-                return None
+                # Return None the original sentences are not aligned to the cleaned sentences
+                if not len(document.sentences) == len(document.sentences_orig):
+                    return None
 
-        # add operations for each sentence in the document
-        # TODO: assign the operations to document and sentences separately
-        document.operations = [document.operations] * len(document.sentences)
+            # add operations for each sentence in the document
+            # TODO: assign the operations to document and sentences separately
+            document.operations = [document.operations] * len(document.sentences)
         return document
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
