@@ -242,7 +242,7 @@ class PreFilterer(CleanerComponentMapper):
     def _filter_by_length(self, doc: Document):
         value = len(doc.content)
         if value < self.char_length_filter:
-            return False, value
+            return False, round(value, 2)
         return True, None
 
     @debug_filter
@@ -252,14 +252,14 @@ class PreFilterer(CleanerComponentMapper):
             for token in ['found', '404', 'robots.txt', 'error', 'trouvée']:
                 if re.search(token, doc.heads, re.IGNORECASE):
                     value.append(token)
-                    return False, value
+                    return False, round(value, 2)
         return True, None
 
     @debug_filter
     def _filter_by_digits(self, doc: Document):
         value = sum(c.isdigit() for c in doc.content) / len(doc.content)
         if value > self.digits_filter:
-            return False, value
+            return False, round(value, 2)
         return True, None
 
     @debug_filter
@@ -267,7 +267,7 @@ class PreFilterer(CleanerComponentMapper):
         concat_content = ''.join(doc.content.split())
         value = (1 - (sum(c.isalnum() for c in concat_content) / len(concat_content)))
         if value > self.alphanum_filter:
-            return False, value
+            return False, round(value, 2)
         return True, None
 
     @debug_filter
@@ -275,14 +275,14 @@ class PreFilterer(CleanerComponentMapper):
         concat_content = ''.join(doc.content.split())
         value = (1 - (sum(c in self.alphabet for c in concat_content) / len(concat_content)))
         if value > self.lang_chars_filter:
-            return False, value
+            return False, round(value, 2)
         return True, None
 
     @debug_filter
     def _filter_by_uppercase(self, doc: Document):
         value = sum(c.isupper() for c in doc.content) / len(doc.content)
         if value > self.uppercase_filter:
-            return False, value
+            return False, round(value, 2)
         return True, None
 
     @debug_filter
@@ -306,7 +306,7 @@ class PreFilterer(CleanerComponentMapper):
         if lang in self.lang_filter and conf > self.initial_lang_filter_threshold:
             doc.language = lang
             return True, None
-        value = f"({conf}, {lang})"
+        value = f"({round(conf, 2)}, {lang})"
         return False, value
 
     @debug_filter

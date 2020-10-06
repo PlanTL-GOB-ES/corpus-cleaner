@@ -88,14 +88,14 @@ class SentenceFilter(CleanerComponentMapper):
         value = len(sentence)
         if value > self.char_length_filter_sentence:
             return True, None
-        return False, value
+        return False, round(value, 2)
 
     def _filter_by_code(self, sentence: str):
         value = (len(re.findall(self.code_keywords_pattern, sentence)) / len(sentence.split())) \
                 + len(re.findall(self.code_chars_pattern, sentence)) / len(sentence)
         if value > self.code_threshold:
-            return False, value
-        return True, value
+            return False, round(value, 2)
+        return True, None
 
     def _filter_by_lang_sent(self, sentence: str):
         res = self.fasttext_lid.predict(sentence.lower())
@@ -109,7 +109,7 @@ class SentenceFilter(CleanerComponentMapper):
             conf = res[1]
             if lang in self.lang_filter and conf > self.slow_lang_filter_threshold:
                 return True, None
-        value = f"({conf}, {lang})"
+        value = f"({round(conf, 2)}, {lang})"
         return False, value
 
     def _filter_by_dict(self, sentence: str):
