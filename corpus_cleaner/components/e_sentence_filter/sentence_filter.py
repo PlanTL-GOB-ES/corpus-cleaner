@@ -1,8 +1,7 @@
 from corpus_cleaner.document import Document
-from typing import Union, Tuple, Optional, List
+from typing import Union, Tuple, Optional
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 from langid.langid import LanguageIdentifier, model
-from ordered_set import OrderedSet
 import argparse
 import fasttext
 import os
@@ -78,45 +77,50 @@ class SentenceFilter(CleanerComponentMapper):
             self.fasttext_lid = fasttext.load_model(os.path.join('lib', 'lid.176.bin'))
             self.lang_id = LanguageIdentifier.from_modelstring(model, norm_probs=True)
             _ = self.lang_id.classify('')  # force init
-            self.filters.append(self._filter_by_lang)
+            self.filters.append(self._filter_by_lang_sent)
         if self.dictionary_filter is not None:
             self.dictionary_filter_pattern = re.compile("|".join(self.dictionary_filter))
             self.filters.append(self._filter_by_dict)
         if self.dedup_same_doc_sentences:
             self.filters.append(self._filter_by_duplicate)
 
-    def _filter_by_char_len(self, sentence: str) -> bool:
-        if len(sentence) > self.char_length_filter_sentence:
-            return True
-        return False
+    def _filter_by_char_len(self, sentence: str):
+        value = len(sentence)
+        if value > self.char_length_filter_sentence:
+            return True, None
+        return False, value
 
-    def _filter_by_code(self, sentence: str) -> bool:
-        if (len(re.findall(self.code_keywords_pattern, sentence)) / len(sentence.split())) \
-                + len(re.findall(self.code_chars_pattern, sentence)) / len(sentence) > self.code_threshold:
-            return False
-        return True
+    def _filter_by_code(self, sentence: str):
+        value = (len(re.findall(self.code_keywords_pattern, sentence)) / len(sentence.split())) \
+                + len(re.findall(self.code_chars_pattern, sentence)) / len(sentence)
+        if value > self.code_threshold:
+            return False, value
+        return True, value
 
-    def _filter_by_lang(self, sentence: str) -> bool:
+    def _filter_by_lang_sent(self, sentence: str):
         res = self.fasttext_lid.predict(sentence.lower())
         lang = res[0][0][-2:]
         conf = res[1][0]
         if lang in self.lang_filter and conf > self.slow_lang_filter_threshold - 0.1:
-            return True
+            return True, None
         elif lang in self.lang_filter:
             res = self.lang_id.classify(sentence)
-            if res[0] in self.lang_filter and res[1] > self.slow_lang_filter_threshold:
-                return True
-        return False
+            lang = res[0]
+            conf = res[1]
+            if lang in self.lang_filter and conf > self.slow_lang_filter_threshold:
+                return True, None
+        value = f"({conf}, {lang})"
+        return False, value
 
     def _filter_by_dict(self, sentence: str):
         if self.dictionary_filter_pattern.search(sentence):
-            return False
-        return True
+            return False, None
+        return True, None
 
-    def _filter_by_duplicate(self, sentence: str) -> bool:
+    def _filter_by_duplicate(self, sentence: str):
         if sentence in self.sentences_duplicate:
-            return False
-        return True
+            return False, None
+        return True, None
 
     # TODO: add decorators to register the filters
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
@@ -127,13 +131,13 @@ class SentenceFilter(CleanerComponentMapper):
         for sentence_idx, sentence in enumerate(document.sentences):
             keep = True
             for filter_ in self.filters:
-                keep = filter_(sentence)
+                keep, value = filter_(sentence)
                 if not keep:
                     # if debug, keep an empty sentence as cleaned
                     if self.debug:
                         # register operation only if the sentence is not empty
                         if sentence:
-                            document.operations[sentence_idx].append(filter_.__name__)
+                            document.operations[sentence_idx].append(f"{filter_.__name__}:{value}")
                         sentences.append('')
                     break
             if keep:

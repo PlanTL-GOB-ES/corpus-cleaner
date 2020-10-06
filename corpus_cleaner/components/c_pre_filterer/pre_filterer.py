@@ -162,17 +162,6 @@ class PreFilterer(CleanerComponentMapper):
         subs_all.append(subs)
         return text, any(subs_all)
 
-    # def fix(self, text):
-    #     text = normalize_space(text, preserve=['\n'])
-    #     text = self.punc_space_pattern.sub('\\2', text)
-    #     text = self.zero_width_space_pattern.sub('', text)
-    #     text = self.punc_no_space_pattern.sub('\\1\\2 \\3', text)
-    #     text = self.quote_no_space_pattern1.sub('\\1 \\2\\3\\5', text)
-    #     text = self.quote_no_space_pattern2.sub('\\1\\2\\4 \\5', text)
-    #     text = self.final_sentence_pattern1.subf("{1}{2}{3}\n{4}{5}{6}", text)
-    #     text = self.final_sentence_pattern2.subf("{1}{2}{3}\n{4}{5}{6}{7}", text)
-    #     return text
-
     def _seg_sentences(self, text):
         subs_all = []
         text, subs = self.final_sentence_pattern1.subfn("{1}{2}{3}\n{4}{5}{6}", text)
@@ -230,7 +219,7 @@ class PreFilterer(CleanerComponentMapper):
                 )
             self.no_eols_pattern = re.compile('\n')
             self.fasttext_lid = fasttext.load_model(os.path.join('lib', 'lid.176.bin'))
-            self.filters.append(self._filter_by_lang)
+            self.filters.append(self._filter_by_lang_doc)
         if self.dictionary_filter is not None:
             self.dictionary_filter_pattern = re.compile("|".join(self.dictionary_filter))
             self.filters.append(self._filter_by_dict)
@@ -308,16 +297,16 @@ class PreFilterer(CleanerComponentMapper):
         return True, None
 
     @debug_filter
-    def _filter_by_lang(self, doc: Document):
+    def _filter_by_lang_doc(self, doc: Document):
         content = self.url_placeholder_pattern.sub('', doc.content)
         content = self.no_eols_pattern.sub('. ', content)
         res = self.fasttext_lid.predict(content)
         lang = res[0][0][-2:]
         conf = res[1][0]
-        value = conf
-        if lang in self.lang_filter and value > self.initial_lang_filter_threshold:
+        if lang in self.lang_filter and conf > self.initial_lang_filter_threshold:
             doc.language = lang
             return True, None
+        value = f"({conf}, {lang})"
         return False, value
 
     @debug_filter
