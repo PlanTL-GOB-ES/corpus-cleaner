@@ -16,9 +16,9 @@ import regex
 def debug_filter(func):
     def debug(self, doc):
         if self.debug:
-            keep = func(self, doc)
+            keep, value = func(self, doc)
             if not keep:
-                doc.operations.append(func.__name__)
+                doc.operations.append(f"{func.__name__}:{value}")
                 doc.content = ''
             return keep
         else:
@@ -251,54 +251,61 @@ class PreFilterer(CleanerComponentMapper):
 
     @debug_filter
     def _filter_by_length(self, doc: Document):
-        if len(doc.content) < self.char_length_filter:
-            return False
-        return True
+        value = len(doc.content)
+        if value < self.char_length_filter:
+            return False, value
+        return True, None
 
     @debug_filter
     def _filter_by_heads(self, doc: Document):
+        value = []
         if doc.heads is not None:
             for token in ['found', '404', 'robots.txt', 'error', 'trouvée']:
                 if re.search(token, doc.heads, re.IGNORECASE):
-                    return False
-        return True
+                    value.append(token)
+                    return False, value
+        return True, None
 
     @debug_filter
     def _filter_by_digits(self, doc: Document):
-        if sum(c.isdigit() for c in doc.content) / len(doc.content) > self.digits_filter:
-            return False
-        return True
+        value = sum(c.isdigit() for c in doc.content) / len(doc.content)
+        if value > self.digits_filter:
+            return False, value
+        return True, None
 
     @debug_filter
     def _filter_by_alphanum(self, doc: Document):
         concat_content = ''.join(doc.content.split())
-        if (1 - (sum(c.isalnum() for c in concat_content) / len(concat_content))) > self.alphanum_filter:
-            return False
-        return True
+        value = (1 - (sum(c.isalnum() for c in concat_content) / len(concat_content)))
+        if value > self.alphanum_filter:
+            return False, value
+        return True, None
 
     @debug_filter
     def _filter_by_lang_chars(self, doc: Document):
         concat_content = ''.join(doc.content.split())
-        if (1 - (sum(c in self.alphabet for c in concat_content) /
-                 len(concat_content))) > self.lang_chars_filter:
-            return False
-        return True
+        value = (1 - (sum(c in self.alphabet for c in concat_content) / len(concat_content)))
+        if value > self.lang_chars_filter:
+            return False, value
+        return True, None
 
     @debug_filter
     def _filter_by_uppercase(self, doc: Document):
-        if sum(c.isupper() for c in doc.content) / len(doc.content) > self.uppercase_filter:
-            return False
-        return True
+        value = sum(c.isupper() for c in doc.content) / len(doc.content)
+        if value > self.uppercase_filter:
+            return False, value
+        return True, None
 
     @debug_filter
     def _filter_by_alphabet(self, doc: Document):
         # TODO: Check thresholds?
         try:
-            if len(self.ad.detect_alphabet(doc.content).intersection(set(self.alphabet_filter))) == 0:
-                return False
+            value = len(self.ad.detect_alphabet(doc.content).intersection(set(self.alphabet_filter)))
+            if value == 0:
+                return False, value
         except:
-            return True
-        return True
+            return True, None
+        return True, None
 
     @debug_filter
     def _filter_by_lang(self, doc: Document):
@@ -307,16 +314,17 @@ class PreFilterer(CleanerComponentMapper):
         res = self.fasttext_lid.predict(content)
         lang = res[0][0][-2:]
         conf = res[1][0]
-        if lang in self.lang_filter and conf > self.initial_lang_filter_threshold:
+        value = conf
+        if lang in self.lang_filter and value > self.initial_lang_filter_threshold:
             doc.language = lang
-            return True
-        return False
+            return True, None
+        return False, value
 
     @debug_filter
     def _filter_by_dict(self, doc: Document):
         if self.dictionary_filter_pattern.search(doc.content):
-            return False
-        return True
+            return False, None
+        return True, None
 
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
         # TODO: 1. implement replace functions that receives as input the Document
