@@ -113,8 +113,9 @@ for data_dir in ${data_dirs}; do
     fi
 
     cat $(find_files "${data_dir}" "${exclude_names}") | \
-    shuf -n ${number_lines_dir} --random-source=<(get_seeded_random ${seed}) | \
-    sed '/^$/d' | sort | uniq >> ${output_file}
+    sed '/^$/d' | sort | uniq \
+    shuf -n ${number_lines_dir} --random-source=<(get_seeded_random ${seed}) \
+    >> ${output_file}
 done
 
 sample_lines=$(count_file_lines ${output_file})
