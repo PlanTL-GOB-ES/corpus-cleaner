@@ -43,7 +43,7 @@ class Cleaner:
     def get_valid_input_output_formats() -> Tuple:
         return DataParserFactory.VALID_INPUT_FORMATS, OutputFormatterFactory.VALID_OUTPUT_FORMATS
 
-    def __init__(self, args: argparse.Namespace, logger: logging):
+    def __init__(self, args: argparse.Namespace, logger: logging, checkpoint: Checkpoint):
         self.args = args
         self.args.cleaner_version = __version__
         self.logger = PipelineLogger(logger)

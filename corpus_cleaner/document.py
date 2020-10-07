@@ -1,9 +1,11 @@
 from typing import List
 from typing import Optional
 
+
 class Document:
     def __init__(self,
                  content: str,
+                 idx: int,
                  sentences: Optional[List[str]] = None,
                  sentences_orig: Optional[List[str]] = None,
                  filename: Optional[str] = None,
@@ -14,6 +16,7 @@ class Document:
                  heads: Optional[str] = None,
                  language: Optional[str] = None):
         self.content = content
+        self.idx = idx
         self.content_orig = content
         self.sentences = sentences
         self.sentences_orig = sentences_orig

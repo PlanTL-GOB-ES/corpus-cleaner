@@ -6,9 +6,12 @@ from logging import Logger
 from typing import Optional
 import multiprocessing_logging
 from typing import Any
+from typing import Tuple
 import ray
 from ray.util.multiprocessing import Pool
 import os
+from collections import OrderedDict
+import shelve
 
 T = TypeVar('T')
 
@@ -63,7 +66,7 @@ Q = TypeVar('Q')
 
 
 class MappingPipeline:
-    def __init__(self, streams: List[S], mappers_factory: Callable[[], List[Callable[[S], S]]],
+    def __init__(self, streams: OrderedDict[str, S], mappers_factory: Callable[[], List[Callable[[S], S]]],
                  parallel: bool, logger: Optional[PipelineLogger] = None, log_every_iter: int = 10,
                  backend: str = 'mp'):
         """
@@ -85,8 +88,6 @@ class MappingPipeline:
         self.mappers_factory = mappers_factory
         self.parallel = parallel
         self.log_every_iter = log_every_iter
-        if self.par_logger:
-            pass#raise NotImplementedError('No pipeline logging implemented')
         self.done = False
         self.f_mappers = None
 
@@ -119,35 +120,40 @@ class MappingPipeline:
         """
 
         assert not self.done
-        if self.par_logger:
-            pass
-        if self.parallel:
-            if self.par_logger:
-                self.par_logger.logger.info(f'{self.__class__.__name__}: Initializing mappers')
-                self._initialize_mappers(self.mappers_factory)  # Initialize in local
+        done_streams = []
+        with shelve.open('checkpoint') as c:
+            if self.parallel:
+                if self.par_logger:
+                    self.par_logger.logger.info(f'{self.__class__.__name__}: Initializing mappers')
+                    self._initialize_mappers(self.mappers_factory)  # Initialize in local
 
-            if self.backend == 'mp':
-                with multiprocessing.Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory,)) \
-                        as pool:
-                            res = pool.imap_unordered(self._map_f, self.streams)
+                if self.backend == 'mp':
+                    with multiprocessing.Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory,)) \
+                            as pool:
+                                res = pool.imap_unordered(self._map_f, self.streams.values())
+                                for idx, e in enumerate(res):
+                                    c['done_files'].append(e[2])
+                                    if self.par_logger and idx % self.log_every_iter == 0:
+                                        self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} '
+                                                                    f'({idx}/{len(self.streams)})')
+                else:
+                    work_dir = os.getcwd()
+                    ray.init(address='auto', redis_password='5241590000000000')
+                    with Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory, work_dir)) as pool:
+                        res = pool.imap_unordered(self._map_f, self.streams)
+                        for idx, e in enumerate(res):
+                            c['done_files'].append(e[2])
+                            if self.par_logger and idx % self.log_every_iter == 0:
+                                self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} '
+                                                            f'({idx}/{len(self.streams)})')
             else:
-                work_dir = os.getcwd()
-                ray.init(address='auto', redis_password='5241590000000000')
-                with Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory, work_dir)) as pool:
-                    res = pool.imap_unordered(self._map_f, self.streams)
-            if self.par_logger:
-                for idx, e in enumerate(res):
+                self._initialize_mappers(self.mappers_factory)
+                res = []
+                for idx, e in enumerate(self.streams):
+                    res.append(self._map_f(e))
+                    c['done_files'].append(res[-1][2])
                     if self.par_logger and idx % self.log_every_iter == 0:
-                        self.par_logger.logger.info(
-                            f'Processed {e} into {G.F_MAPPERS.target} ({idx}/{len(self.streams)})')
-
-        else:
-            self._initialize_mappers(self.mappers_factory)
-            res = []
-            for idx, e in enumerate(self.streams):
-                res.append(self._map_f(e))
-                if self.par_logger and idx % self.log_every_iter == 0:
-                    self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} ({idx}/{len(self.streams)}')
+                        self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} ({idx}/{len(self.streams)})')
 
         if self.par_logger:
             self.par_logger.logger.info(f'{self.__class__.__name__}: Mapping pipeline executed')
