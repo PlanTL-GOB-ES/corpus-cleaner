@@ -13,6 +13,8 @@ class SentenceFilter(CleanerComponentMapper):
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--char-length-filter-sentence', type=int, default=30,
                             help='filter sentences shorter than a given minimum character length')
+        parser.add_argument('--word-length-filter-sentence', type=int, default=2,
+                            help='filter sentences shorter than a given minimum word length')
         parser.add_argument('--profanity-check', action='store_true',
                             help='filter sentences with sensible content')
         parser.add_argument('--fast-lang-filter-threshold', type=float, help='If --lang-filter is set, minimum'
@@ -37,6 +39,7 @@ class SentenceFilter(CleanerComponentMapper):
         pass
 
     def __init__(self, args: argparse.Namespace, char_length_filter_sentence: int = 30,
+                 word_length_filter_sentence: int = 2,
                  lang_filter: Union[Tuple[str], None] = None, slow_lang_filter_threshold: float = 0.90,
                  code_threshold: float = 0.25,
                  profanity_check: bool = False, dictionary_filter: Optional[str] = None,
@@ -45,6 +48,8 @@ class SentenceFilter(CleanerComponentMapper):
         super().__init__(args)
         self.char_length_filter_sentence = args.char_length_filter_sentence if args.char_length_filter_sentence is not \
                                                                                None else char_length_filter_sentence
+        self.word_length_filter_sentence = args.word_length_filter_sentence if args.word_length_filter_sentence is not \
+                                                                               None else word_length_filter_sentence
         self.profanity_check = args.profanity_check if args.profanity_check is not None else profanity_check
         self.lang_filter = args.lang_filter if args.lang_filter is not None else lang_filter
         self.lang_id = None
@@ -70,7 +75,7 @@ class SentenceFilter(CleanerComponentMapper):
 
     def _get_filters(self):
         if self.char_length_filter_sentence is not None:
-            self.filters.append(self._filter_by_char_len)
+            self.filters.append(self._filter_by_len_sent)
         if self.code_threshold != -1:
             self.filters.append(self._filter_by_code)
         if self.lang_filter is not None:
@@ -84,11 +89,13 @@ class SentenceFilter(CleanerComponentMapper):
         if self.dedup_same_doc_sentences:
             self.filters.append(self._filter_by_duplicate)
 
-    def _filter_by_char_len(self, sentence: str):
-        value = len(sentence)
-        if value > self.char_length_filter_sentence:
+    def _filter_by_len_sent(self, sentence: str):
+        len_sentence = len(sentence)
+        len_words = len(sentence.split(' '))
+        if len_sentence > self.char_length_filter_sentence and len_words > self.word_length_filter_sentence:
             return True, None
-        return False, round(value, 2)
+        value = f"({round(len_sentence)} chars, {len_words} words)"
+        return False, value
 
     def _filter_by_code(self, sentence: str):
         value = (len(re.findall(self.code_keywords_pattern, sentence)) / len(sentence.split())) \

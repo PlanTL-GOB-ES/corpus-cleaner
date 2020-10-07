@@ -39,8 +39,8 @@ class PreFilterer(CleanerComponentMapper):
         parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
         parser.add_argument('--no-space-normalization', action='store_true', help='Avoid normalizing white spaces')
         parser.add_argument('--no-replace-urls', action='store_true', help='Avoid replacing URLs with "[URL]"')
-        parser.add_argument('--char-length-filter', type=int, help='Minimum char length per document. Set to 0 not'
-                                                                   'to apply any filter.', default=40)
+        parser.add_argument('--char-length-filter-document', type=int,
+                            help='Minimum char length per document. Set to 0 not to apply any filter.', default=40)
         parser.add_argument('--no-head-filter', action='store_true', help='Avoid filtering documents coming from'
                                                                           'a crawler (having a "heads" attribute) with'
                                                                           'common HTTP errors.')
@@ -77,7 +77,7 @@ class PreFilterer(CleanerComponentMapper):
                  no_replace_emails: bool = False,
                  no_remove_hashtags_mentions: bool = False, no_remove_tags: bool = False,
                  no_space_normalization: bool = False, no_replace_urls: bool = False,
-                 char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
+                 char_length_filter_document: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
                  lang_chars_filter: float = 0.1,
                  alphanum_filter: float = 0.3, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
@@ -99,7 +99,7 @@ class PreFilterer(CleanerComponentMapper):
         self.extra_spaces_pattern = None
         self.replace_urls = not args.no_replace_urls if args.no_replace_urls is not None else not no_replace_urls
         self.urls_pattern = None
-        self.char_length_filter = args.char_length_filter if args.char_length_filter is not None else char_length_filter
+        self.char_length_filter_document = args.char_length_filter_document if args.char_length_filter_document is not None else char_length_filter_document
         self.head_filter = not args.no_head_filter if args.no_head_filter is not None else not no_head_filter
         self.digits_filter = args.digits_filter if args.digits_filter is not None else digits_filter
         self.alphanum_filter = args.alphanum_filter if args.alphanum_filter is not None else alphanum_filter
@@ -195,8 +195,8 @@ class PreFilterer(CleanerComponentMapper):
             self.urls_pattern = re.compile(
                 rf'\((@)?((http|https)://)?([{self.lang_chars}0-9./?\\\\@\-—_=#])+\.[a-z]{{2,6}}([{self.lang_chars}0-9&/\\\\+~*?%:!@—_=#()-])*')
             self.urls_pattern2 = re.compile('(\[URL\]\.?\w*\s*)+')
-        if self.char_length_filter > 0:
-            self.filters.append(self._filter_by_length)
+        if self.char_length_filter_document > 0:
+            self.filters.append(self._filter_by_char_len_doc)
         if self.head_filter:
             self.filters.append(self._filter_by_heads)
         if self.digits_filter > 0:
@@ -239,9 +239,9 @@ class PreFilterer(CleanerComponentMapper):
             self.final_sentence_pattern2 = regex.compile(r"(\s)(\p{Ll}+)([.!?:]+)('|\")(\p{Lu})(\p{Ll}+)([\s.,;:?!])")
 
     @debug_filter
-    def _filter_by_length(self, doc: Document):
+    def _filter_by_char_len_doc(self, doc: Document):
         value = len(doc.content)
-        if value < self.char_length_filter:
+        if value < self.char_length_filter_document:
             return False, round(value, 2)
         return True, None
 
