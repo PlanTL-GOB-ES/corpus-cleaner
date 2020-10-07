@@ -109,6 +109,9 @@ class SentenceFilter(CleanerComponentMapper):
             conf = res[1]
             if lang in self.lang_filter and conf > self.slow_lang_filter_threshold:
                 return True, None
+            else:
+                value = f"({round(conf, 2)}, {lang})"
+                return False, value
         value = f"({round(conf, 2)}, {lang})"
         return False, value
 
