@@ -5,7 +5,7 @@ from typing import Optional
 class Document:
     def __init__(self,
                  content: str,
-                 filename: str,
+                 filename: Optional[str] = None,
                  sentences: Optional[List[str]] = None,
                  sentences_orig: Optional[List[str]] = None,
                  title: Optional[str] = None,

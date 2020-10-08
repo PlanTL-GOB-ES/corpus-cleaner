@@ -13,7 +13,7 @@ from corpus_cleaner.components.i_output_formatter.output_formatter_factory impor
 from typing import Iterable, List, Tuple
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 from corpus_cleaner.document import Document
-from corpus_cleaner import Checkpoint
+from corpus_cleaner.checkpoint import Checkpoint
 from collections import OrderedDict
 from corpus_cleaner.par_utils import MappingPipeline, PipelineLogger
 from corpus_cleaner.components.cleaner_component_reducer import DummyReducer
@@ -46,7 +46,6 @@ class Cleaner:
 
     def __init__(self, args: argparse.Namespace, logger: logging, checkpoint: Checkpoint):
         self.args = args
-        self.args.cleaner_version = __version__
         self.logger = PipelineLogger(logger)
         self.args.logger = self.logger
         self.mappers = MAPPERS
@@ -118,7 +117,7 @@ class Cleaner:
 
     def _get_paths(self) -> List[Tuple[int, str]]:
         # self.logger.info('Parsing...')
-        parser = DataParserFactory.get_parser(self.args, done_paths=self.checkpoint.done_paths)
+        parser = DataParserFactory.get_parser(self.args, done_paths=self.checkpoint.get_done_paths())
         return parser.get_idx_relative_filepaths()
 
     def _create_pipeline_mappers(self) -> List[CleanerComponent]:
@@ -149,7 +148,8 @@ class Cleaner:
                                            parallel=self.args.parallel,
                                            logger=self.logger if self.args.log_every_iter != -1 else None,
                                            log_every_iter=self.args.log_every_iter,
-                                           backend=self.args.backend)
+                                           backend=self.args.backend,
+                                           checkpoint_path=self.checkpoint.checkpoint_path)
                 pipeline.run()
 
             else:

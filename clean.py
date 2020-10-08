@@ -64,6 +64,8 @@ def main():
     output_dir = get_output_dir(args.name, args.output_path)
     args.output_path = output_dir
 
+    if os.path.exists(output_dir):
+        raise OSError(f'{output_dir} already exists!')
     os.makedirs(output_dir, exist_ok=True)
 
     checkpoint = Checkpoint(output_dir, args)
