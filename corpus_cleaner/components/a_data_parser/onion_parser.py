@@ -20,7 +20,9 @@ class OnionParser(DataParser):
         doc = Document(content='')
         for line in fd:
             if not self.debug:
-                line_index, line = line.split('\t')
+                # line_index, line = line.split('\t')
+                line_index = line.split('\t')[0]
+                line = '\t'.join(line.split('\t')[1:])
             # ignore the first two lines with the start tags
             if line.startswith('<doc'):
                 sp = line.split()
