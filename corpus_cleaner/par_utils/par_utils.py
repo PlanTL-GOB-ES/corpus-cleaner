@@ -147,7 +147,7 @@ class MappingPipeline:
                                         c.sync()
                                     if self.par_logger and idx % self.log_every_iter == 0:
                                         self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} '
-                                                                    f'({current+1}/{total})')
+                                                                    f'({idx+current+1}/{total})')
                 else:
                     work_dir = os.getcwd()
                     ray.init(address='auto', redis_password='5241590000000000')
@@ -159,7 +159,7 @@ class MappingPipeline:
                                 c.sync()
                             if self.par_logger and idx % self.log_every_iter == 0:
                                 self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} '
-                                                            f'({current+1}/{total})')
+                                                            f'({idx+current+1}/{total})')
             else:
                 self._initialize_mappers(self.mappers_factory)
                 # res = []
@@ -171,7 +171,7 @@ class MappingPipeline:
                         c.sync()
                     if self.par_logger and idx % self.log_every_iter == 0:
                         self.par_logger.logger.info(f'Processed {partial_res} into {G.F_MAPPERS.target} '
-                                                    f'({current+1}/{total})')
+                                                    f'({idx+current+1}/{total})')
 
         if self.par_logger:
             self.par_logger.logger.info(f'{self.__class__.__name__}: Mapping pipeline executed')
