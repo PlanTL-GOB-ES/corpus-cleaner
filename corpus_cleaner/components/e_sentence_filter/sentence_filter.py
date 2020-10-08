@@ -75,7 +75,7 @@ class SentenceFilter(CleanerComponentMapper):
 
     def _get_filters(self):
         if self.char_length_filter_sentence is not None:
-            self.filters.append(self.filter_by_len)
+            self.filters.append(self._filter_by_len)
         if self.code_threshold != -1:
             self.filters.append(self._filter_by_code)
         if self.lang_filter is not None:

@@ -221,7 +221,7 @@ class PreFilterer(CleanerComponentMapper):
                 )
             self.no_eols_pattern = re.compile('\n')
             self.fasttext_lid = fasttext.load_model(os.path.join('lib', 'lid.176.bin'))
-            self.filters.append(self._filter_by_lang_doc)
+            self.filters.append(self._filter_by_lang)
         if self.dictionary_filter is not None:
             self.dictionary_filter_pattern = re.compile("|".join(self.dictionary_filter))
             self.filters.append(self._filter_by_dict)
@@ -299,7 +299,7 @@ class PreFilterer(CleanerComponentMapper):
         return True, None
 
     @debug_filter
-    def _filter_by_lang_doc(self, doc: Document):
+    def _filter_by_lang(self, doc: Document):
         content = self.url_placeholder_pattern.sub('', doc.content)
         content = self.no_eols_pattern.sub('. ', content)
         res = self.fasttext_lid.predict(content)
