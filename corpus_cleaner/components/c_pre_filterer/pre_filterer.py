@@ -20,7 +20,7 @@ def debug_filter(func):
             if not keep:
                 doc.operations.append(f"{func.__name__}:{value}")
                 doc.content = ''
-            return keep
+            return keep, value
         else:
             return func(self, doc)
 
@@ -353,7 +353,7 @@ class PreFilterer(CleanerComponentMapper):
 
         keep = True
         for filter_ in self.filters:
-            keep = filter_(document)
+            keep, _ = filter_(document)
             if not keep:
                 break
         if keep or self.debug:
