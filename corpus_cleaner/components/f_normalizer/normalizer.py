@@ -37,7 +37,8 @@ class Normalizer(CleanerComponentMapper):
                 sent_norm = normalizer(sent_norm)
                 if self.debug and sent_norm:
                     if sent_norm != sent:
-                        document.operations[idx_sent].append(normalizer.__name__)
+                        class_name = self.__class__.__name__
+                        document.operations[idx_sent].append(f"{class_name}-{normalizer.__name__}")
             sent_norms.append(sent_norm)
         document.sentences = sent_norms
         return document

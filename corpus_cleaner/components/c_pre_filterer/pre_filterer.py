@@ -18,7 +18,9 @@ def debug_filter(func):
         if self.debug:
             keep, value = func(self, doc)
             if not keep:
-                doc.operations.append(f"{func.__name__}:{value}")
+                class_name = self.__class__.__name__
+                filter_name = func.__name__
+                doc.operations.append(f"{class_name}-{filter_name}:{value}")
                 doc.content = ''
             return keep, value
         else:
@@ -196,7 +198,7 @@ class PreFilterer(CleanerComponentMapper):
                 rf'\((@)?((http|https)://)?([{self.lang_chars}0-9./?\\\\@\-—_=#])+\.[a-z]{{2,6}}([{self.lang_chars}0-9&/\\\\+~*?%:!@—_=#()-])*')
             self.urls_pattern2 = re.compile('(\[URL\]\.?\w*\s*)+')
         if self.char_length_filter_document > 0:
-            self.filters.append(self._filter_by_char_len_doc)
+            self.filters.append(self._filter_by_char_len)
         if self.head_filter:
             self.filters.append(self._filter_by_heads)
         if self.digits_filter > 0:
@@ -239,7 +241,7 @@ class PreFilterer(CleanerComponentMapper):
             self.final_sentence_pattern2 = regex.compile(r"(\s)(\p{Ll}+)([.!?:]+)('|\")(\p{Lu})(\p{Ll}+)([\s.,;:?!])")
 
     @debug_filter
-    def _filter_by_char_len_doc(self, doc: Document):
+    def _filter_by_char_len(self, doc: Document):
         value = len(doc.content)
         if value < self.char_length_filter_document:
             return False, round(value, 2)
@@ -322,31 +324,31 @@ class PreFilterer(CleanerComponentMapper):
         if self.language_normalization:
             document.content, subs = self._language_normalization(self.lang_filter, document.content)
             if self.debug and subs:
-                document.operations.append(self._language_normalization.__name__)
+                document.operations.append(f"{self.__class__.__name__}-{self._language_normalization.__name__}")
         if self.replace_emails:
             document.content, subs = self._replace_emails(document.content)
             if self.debug and subs:
-                document.operations.append(self._replace_emails.__name__)
+                document.operations.append(f"{self.__class__.__name__}-{self._replace_emails.__name__}")
         if self.remove_hashtags_mentions:
             document.content, subs = self._remove_hashtags_mentions(document.content)
             if self.debug and subs:
-                document.operations.append(self._remove_hashtags_mentions.__name__)
+                document.operations.append(f"{self.__class__.__name__}-{self._remove_hashtags_mentions.__name__}")
         if self.remove_tags:
             document.content, subs = self._remove_tags(document.content)
             if self.debug and subs:
-                document.operations.append(self._remove_tags.__name__)
+                document.operations.append(f"{self.__class__.__name__}-{self._remove_tags.__name__}")
         if self.replace_urls:
             document.content, subs = self._replace_urls(document.content)
             if self.debug and subs:
-                document.operations.append(self._replace_urls.__name__)
+                document.operations.append(f"{self.__class__.__name__}-{self._replace_urls.__name__}")
         if self.space_normalization:
             document.content, subs = self._space_normalization(document.content)
             if self.debug and subs:
-                document.operations.append(self._space_normalization.__name__)
+                document.operations.append(f"{self.__class__.__name__}-{self._space_normalization.__name__}")
         if self.seg_sentences:
             document.content, subs = self._seg_sentences(document.content)
             if self.debug and subs:
-                document.operations.append(self._seg_sentences.__name__)
+                document.operations.append(f"{self.__class__.__name__}-{self._seg_sentences.__name__}")
 
         if len(document.content.split()) == 0:
             return None
