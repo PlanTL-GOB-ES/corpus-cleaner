@@ -82,14 +82,14 @@ class SentenceFilter(CleanerComponentMapper):
             self.fasttext_lid = fasttext.load_model(os.path.join('lib', 'lid.176.bin'))
             self.lang_id = LanguageIdentifier.from_modelstring(model, norm_probs=True)
             _ = self.lang_id.classify('')  # force init
-            self.filters.append(self.__filter_by_lang)
+            self.filters.append(self._filter_by_lang)
         if self.dictionary_filter is not None:
             self.dictionary_filter_pattern = re.compile("|".join(self.dictionary_filter))
             self.filters.append(self._filter_by_dict)
         if self.dedup_same_doc_sentences:
             self.filters.append(self._filter_by_duplicate)
 
-    def filter_by_len(self, sentence: str):
+    def _filter_by_len(self, sentence: str):
         len_sentence = len(sentence)
         len_words = len(sentence.split(' '))
         if len_sentence > self.char_length_filter_sentence and len_words > self.word_length_filter_sentence:
@@ -104,7 +104,7 @@ class SentenceFilter(CleanerComponentMapper):
             return False, round(value, 2)
         return True, None
 
-    def __filter_by_lang(self, sentence: str):
+    def _filter_by_lang(self, sentence: str):
         res = self.fasttext_lid.predict(sentence.lower())
         lang = res[0][0][-2:]
         conf = res[1][0]
