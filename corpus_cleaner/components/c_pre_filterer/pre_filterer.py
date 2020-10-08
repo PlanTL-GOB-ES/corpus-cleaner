@@ -254,7 +254,7 @@ class PreFilterer(CleanerComponentMapper):
             for token in ['found', '404', 'robots.txt', 'error', 'trouvée']:
                 if re.search(token, doc.heads, re.IGNORECASE):
                     value.append(token)
-                    return False, round(value, 2)
+                    return False, value
         return True, None
 
     @debug_filter
