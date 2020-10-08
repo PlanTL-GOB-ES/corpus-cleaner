@@ -48,7 +48,7 @@ class SentenceSplitterComponent(CleanerComponentMapper):
                 # the number of lines in the original content
                 empty_sentences_number = len(document.content_orig.splitlines())
                 document.sentences = [''] * empty_sentences_number
-                document.sentences_orig = [document.content_orig]
+                document.sentences_orig = document.content_orig.splitlines()
             else:
                 document.sentences = [sent for sent in splitter.split(document.content)]
                 document.sentences_orig = [sent for sent in splitter.split(document.content_orig)]
@@ -60,6 +60,8 @@ class SentenceSplitterComponent(CleanerComponentMapper):
             # add operations for each sentence in the document
             # TODO: assign the operations to document and sentences separately
             document.operations = [document.operations.copy() for _ in range(len(document.sentences))]
+        else:
+            document.sentences = [sent for sent in splitter.split(document.content)]
         return document
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
