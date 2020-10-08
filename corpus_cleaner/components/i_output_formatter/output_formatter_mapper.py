@@ -21,19 +21,10 @@ class OutputFormatterMapper(CleanerComponent):
 
     def __call__(self, documents: Iterable[Document]) -> Tuple[int, Optional[Tuple], Optional[str]]:
         self.output_formatter.init_writing()
-        idx = -1
-        id_ = None
         filename = None
         for document in documents:
             self.output_formatter._write_document(document)
-            if document.url and document.id:
-                id_ = (document.filename, document.id, document.url)
-            elif document.id:
-                id_ = (document.filename, document.id)
-            else:
-                id_ = (document.filename,)
-            idx = document.idx
             filename = document.filename
         self.output_formatter.end_writing()
-        return idx, id_, filename
+        return filename
 

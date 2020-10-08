@@ -13,6 +13,7 @@ from corpus_cleaner.components.i_output_formatter.output_formatter_factory impor
 from typing import Iterable, List, Tuple
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 from corpus_cleaner.document import Document
+from corpus_cleaner import Checkpoint
 from collections import OrderedDict
 from corpus_cleaner.par_utils import MappingPipeline, PipelineLogger
 from corpus_cleaner.components.cleaner_component_reducer import DummyReducer
@@ -87,6 +88,7 @@ class Cleaner:
                     self.postmappers.append(comp)
         self.documents = None
         self.stats = OrderedDict()
+        self.checkpoint = checkpoint
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -116,7 +118,7 @@ class Cleaner:
 
     def _get_paths(self) -> List[Tuple[int, str]]:
         # self.logger.info('Parsing...')
-        parser = DataParserFactory.get_parser(self.args)
+        parser = DataParserFactory.get_parser(self.args, done_paths=self.checkpoint.done_paths)
         return parser.get_idx_relative_filepaths()
 
     def _create_pipeline_mappers(self) -> List[CleanerComponent]:

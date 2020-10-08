@@ -15,6 +15,7 @@ def clean(args: argparse.Namespace, logger: logging.Logger, checkpoint: Checkpoi
     t0 = datetime.datetime.now().timestamp()
     cleaner = Cleaner(args, logger, checkpoint)
     cleaner.clean()
+    checkpoint.declare_as_cleaned()
     t1 = datetime.datetime.now().timestamp()
     logger.info(f'Elapsed {t1-t0}s')
 
@@ -65,8 +66,8 @@ def main():
 
     os.makedirs(output_dir, exist_ok=True)
 
-    checkpoint = Checkpoint(output_dir)
-    logger = checkpoint.init()
+    checkpoint = Checkpoint(output_dir, args)
+    logger = checkpoint.logger
 
     logging.info(output_dir)
 

@@ -67,7 +67,7 @@ Q = TypeVar('Q')
 
 class MappingPipeline:
     def __init__(self, streams: OrderedDict[str, S], mappers_factory: Callable[[], List[Callable[[S], S]]],
-                 parallel: bool, logger: Optional[PipelineLogger] = None, log_every_iter: int = 10,
+                 parallel: bool, checkpoint_path: str, logger: Optional[PipelineLogger] = None, log_every_iter: int = 10,
                  backend: str = 'mp'):
         """
         A simple class for parallelizing map-like functions.
@@ -90,6 +90,7 @@ class MappingPipeline:
         self.log_every_iter = log_every_iter
         self.done = False
         self.f_mappers = None
+        self.checkpoint_path = checkpoint_path
 
     @staticmethod
     def _initialize_mappers(mappers_factory, work_dir=None):
@@ -120,8 +121,7 @@ class MappingPipeline:
         """
 
         assert not self.done
-        done_streams = []
-        with shelve.open('checkpoint') as c:
+        with shelve.open(self.checkpoint_path) as c:
             if self.parallel:
                 if self.par_logger:
                     self.par_logger.logger.info(f'{self.__class__.__name__}: Initializing mappers')
@@ -132,7 +132,7 @@ class MappingPipeline:
                             as pool:
                                 res = pool.imap_unordered(self._map_f, self.streams.values())
                                 for idx, e in enumerate(res):
-                                    c['done_files'].append(e[2])
+                                    c['done_files'].append(e)
                                     if self.par_logger and idx % self.log_every_iter == 0:
                                         self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} '
                                                                     f'({idx}/{len(self.streams)})')
@@ -142,7 +142,7 @@ class MappingPipeline:
                     with Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory, work_dir)) as pool:
                         res = pool.imap_unordered(self._map_f, self.streams)
                         for idx, e in enumerate(res):
-                            c['done_files'].append(e[2])
+                            c['done_files'].append(e)
                             if self.par_logger and idx % self.log_every_iter == 0:
                                 self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} '
                                                             f'({idx}/{len(self.streams)})')
@@ -151,11 +151,12 @@ class MappingPipeline:
                 res = []
                 for idx, e in enumerate(self.streams):
                     res.append(self._map_f(e))
-                    c['done_files'].append(res[-1][2])
+                    c['done_files'].append(res[-1])
                     if self.par_logger and idx % self.log_every_iter == 0:
-                        self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} ({idx}/{len(self.streams)})')
+                        self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} '
+                                                    f'({idx}/{len(self.streams)})')
 
         if self.par_logger:
             self.par_logger.logger.info(f'{self.__class__.__name__}: Mapping pipeline executed')
         self.done = True
-        return res
+        return None

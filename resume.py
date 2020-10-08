@@ -5,8 +5,8 @@ from .clean import clean
 
 def resume(output_path: str):
     checkpoint = Checkpoint(output_path)
-    args = checkpoint.restore_args()
-    logger = checkpoint.restore_logging()
+    args = checkpoint.args
+    logger = checkpoint.logger
     logger.info(f'Restoring clean from {output_path}')
     clean(args, logger, checkpoint)
 

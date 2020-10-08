@@ -35,8 +35,7 @@ class DataParser(CleanerComponent):
     def __init__(self, args: argparse.Namespace, input_path: Optional[str] = None,
                  extensions: Optional[Tuple[str]] = None,
                  encoding: str = 'auto', encoding_threshold: float = 0.9, encoding_error_policy: str = 'ignore',
-                 bytes_: bool = False, url_filter: Optional[str] = None, done_paths: Iterable[str] = (),
-                 last_docs: Optional[Dict[str, int]] = None):
+                 bytes_: bool = False, url_filter: Optional[str] = None, done_paths: Iterable[str] = ()):
         # TODO: Revisit defaults
         super().__init__(args)
         self.input_path = input_path if input_path is not None else args.input_path
@@ -58,7 +57,6 @@ class DataParser(CleanerComponent):
                         self.url_filter[idx] = 'http://' + url
                 self.url_filter = [urlparse(url) for url in self.url_filter]
         self.done_paths = set(done_paths)
-        self.last_docs = {} if last_docs is None else last_docs
 
     def _check_url(self, url: str) -> bool:
         def url_belongs_to(u1, u2):
@@ -87,12 +85,9 @@ class DataParser(CleanerComponent):
 
     def _treat_file(self, idx_filepath: int, relative_filepath: str) -> Iterable[Document]:
         abs_path = os.path.join(relative_filepath)
-        last_doc_idx = self.last_docs[relative_filepath]
         if self.bytes:
             with open(abs_path, 'rb') as f:
                 for idx, doc in enumerate(self._parse_binary_file(f, relative_filepath, idx_filepath)):
-                    if idx < last_doc_idx:
-                        continue
                     if self.url_filter is not None:
                         url = doc.url
                         if self._check_url(url):
@@ -109,16 +104,12 @@ class DataParser(CleanerComponent):
             if not gz:
                 with open(abs_path, 'r', encoding=enc, errors=self.encoding_error_policy) as f:
                     for idx, doc in enumerate(self._parse_file(f, relative_filepath, idx_filepath)):
-                        if idx < last_doc_idx:
-                            continue
                         if enc != 'utf-8':
                             pass  # TODO: Check possible problems when the original file was not utf-8
                         yield doc
             else:
                 with gzip.open(abs_path, 'rt', encoding=enc, errors=self.encoding_error_policy) as f:
                     for idx, doc in enumerate(self._parse_file(f, relative_filepath, idx_filepath)):
-                        if idx < last_doc_idx:
-                            continue
                         if enc != 'utf-8':
                             pass  # TODO: Check possible problems when the original file was not utf-8
                         yield doc
@@ -176,9 +167,3 @@ class DataParser(CleanerComponent):
 
     def get_idx_relative_filepaths(self) -> List[Tuple[int, str]]:
         return list(enumerate(self._get_relative_filepaths()))
-
-    def register_done(self, path: str):
-        self.done_paths.add(path)
-
-    def get_done(self):
-        return sorted(list(self.done_paths))
