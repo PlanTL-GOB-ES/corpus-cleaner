@@ -130,6 +130,8 @@ class MappingPipeline:
 
         assert not self.done
         with shelve.open(self.checkpoint_path) if self.checkpoint_path is not None else nullcontext() as c:
+            total = len(self.streams) + len(c['done_paths']) if self.checkpoint_path else len(self.streams)
+            current = len(c['done_paths']) if self.checkpoint_path else 0
             if self.parallel:
                 if self.par_logger:
                     self.par_logger.logger.info(f'{self.__class__.__name__}: Initializing mappers')
@@ -138,34 +140,38 @@ class MappingPipeline:
                 if self.backend == 'mp':
                     with multiprocessing.Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory,)) \
                             as pool:
-                                res = pool.imap_unordered(self._map_f, self.streams.values())
+                                res = pool.imap_unordered(self._map_f, self.streams)
                                 for idx, e in enumerate(res):
-                                    c['done_paths'].append(e)
-                                    c.sync()
+                                    if self.checkpoint_path:
+                                        c['done_paths'] += [e]
+                                        c.sync()
                                     if self.par_logger and idx % self.log_every_iter == 0:
                                         self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} '
-                                                                    f'({idx}/{len(self.streams)})')
+                                                                    f'({current+1}/{total})')
                 else:
                     work_dir = os.getcwd()
                     ray.init(address='auto', redis_password='5241590000000000')
                     with Pool(initializer=self._initialize_mappers, initargs=(self.mappers_factory, work_dir)) as pool:
                         res = pool.imap_unordered(self._map_f, self.streams)
                         for idx, e in enumerate(res):
-                            c['done_paths'].append(e)
-                            c.sync()
+                            if self.checkpoint_path:
+                                c['done_paths'] += [e]
+                                c.sync()
                             if self.par_logger and idx % self.log_every_iter == 0:
                                 self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} '
-                                                            f'({idx}/{len(self.streams)})')
+                                                            f'({current+1}/{total})')
             else:
                 self._initialize_mappers(self.mappers_factory)
-                res = []
+                # res = []
                 for idx, e in enumerate(self.streams):
-                    res.append(self._map_f(e))
-                    c['done_paths'].append(res[-1])
-                    c.sync()
+                    # res.append(self._map_f(e))
+                    partial_res = self._map_f(e)
+                    if self.checkpoint_path:
+                        c['done_paths'] += [partial_res]
+                        c.sync()
                     if self.par_logger and idx % self.log_every_iter == 0:
-                        self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} '
-                                                    f'({idx}/{len(self.streams)})')
+                        self.par_logger.logger.info(f'Processed {partial_res} into {G.F_MAPPERS.target} '
+                                                    f'({current+1}/{total})')
 
         if self.par_logger:
             self.par_logger.logger.info(f'{self.__class__.__name__}: Mapping pipeline executed')

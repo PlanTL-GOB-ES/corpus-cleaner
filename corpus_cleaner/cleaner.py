@@ -50,7 +50,8 @@ class Cleaner:
         self.args.logger = self.logger
         self.mappers = MAPPERS
         self.tmp_dir = os.path.join(args.output_path, 'tmp')
-        os.makedirs(self.tmp_dir)
+        if not checkpoint.resume:
+            os.makedirs(self.tmp_dir)
         if args.components is not None:
             self.mappers = []
             for comp in MAPPERS:

@@ -1,6 +1,6 @@
 import argparse
 from corpus_cleaner.checkpoint import Checkpoint
-from .clean import clean
+from clean import clean
 
 
 def resume(output_path: str):

@@ -11,15 +11,13 @@ class Checkpoint:
     def __init__(self, output_path: str, args: Optional[argparse.Namespace] = None):
         self.output_path = output_path
         self.checkpoint_path = os.path.join(output_path, 'checkpoint')
-        if os.path.exists(self.checkpoint_path):
+        if os.path.exists(self.checkpoint_path + '.db'):
             assert args is None
-            with open(os.path.join(output_path, 'args.json'), 'w') as f:
+            with open(os.path.join(output_path, 'args.json'), 'r') as f:
                 self.args = argparse.Namespace(**json.loads(f.read()))
             self.resume = True
             if not self.args.only_reduce:
                 self.logger = self.init_logger(os.path.join(self.output_path, 'clean.log'))
-                with open(os.path.join(self.output_path, 'args.json'), 'w') as f:
-                    json.dump(self.args.__dict__, f, indent=2)
             else:
                 raise RuntimeError("Can't resume with --only-reduce")
                 # self.logger = self.init_logger(os.path.join(self.output_path, 'clean_reduce.log'))

@@ -137,7 +137,7 @@ class DataParser(CleanerComponent):
                     recursive=True):
                 if os.path.isfile(path) and path not in self.done_paths:
                     relative_paths.append(path)
-        return relative_paths
+        return sorted(relative_paths)
 
     def _guess_encoding(self, path: str, gz: bool):
         # https://stackoverflow.com/questions/46037058/using-chardet-to-find-encoding-of-very-large-file/49621821

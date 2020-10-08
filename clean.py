@@ -75,6 +75,8 @@ def main():
 
     clean(args, logger, checkpoint)
 
+    print()
+
 
 if __name__ == '__main__':
     main()
