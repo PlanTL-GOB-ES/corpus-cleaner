@@ -10,8 +10,8 @@ class SentenceOutputFormatter(OutputFormatter):
 
     def _write_document(self, document: Document):
         if len(document.sentences) > 0:
-            sentences = [sentence.replace(f'{self.separator}', '\t') for sentence in document.sentences]
-            self.fd.writelines(f'{sentence}\n' for sentence in sentences)
+            # sentences = [sentence.replace(f'{self.separator}', '\t') for sentence in document.sentences]
+            self.fd.writelines(f'{sentence}\n' for sentence in document.sentences)
 
     def _end_writing(self):
         self.fd.close()
