@@ -53,12 +53,15 @@ class SentenceSplitterComponent(CleanerComponentMapper):
                 document.sentences = [sent for sent in splitter.split(document.content)]
                 document.sentences_orig = [sent for sent in splitter.split(document.content_orig)]
 
-                # Return None the original sentences are not aligned to the cleaned sentences
+                # If the original sentences are not aligned to the cleaned ones, place the whole document on the first
+                # line to allow manual alignment
                 if not len(document.sentences) == len(document.sentences_orig):
-                    return None
+                    if len(document.sentences) > len(document.sentences_orig):
+                        content_orig = document.content_orig.replace('\n', '')
+                        document.sentences_orig = [f'UNALIGNED:{content_orig}']
+                        document.sentences_orig.extend(['UNALIGNED:'] * (len(document.sentences) - len(document.sentences_orig)))
 
             # add operations for each sentence in the document
-            # TODO: assign the operations to document and sentences separately
             document.operations = [document.operations.copy() for _ in range(len(document.sentences))]
         else:
             document.sentences = [sent for sent in splitter.split(document.content)]
