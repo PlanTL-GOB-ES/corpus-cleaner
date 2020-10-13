@@ -6,10 +6,10 @@ from typing import Tuple
 import argparse
 
 
-class FileParser(DataParser):
+class TextfileParser(DataParser):
     def __init__(self,  args: argparse.Namespace, extensions: Tuple[str] = ('txt',),
                  encoding='utf-8', **kwargs):
-        super(FileParser, self).__init__(args, input_path=args.input_path, extensions=extensions,
+        super(TextfileParser, self).__init__(args, input_path=args.input_path, extensions=extensions,
                                              encoding=encoding, **kwargs)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:

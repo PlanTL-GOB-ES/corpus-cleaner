@@ -7,13 +7,13 @@ from .warc_parser import WARCParser
 from .data_parser import DataParser
 from .data_parser_mapper import DataParserMapper
 from .document_parser import DocumentParser
-from .file_parser import FileParser
+from .textfile_parser import TextfileParser
 import argparse
 from typing import Optional
 
 
 class DataParserFactory:
-    VALID_INPUT_FORMATS = ['wikipedia', 'bsc-crawl-json', 'fairseq-lm', 'sentence', 'warc', 'document', 'file']
+    VALID_INPUT_FORMATS = ['wikipedia', 'bsc-crawl-json', 'fairseq-lm', 'sentence', 'warc', 'document', 'textfile']
 
     @staticmethod
     def get_parser(args: argparse.Namespace, input_format: Optional[str] = None, input_path: Optional[str] = None,
@@ -32,8 +32,8 @@ class DataParserFactory:
                 return WARCParser(args, **kwargs)
             elif args.input_format == 'document':
                 return DocumentParser(args, **kwargs)
-            elif args.input_format == 'file':
-                return FileParser(args, **kwargs)
+            elif args.input_format == 'textfile':
+                return TextfileParser(args, **kwargs)
             else:
                 raise NotImplementedError(args.input_format)
         else:
