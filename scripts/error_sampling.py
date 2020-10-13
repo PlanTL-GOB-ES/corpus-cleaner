@@ -30,36 +30,45 @@ class ErrorSampler:
                 return True
         return False
 
-    def parse_file(self, input_file):
+    def parse_file(self, input_file, input_format):
         with open(input_file) as fn:
             lines = fn.readlines()
         assert all(len(line.split(f"{self.separator}")) == 3 for line in lines if line != '\n'), \
             "Please input a file in a TAB-separated format obtained from the pipeline executed in debug mode"
 
-        original = []
-        cleaned = []
-        operations = []
-        original_doc = []
-        cleaned_doc = []
-        operations_doc = []
-        for line in lines:
-            if not line == '\n':
-                original_doc.append(line.split(self.separator)[0])
-                cleaned_doc.append(line.split(self.separator)[1])
-                operations_doc.append(line.split(self.separator)[2])
-            else:
-                original.append(original_doc)
-                cleaned.append(cleaned_doc)
-                operations.append(operations_doc)
-                original_doc = []
-                cleaned_doc = []
-                operations_doc = []
-        return original, cleaned, operations
+        if input_format == 'fairseq-lm':
+            original = []
+            cleaned = []
+            operations = []
+            original_doc = []
+            cleaned_doc = []
+            operations_doc = []
+            for line in lines:
+                if not line == '\n':
+                    original_doc.append(line.split(self.separator)[0])
+                    cleaned_doc.append(line.split(self.separator)[1])
+                    operations_doc.append(line.split(self.separator)[2])
+                else:
+                    original.append(original_doc)
+                    cleaned.append(cleaned_doc)
+                    operations.append(operations_doc)
+                    original_doc = []
+                    cleaned_doc = []
+                    operations_doc = []
+
+            return original, cleaned, operations
+
+        elif input_format == 'sentence':
+            original = [[line.split(self.separator)[0]] for line in lines]
+            cleaned = [[line.split(self.separator)[1]] for line in lines]
+            operations = [[line.split(self.separator)[2]] for line in lines]
+
+            return original, cleaned, operations
 
     # 2. Classify documents in two classes ERROR/NO ERROR
     def classify(self, input_file, input_format, use_unaligned):
         logging.info(f"Classifying documents in error type from the file: {input_file}")
-        original, cleaned, operations = self.parse_file(input_file)
+        original, cleaned, operations = self.parse_file(input_file, input_format)
         for orig_doc, clean_doc, ops_doc in zip(original, cleaned, operations):
             doc = [f'{orig_sent}{self.separator}{clean_sent}{self.separator}{ops_sent}'
                    for orig_sent, clean_sent, ops_sent in zip(orig_doc, clean_doc, ops_doc)]
