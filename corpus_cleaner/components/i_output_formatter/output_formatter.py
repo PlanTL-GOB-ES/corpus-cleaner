@@ -5,7 +5,7 @@ import argparse
 from typing import TextIO
 from typing import Optional
 
-SEPARATOR = " ||| "
+SEPARATOR = "|||"
 
 
 class OutputFormatter(CleanerComponent):
