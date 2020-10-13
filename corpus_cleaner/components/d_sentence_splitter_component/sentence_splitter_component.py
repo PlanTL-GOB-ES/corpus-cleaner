@@ -53,6 +53,9 @@ class SentenceSplitterComponent(CleanerComponentMapper):
                 document.sentences = [sent for sent in splitter.split(document.content)]
                 document.sentences_orig = [sent for sent in splitter.split(document.content_orig)]
 
+                if len(document.sentences) > 1:
+                    document.operations.append(f'{self.__class__.__name__}-_sentence_splitter')
+
                 # If the original sentences are not aligned to the cleaned ones, place the whole document on the first
                 # line to allow manual alignment
                 if not len(document.sentences) == len(document.sentences_orig):

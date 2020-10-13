@@ -27,7 +27,7 @@ class EncodingFixer(CleanerComponentMapper):
         document.operations = []
         document.content = ftfy.fix_text(document.content, normalization='NFKC').replace('\x92', "'")
         if document.content_orig != document.content:
-            document.operations.append('_fix_encoding')
+            document.operations.append(f'{self.__class__.__name__}-_fix_encoding')
         return document
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
