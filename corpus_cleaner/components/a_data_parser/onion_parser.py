@@ -20,7 +20,8 @@ class OnionParser(DataParser):
         doc = Document(content='')
         for line in fd:
             if not self.debug:
-                line_index, line = line.split('\t')
+                line_index = line.split('\t')[0]
+                line = '\t'.join(line.split('\t')[1:])
             # ignore the first two lines with the start tags
             if line.startswith('<doc'):
                 sp = line.split()
@@ -28,7 +29,7 @@ class OnionParser(DataParser):
                     doc = Document.parse_str(sp[1:-1])
                 else:
                     doc = Document(content='')
-            elif line.startswith('<p>') or line.startswith('</p>'):
+            elif line in ['<p>\n', '</p>\n']:
                 continue
             # empty the document sentences list when a new document is reached and return the document object
             elif line.startswith('</doc>'):
