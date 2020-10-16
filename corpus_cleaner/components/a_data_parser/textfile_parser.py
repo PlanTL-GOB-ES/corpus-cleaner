@@ -26,5 +26,5 @@ class TextfileParser(DataParser):
         if len(doc_lines) > 0:
             doc_id = f'{relative_filepath}-{i}'
             filename = relative_filepath
-            yield Document(content=''.join(doc_lines), id_=doc_id, url=url, title=title,
+            yield Document(content='\n'.join(doc_lines), id_=doc_id, url=url, title=title,
                            filename=filename)

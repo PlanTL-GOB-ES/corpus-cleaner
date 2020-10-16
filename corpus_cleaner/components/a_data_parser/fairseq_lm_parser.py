@@ -37,7 +37,7 @@ class FairseqLMParser(DataParser):
                 url = ''
                 title = ''
             else:
-                doc_lines.append(line)
+                doc_lines.append(line + '\n')
 
         if len(doc_lines) > 0:
             filename = relative_filepath
