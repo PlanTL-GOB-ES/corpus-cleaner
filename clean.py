@@ -7,13 +7,15 @@ import os
 import corpus_cleaner
 import sys
 import datetime
+from corpus_cleaner.checkpoint import Checkpoint
 
 
-def clean(args: argparse.Namespace, logger: logging.Logger):
+def clean(args: argparse.Namespace, logger: logging.Logger, checkpoint: Checkpoint):
     logger.info(args)
     t0 = datetime.datetime.now().timestamp()
-    cleaner = Cleaner(args, logger)
+    cleaner = Cleaner(args, logger, checkpoint)
     cleaner.clean()
+    checkpoint.declare_as_cleaned()
     t1 = datetime.datetime.now().timestamp()
     logger.info(f'Elapsed {t1-t0}s')
 
@@ -42,15 +44,6 @@ def check_args(args: argparse.Namespace):
         component.check_args(args)
 
 
-def init_logger(filename_path: str) -> logging.Logger:
-    logging.basicConfig(filename=filename_path, level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    h = logging.StreamHandler(sys.stderr)
-    h.flush = sys.stderr.flush
-    logger.addHandler(h)
-    return logger
-
-
 def main():
     parser = argparse.ArgumentParser(description='Clean raw text data.')
     parser.add_argument('name', type=str, help='A name to identify the run')
@@ -71,20 +64,18 @@ def main():
     output_dir = get_output_dir(args.name, args.output_path)
     args.output_path = output_dir
 
+    if os.path.exists(output_dir):
+        raise OSError(f'{output_dir} already exists!')
     os.makedirs(output_dir, exist_ok=True)
 
-    if not args.only_reduce:
-        logger = init_logger(os.path.join(output_dir, 'clean.log'))
-        with open(os.path.join(output_dir, 'args.json'), 'w') as f:
-            json.dump(args.__dict__, f, indent=2)
-    else:
-        logger = init_logger(os.path.join(output_dir, 'clean_reduce.log'))
-        with open(os.path.join(output_dir, 'args_reduce.json'), 'w') as f:
-            json.dump(args.__dict__, f, indent=2)
+    checkpoint = Checkpoint(output_dir, args)
+    logger = checkpoint.logger
 
     logging.info(output_dir)
 
-    clean(args, logger)
+    clean(args, logger, checkpoint)
+
+    print()
 
 
 if __name__ == '__main__':

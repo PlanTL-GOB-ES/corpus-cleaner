@@ -13,6 +13,7 @@ from corpus_cleaner.components.i_output_formatter.output_formatter_factory impor
 from typing import Iterable, List, Tuple
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 from corpus_cleaner.document import Document
+from corpus_cleaner.checkpoint import Checkpoint
 from collections import OrderedDict
 from corpus_cleaner.par_utils import MappingPipeline, PipelineLogger
 from corpus_cleaner.components.cleaner_component_reducer import DummyReducer
@@ -43,14 +44,14 @@ class Cleaner:
     def get_valid_input_output_formats() -> Tuple:
         return DataParserFactory.VALID_INPUT_FORMATS, OutputFormatterFactory.VALID_OUTPUT_FORMATS
 
-    def __init__(self, args: argparse.Namespace, logger: logging):
+    def __init__(self, args: argparse.Namespace, logger: logging, checkpoint: Checkpoint):
         self.args = args
-        self.args.cleaner_version = __version__
         self.logger = PipelineLogger(logger)
         self.args.logger = self.logger
         self.mappers = MAPPERS
         self.tmp_dir = os.path.join(args.output_path, 'tmp')
-        os.makedirs(self.tmp_dir)
+        if not checkpoint.resume:
+            os.makedirs(self.tmp_dir)
         if args.components is not None:
             self.mappers = []
             for comp in MAPPERS:
@@ -87,6 +88,7 @@ class Cleaner:
                     self.postmappers.append(comp)
         self.documents = None
         self.stats = OrderedDict()
+        self.checkpoint = checkpoint
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -116,7 +118,7 @@ class Cleaner:
 
     def _get_paths(self) -> List[Tuple[int, str]]:
         # self.logger.info('Parsing...')
-        parser = DataParserFactory.get_parser(self.args)
+        parser = DataParserFactory.get_parser(self.args, done_paths=self.checkpoint.get_done_paths())
         return parser.get_idx_relative_filepaths()
 
     def _create_pipeline_mappers(self) -> List[CleanerComponent]:
@@ -136,18 +138,28 @@ class Cleaner:
         else:
             if not self.args.only_reduce_output:
                 self.reducer = self.reducer(self.args)
+                components_str = self.args.input_format + ' -> '
+                for idx, c in enumerate(self.mappers):
+                    if idx not in [0, len(self.mappers) - 1]:
+                        components_str += c.__name__ + ' -> '
+                components_str += 'onion'
+                self.logger.logger.info(components_str)
                 pipeline = MappingPipeline(streams=self._get_paths(),
                                            mappers_factory=self._create_pipeline_mappers,
                                            parallel=self.args.parallel,
                                            logger=self.logger if self.args.log_every_iter != -1 else None,
                                            log_every_iter=self.args.log_every_iter,
-                                           backend=self.args.backend)
+                                           backend=self.args.backend,
+                                           checkpoint_path=self.checkpoint.checkpoint_path)
                 pipeline.run()
 
             else:
                 self.reducer = self.reducer(self.args, output_path=os.path.join(self.args.input_path))
 
+            self.logger.logger.info(f'Reducing with {self.reducer.__class__.__name__}')
             self.reducer.reduce()
 
+            self.logger.logger.info(f'onion -> {self.args.output_format}')
+            self.logger.logger.info('Writing deduplicated documents')
             self._output(self.reducer.get_documents()[0])
 

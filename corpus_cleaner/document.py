@@ -5,9 +5,9 @@ from typing import Optional
 class Document:
     def __init__(self,
                  content: str,
+                 filename: Optional[str] = None,
                  sentences: Optional[List[str]] = None,
                  sentences_orig: Optional[List[str]] = None,
-                 filename: Optional[str] = None,
                  title: Optional[str] = None,
                  url: Optional[str] = None,
                  id_: Optional[str] = None,

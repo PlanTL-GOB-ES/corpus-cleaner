@@ -2,8 +2,7 @@ from corpus_cleaner.document import Document
 from chardet.universaldetector import UniversalDetector  # TODO: Try UnicodeDammit, Magic...?
 from typing import TextIO, BinaryIO
 import os
-from typing import Tuple, Union
-from pathlib import Path
+from typing import Tuple
 import glob
 from corpus_cleaner.components.cleaner_component import CleanerComponent
 import argparse
@@ -11,6 +10,7 @@ from typing import Iterable, List, Optional
 import gzip
 from urllib.parse import urlparse
 import re
+from typing import Dict
 
 
 class DataParser(CleanerComponent):
@@ -26,7 +26,6 @@ class DataParser(CleanerComponent):
         parser.add_argument('--url-doc', type=str, help='Path to a url list (plain text, one url per line)'
                                                         'that should be filtered and processed', default=None)
 
-
     @staticmethod
     def check_args(args: argparse.Namespace):
         # TODO check custom args
@@ -36,7 +35,7 @@ class DataParser(CleanerComponent):
     def __init__(self, args: argparse.Namespace, input_path: Optional[str] = None,
                  extensions: Optional[Tuple[str]] = None,
                  encoding: str = 'auto', encoding_threshold: float = 0.9, encoding_error_policy: str = 'ignore',
-                 bytes_: bool = False, url_filter: Optional[str] = None):
+                 bytes_: bool = False, url_filter: Optional[str] = None, done_paths: Iterable[str] = ()):
         # TODO: Revisit defaults
         super().__init__(args)
         self.input_path = input_path if input_path is not None else args.input_path
@@ -57,6 +56,7 @@ class DataParser(CleanerComponent):
                     if len(re.findall("\w://", url)) == 0:
                         self.url_filter[idx] = 'http://' + url
                 self.url_filter = [urlparse(url) for url in self.url_filter]
+        self.done_paths = set(done_paths)
 
     def _check_url(self, url: str) -> bool:
         def url_belongs_to(u1, u2):
@@ -87,7 +87,7 @@ class DataParser(CleanerComponent):
         abs_path = os.path.join(relative_filepath)
         if self.bytes:
             with open(abs_path, 'rb') as f:
-                for doc in self._parse_binary_file(f, relative_filepath, idx_filepath):
+                for idx, doc in enumerate(self._parse_binary_file(f, relative_filepath, idx_filepath)):
                     if self.url_filter is not None:
                         url = doc.url
                         if self._check_url(url):
@@ -101,19 +101,18 @@ class DataParser(CleanerComponent):
                 gz = True
             enc, confidence_ok = self._guess_encoding(abs_path, gz=gz) if self.encoding == 'auto' else (self.encoding,
                                                                                                         True)
-            if not self.bytes:
-                if not gz:
-                    with open(abs_path, 'r', encoding=enc, errors=self.encoding_error_policy) as f:
-                        for doc in self._parse_file(f, relative_filepath, idx_filepath):
-                            if enc != 'utf-8':
-                                pass  # TODO: Check possible problems when the original file was not utf-8
-                            yield doc
-                else:
-                    with gzip.open(abs_path, 'rt', encoding=enc, errors=self.encoding_error_policy) as f:
-                        for doc in self._parse_file(f, relative_filepath, idx_filepath):
-                            if enc != 'utf-8':
-                                pass  # TODO: Check possible problems when the original file was not utf-8
-                            yield doc
+            if not gz:
+                with open(abs_path, 'r', encoding=enc, errors=self.encoding_error_policy) as f:
+                    for idx, doc in enumerate(self._parse_file(f, relative_filepath, idx_filepath)):
+                        if enc != 'utf-8':
+                            pass  # TODO: Check possible problems when the original file was not utf-8
+                        yield doc
+            else:
+                with gzip.open(abs_path, 'rt', encoding=enc, errors=self.encoding_error_policy) as f:
+                    for idx, doc in enumerate(self._parse_file(f, relative_filepath, idx_filepath)):
+                        if enc != 'utf-8':
+                            pass  # TODO: Check possible problems when the original file was not utf-8
+                        yield doc
 
     def _parse(self) -> List[Iterable[Document]]:
         parse_iterables = []
@@ -136,9 +135,9 @@ class DataParser(CleanerComponent):
             for path in glob.glob(
                     os.path.join(self.input_path, '**', f'*{extension}' if '*' not in extension else extension),
                     recursive=True):
-                if os.path.isfile(path):
+                if os.path.isfile(path) and path not in self.done_paths:
                     relative_paths.append(path)
-        return relative_paths
+        return sorted(relative_paths)
 
     def _guess_encoding(self, path: str, gz: bool):
         # https://stackoverflow.com/questions/46037058/using-chardet-to-find-encoding-of-very-large-file/49621821
