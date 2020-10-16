@@ -2,12 +2,16 @@
 VENV="source venv/bin/activate"
 CMD="pytest"
 $VENV
-$CMD
-RESULT=$?
-echo $RESULT
-if [ $RESULT -ne 0 ]; then
-    echo "TEST FAIL! => $CMD"
-    exit 1
+
+protected_branch='master'
+current_branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
+
+if [[ $current_branch = $protected_branch ]]; then
+    eval $CMD
+    RESULT=$?
+    if [ $RESULT -ne 0 ]; then
+        echo "failed $CMD"
+        exit 1
+    fi
 fi
 exit 0
-

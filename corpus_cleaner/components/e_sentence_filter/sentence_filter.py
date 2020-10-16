@@ -13,7 +13,7 @@ class SentenceFilter(CleanerComponentMapper):
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--char-length-filter-sentence', type=int, default=30,
                             help='filter sentences shorter than a given minimum character length')
-        parser.add_argument('--word-length-filter-sentence', type=int, default=2,
+        parser.add_argument('--word-length-filter-sentence', type=int, default=3,
                             help='filter sentences shorter than a given minimum word length')
         parser.add_argument('--profanity-check', action='store_true',
                             help='filter sentences with sensible content')
@@ -39,7 +39,7 @@ class SentenceFilter(CleanerComponentMapper):
         pass
 
     def __init__(self, args: argparse.Namespace, char_length_filter_sentence: int = 30,
-                 word_length_filter_sentence: int = 2,
+                 word_length_filter_sentence: int = 3,
                  lang_filter: Union[Tuple[str], None] = None, slow_lang_filter_threshold: float = 0.90,
                  code_threshold: float = 0.25,
                  profanity_check: bool = False, dictionary_filter: Optional[str] = None,

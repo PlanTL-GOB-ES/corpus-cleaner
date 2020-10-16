@@ -133,4 +133,3 @@ elif [[ ${unit} == "files" ]]; then
     echo "Sampled ${sample_files} total ${unit} into dir: $(realpath ${output_dir})" | tee -a ${log_file}
 
 fi
-

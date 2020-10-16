@@ -63,7 +63,8 @@ class SentenceSplitterComponent(CleanerComponentMapper):
                         content_orig = document.content_orig.replace('\n', '')
                         document.sentences_orig = [f'UNALIGNED:{content_orig}']
                         document.sentences_orig.extend(['UNALIGNED:'] * (len(document.sentences) - len(document.sentences_orig)))
-
+                    else:
+                        return None
             # add operations for each sentence in the document
             document.operations = [document.operations.copy() for _ in range(len(document.sentences))]
         else:
