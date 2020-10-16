@@ -31,17 +31,21 @@ class Normalizer(CleanerComponentMapper):
 
     def _normalize(self, document: Optional[Document]) -> Optional[Document]:
         sent_norms = []
-        for sent in document.sentences:
+        for idx_sent, sent in enumerate(document.sentences):
             sent_norm = sent
             for normalizer in self.normalizers:
-                sent_norm = normalizer.normalize(sent_norm)
+                sent_norm = normalizer(sent_norm)
+                if self.debug and sent_norm:
+                    if sent_norm != sent:
+                        class_name = self.__class__.__name__
+                        document.operations[idx_sent].append(f"{class_name}-{normalizer.__name__}")
             sent_norms.append(sent_norm)
         document.sentences = sent_norms
         return document
 
     def _build_normalizers(self):
         if self.punctuation_norm:
-            self.normalizers.append(self._punctuation_normalization())
+            self.normalizers.append(self._punctuation_normalization)
         if self.spell_check:
             raise NotImplementedError()
         if self.terminology_norm is not None:
@@ -53,8 +57,8 @@ class Normalizer(CleanerComponentMapper):
     def _terminology_normalization(self):
         raise NotImplementedError()
 
-    def _punctuation_normalization(self):
-        return MosesPunctNormalizer(self.language[0])
+    def _punctuation_normalization(self, sentence: str):
+        return MosesPunctNormalizer(self.language[0]).normalize(sentence)
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
         return self._normalize(document)

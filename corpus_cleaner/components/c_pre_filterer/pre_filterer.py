@@ -11,6 +11,24 @@ from corpus_cleaner.configs.langs import langs
 import regex
 
 
+# TODO: implement decorator that register the name of the operation (replace/filter) applied to each sentence
+#       That information will be used to list the operations applied to the sentences during the cleaning process
+def debug_filter(func):
+    def debug(self, doc):
+        if self.debug:
+            keep, value = func(self, doc)
+            if not keep:
+                class_name = self.__class__.__name__
+                filter_name = func.__name__
+                doc.operations.append(f"{class_name}-{filter_name}:{value}")
+                doc.content = ''
+            return keep, value
+        else:
+            return func(self, doc)
+
+    return debug
+
+
 class PreFilterer(CleanerComponentMapper):
 
     @staticmethod
@@ -23,8 +41,8 @@ class PreFilterer(CleanerComponentMapper):
         parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
         parser.add_argument('--no-space-normalization', action='store_true', help='Avoid normalizing white spaces')
         parser.add_argument('--no-replace-urls', action='store_true', help='Avoid replacing URLs with "[URL]"')
-        parser.add_argument('--char-length-filter', type=int, help='Minimum char length per document. Set to 0 not'
-                                                                   'to apply any filter.', default=40)
+        parser.add_argument('--char-length-filter-document', type=int,
+                            help='Minimum char length per document. Set to 0 not to apply any filter.', default=40)
         parser.add_argument('--no-head-filter', action='store_true', help='Avoid filtering documents coming from'
                                                                           'a crawler (having a "heads" attribute) with'
                                                                           'common HTTP errors.')
@@ -61,7 +79,7 @@ class PreFilterer(CleanerComponentMapper):
                  no_replace_emails: bool = False,
                  no_remove_hashtags_mentions: bool = False, no_remove_tags: bool = False,
                  no_space_normalization: bool = False, no_replace_urls: bool = False,
-                 char_length_filter: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
+                 char_length_filter_document: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
                  lang_chars_filter: float = 0.1,
                  alphanum_filter: float = 0.3, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
@@ -83,7 +101,7 @@ class PreFilterer(CleanerComponentMapper):
         self.extra_spaces_pattern = None
         self.replace_urls = not args.no_replace_urls if args.no_replace_urls is not None else not no_replace_urls
         self.urls_pattern = None
-        self.char_length_filter = args.char_length_filter if args.char_length_filter is not None else char_length_filter
+        self.char_length_filter_document = args.char_length_filter_document if args.char_length_filter_document is not None else char_length_filter_document
         self.head_filter = not args.no_head_filter if args.no_head_filter is not None else not no_head_filter
         self.digits_filter = args.digits_filter if args.digits_filter is not None else digits_filter
         self.alphanum_filter = args.alphanum_filter if args.alphanum_filter is not None else alphanum_filter
@@ -110,51 +128,54 @@ class PreFilterer(CleanerComponentMapper):
         self.filters = []
         self._build_filters()
 
-    # TODO: implement decorator that register the name of the operation (replace/filter) applied to each sentence
-    #       That information will be used to list the operations applied to the sentences during the cleaning process
-    def register_applied_operations(self):
-        pass
-
     # TODO: move the remove operations to a new component called CharFilter
     def _language_normalization(self, langs, text):
         if 'ca' in langs:
-            return self.geminate_l_pattern.sub('l·l', text)
+            text, subs = self.geminate_l_pattern.subn('l·l', text)
+            return text, bool(subs)
         else:
-            return text
+            return text, False
 
     def _replace_emails(self, text):
         replace = ' [EMAIL] '
-        return self.emails_pattern.sub(replace, text)
+        text, subs = self.emails_pattern.subn(replace, text)
+        return text, bool(subs)
 
     def _remove_hashtags_mentions(self, text):
-        return self.remove_hashtags_pattern.sub(' ', text)
+        text, subs = self.remove_hashtags_pattern.subn(' ', text)
+        return text, bool(subs)
 
     def _remove_tags(self, text):
-        return self.tags_pattern.sub(' ', self.p_tags_pattern.sub('\n', text))
+        text, subs = self.tags_pattern.subn(' ', self.p_tags_pattern.sub('\n', text))
+        return text, bool(subs)
 
     def _space_normalization(self, text):
         text = normalize_space(text, preserve=['\n'])
-        text = self.punc_space_pattern.sub('\\2', text)
+        subs_all = []
+        text, subs = self.punc_space_pattern.subn('\\2', text)
+        subs_all.append(subs)
         text = self.zero_width_space_pattern.sub('', text)
+        subs_all.append(subs)
         text = self.punc_no_space_pattern.sub('\\1\\2 \\3', text)
+        subs_all.append(subs)
         text = self.quote_no_space_pattern1.sub('\\1 \\2\\3\\5', text)
+        subs_all.append(subs)
         text = self.quote_no_space_pattern2.sub('\\1\\2\\4 \\5', text)
-        return text
+        subs_all.append(subs)
+        return text, any(subs_all)
 
-    def fix(self, text):
-        text = normalize_space(text, preserve=['\n'])
-        text = self.punc_space_pattern.sub('\\2', text)
-        text = self.zero_width_space_pattern.sub('', text)
-        text = self.punc_no_space_pattern.sub('\\1\\2 \\3', text)
-        text = self.quote_no_space_pattern1.sub('\\1 \\2\\3\\5', text)
-        text = self.quote_no_space_pattern2.sub('\\1\\2\\4 \\5', text)
-        text = self.final_sentence_pattern1.subf("{1}{2}{3}\n{4}{5}{6}", text)
-        text = self.final_sentence_pattern2.subf("{1}{2}{3}\n{4}{5}{6}{7}", text)
-        return text
+    def _seg_sentences(self, text):
+        subs_all = []
+        text, subs = self.final_sentence_pattern1.subfn("{1}{2}{3}\n{4}{5}{6}", text)
+        subs_all.append(subs)
+        text, subs = self.final_sentence_pattern2.subfn("{1}{2}{3}\n{4}{5}{6}{7}", text)
+        subs_all.append(subs)
+        return text, any(subs_all)
 
     def _replace_urls(self, text):
         replace = ' [URL] '
-        return self.urls_pattern2.sub(replace, self.urls_pattern.sub(replace, text))
+        text, subs = self.urls_pattern2.subn(replace, self.urls_pattern.sub(replace, text))
+        return text, bool(subs)
 
     def _build_filters(self):
         # https://www.tutorialspoint.com/Extracting-email-addresses-using-regular-expressions-in-Python
@@ -176,8 +197,8 @@ class PreFilterer(CleanerComponentMapper):
             self.urls_pattern = re.compile(
                 rf'\((@)?((http|https)://)?([{self.lang_chars}0-9./?\\\\@\-—_=#])+\.[a-z]{{2,6}}([{self.lang_chars}0-9&/\\\\+~*?%:!@—_=#()-])*')
             self.urls_pattern2 = re.compile('(\[URL\]\.?\w*\s*)+')
-        if self.char_length_filter > 0:
-            self.filters.append(self._filter_by_length)
+        if self.char_length_filter_document > 0:
+            self.filters.append(self._filter_by_char_len)
         if self.head_filter:
             self.filters.append(self._filter_by_heads)
         if self.digits_filter > 0:
@@ -219,51 +240,65 @@ class PreFilterer(CleanerComponentMapper):
             self.final_sentence_pattern1 = regex.compile(r"(\s)(\p{Ll}+)([.!?:]*)(\p{Lu})(\p{Ll}+)([\s.,;:?!])")
             self.final_sentence_pattern2 = regex.compile(r"(\s)(\p{Ll}+)([.!?:]+)('|\")(\p{Lu})(\p{Ll}+)([\s.,;:?!])")
 
-    def _filter_by_length(self, doc: Document):
-        if len(doc.content) < self.char_length_filter:
-            return False
-        return True
+    @debug_filter
+    def _filter_by_char_len(self, doc: Document):
+        value = len(doc.content)
+        if value < self.char_length_filter_document:
+            return False, round(value, 2)
+        return True, None
 
-    @staticmethod
-    def _filter_by_heads(doc: Document):
+    @debug_filter
+    def _filter_by_heads(self, doc: Document):
+        value = []
         if doc.heads is not None:
             for token in ['found', '404', 'robots.txt', 'error', 'trouvée']:
                 if re.search(token, doc.heads, re.IGNORECASE):
-                    return False
-        return True
+                    value.append(token)
+                    return False, value
+        return True, None
 
+    @debug_filter
     def _filter_by_digits(self, doc: Document):
-        if sum(c.isdigit() for c in doc.content) / len(doc.content) > self.digits_filter:
-            return False
-        return True
+        value = sum(c.isdigit() for c in doc.content) / len(doc.content)
+        if value > self.digits_filter:
+            return False, round(value, 2)
+        return True, None
 
+    @debug_filter
     def _filter_by_alphanum(self, doc: Document):
         concat_content = ''.join(doc.content.split())
-        if (1 - (sum(c.isalnum() for c in concat_content) / len(concat_content))) > self.alphanum_filter:
-            return False
-        return True
+        value = (1 - (sum(c.isalnum() for c in concat_content) / len(concat_content)))
+        if value > self.alphanum_filter:
+            return False, round(value, 2)
+        return True, None
 
+    @debug_filter
     def _filter_by_lang_chars(self, doc: Document):
         concat_content = ''.join(doc.content.split())
-        if (1 - (sum(c in self.alphabet for c in concat_content) /
-                 len(concat_content))) > self.lang_chars_filter:
-            return False
-        return True
+        value = (1 - (sum(c in self.alphabet for c in concat_content) / len(concat_content)))
+        if value > self.lang_chars_filter:
+            return False, round(value, 2)
+        return True, None
 
+    @debug_filter
     def _filter_by_uppercase(self, doc: Document):
-        if sum(c.isupper() for c in doc.content) / len(doc.content) > self.uppercase_filter:
-            return False
-        return True
+        value = sum(c.isupper() for c in doc.content) / len(doc.content)
+        if value > self.uppercase_filter:
+            return False, round(value, 2)
+        return True, None
 
+    @debug_filter
     def _filter_by_alphabet(self, doc: Document):
         # TODO: Check thresholds?
         try:
-            if len(self.ad.detect_alphabet(doc.content).intersection(set(self.alphabet_filter))) == 0:
-                return False
+            value = len(self.ad.detect_alphabet(doc.content).intersection(set(self.alphabet_filter)))
+            if value == 0:
+                return False, value
         except:
-            return True
-        return True
+            return True, None
+        return True, None
 
+    @debug_filter
     def _filter_by_lang(self, doc: Document):
         content = self.url_placeholder_pattern.sub('', doc.content)
         content = self.no_eols_pattern.sub('. ', content)
@@ -272,54 +307,59 @@ class PreFilterer(CleanerComponentMapper):
         conf = res[1][0]
         if lang in self.lang_filter and conf > self.initial_lang_filter_threshold:
             doc.language = lang
-            return True
-        return False
+            return True, None
+        value = f"({round(conf, 2)}, {lang})"
+        return False, value
 
+    @debug_filter
     def _filter_by_dict(self, doc: Document):
         if self.dictionary_filter_pattern.search(doc.content):
-            return False
-        return True
+            return False, None
+        return True, None
 
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
+        # TODO: 1. implement replace functions that receives as input the Document
+        #       2. implement a decorator for the replace functions like the decorator for filters
         if self.language_normalization:
-            document.content = self._language_normalization(self.lang_filter, document.content)
+            document.content, subs = self._language_normalization(self.lang_filter, document.content)
+            if self.debug and subs:
+                document.operations.append(f"{self.__class__.__name__}-{self._language_normalization.__name__}")
         if self.replace_emails:
-            document.content = self._replace_emails(document.content)
+            document.content, subs = self._replace_emails(document.content)
+            if self.debug and subs:
+                document.operations.append(f"{self.__class__.__name__}-{self._replace_emails.__name__}")
         if self.remove_hashtags_mentions:
-            document.content = self._remove_hashtags_mentions(document.content)
+            document.content, subs = self._remove_hashtags_mentions(document.content)
+            if self.debug and subs:
+                document.operations.append(f"{self.__class__.__name__}-{self._remove_hashtags_mentions.__name__}")
         if self.remove_tags:
-            document.content = self._remove_tags(document.content)
+            document.content, subs = self._remove_tags(document.content)
+            if self.debug and subs:
+                document.operations.append(f"{self.__class__.__name__}-{self._remove_tags.__name__}")
         if self.replace_urls:
-            document.content = self._replace_urls(document.content)
+            document.content, subs = self._replace_urls(document.content)
+            if self.debug and subs:
+                document.operations.append(f"{self.__class__.__name__}-{self._replace_urls.__name__}")
         if self.space_normalization:
-            document.content = self._space_normalization(document.content)
+            document.content, subs = self._space_normalization(document.content)
+            if self.debug and subs:
+                document.operations.append(f"{self.__class__.__name__}-{self._space_normalization.__name__}")
         if self.seg_sentences:
-            document.content = self.final_sentence_pattern1.subf("{1}{2}{3}\n{4}{5}{6}", document.content)
-            document.content = self.final_sentence_pattern2.subf("{1}{2}{3}\n{4}{5}{6}{7}", document.content)
+            document.content, subs = self._seg_sentences(document.content)
+            if self.debug and subs:
+                document.operations.append(f"{self.__class__.__name__}-{self._seg_sentences.__name__}")
 
         if len(document.content.split()) == 0:
             return None
+
         keep = True
         for filter_ in self.filters:
-            keep = filter_(document)
+            keep, _ = filter_(document)
             if not keep:
-                # if debug, keep an empty document as cleaned
-                if self.debug:
-                    document.content = ''
                 break
         if keep or self.debug:
             return document
         return None
-
-        # TODO: make sure decorator is implemented before using these lines
-        # for filter_ in self.filters:
-        #     keep = filter_(document)
-        #     if not keep:
-        #         break
-        # if keep or self.debug_errors_mode:
-        #     return document
-        # return None
-        ##########################
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
         return self._filter(document)

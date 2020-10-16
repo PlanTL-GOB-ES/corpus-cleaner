@@ -23,8 +23,11 @@ class EncodingFixer(CleanerComponentMapper):
         #              fix_surrogates=True, remove_control_chars=True, remove_bom=True, normalization='NFC',
         #              max_decode_length=1000000)
         # Also: Consider adding heuristics from https://github.com/PlanTL-SANIDAD/utils/tree/master/FixEncodingErrors
-
+        # TODO: initialize the attribute operations in the Document class
+        document.operations = []
         document.content = ftfy.fix_text(document.content, normalization='NFKC').replace('\x92', "'")
+        if document.content_orig != document.content:
+            document.operations.append(f'{self.__class__.__name__}-_fix_encoding')
         return document
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:

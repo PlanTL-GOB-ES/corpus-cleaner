@@ -5,12 +5,15 @@ import argparse
 from typing import TextIO
 from typing import Optional
 
+SEPARATOR = "|"
+
 
 class OutputFormatter(CleanerComponent):
     def __init__(self, args: argparse.Namespace, output_path: Optional[str] = None):
         super().__init__(args)
         self.path = output_path if output_path is not None else args.output_path
         self.fd: Union[TextIO, None] = None
+        self.separator = SEPARATOR
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):

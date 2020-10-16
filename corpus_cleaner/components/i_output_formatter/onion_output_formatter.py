@@ -2,8 +2,6 @@ from .output_formatter import OutputFormatter
 from corpus_cleaner.document import Document
 import argparse
 
-SEPARATOR = "|||"
-
 
 class OnionOutputFormatter(OutputFormatter):
     def __init__(self, args: argparse.Namespace, output_path: str, **kwargs):
@@ -12,7 +10,6 @@ class OnionOutputFormatter(OutputFormatter):
         self.start_p_tag = ' >\n<p>\n'
         self.end_doc_tag = '\n</p>\n</doc>\n'
         self.debug = args.debug
-        self.separator = SEPARATOR
 
     def _init_writing(self):
         self.fd = open(self.path, 'a')
@@ -20,8 +17,11 @@ class OnionOutputFormatter(OutputFormatter):
     def _write_document(self, document: Document):
         if document is not None:
             if self.debug:
-                sentences = [f'{sent_orig}{self.separator}{sent_clean}'
-                             for sent_orig, sent_clean in zip(document.sentences_orig, document.sentences)]
+                operations = [", ".join(ops) for ops in document.operations]
+                sentences = [f'{sent_orig}{self.separator}{sent_clean}{self.separator}{operation}'
+                             for sent_orig, sent_clean, operation in zip(document.sentences_orig,
+                                                                         document.sentences,
+                                                                         operations)]
             else:
                 sentences = document.sentences
             doc_onion = self.start_doc_tag + document.attr_str() + self.start_p_tag + '\n'.join(sentences) + \

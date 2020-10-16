@@ -37,9 +37,9 @@ class FairseqLMParser(DataParser):
                 url = ''
                 title = ''
             else:
-                doc_lines.append(line + '\n\n')
+                doc_lines.append(line + '\n')
 
         if len(doc_lines) > 0:
             filename = relative_filepath
-            yield Document(content=''.join(doc_lines), id_=doc_id, url=url, title=title,
+            yield Document(content='\n'.join(doc_lines), id_=doc_id, url=url, title=title,
                            filename=filename)
