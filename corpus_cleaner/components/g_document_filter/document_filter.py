@@ -42,8 +42,8 @@ class DocumentFilter(CleanerComponentReducer):
         parser.add_argument('--remove-glob-rep-sen', type=int, default=5,
                             help='Whether to remove corpus-level repeated sentences (threshold of repetitions; -1'
                                  'to deactivate)')
-        parser.add_argument('--dedup-buffer', type=int, default=16777216,
-                            help='Deduplication buffer size, in bytes (default: 16777216)')
+        parser.add_argument('--dedup-buffer', type=int, default=100000000,
+                            help='Deduplication buffer size, in bytes (default: 100000000)')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
