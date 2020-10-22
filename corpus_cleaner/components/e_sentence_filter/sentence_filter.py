@@ -92,7 +92,7 @@ class SentenceFilter(CleanerComponentMapper):
     def _filter_by_len(self, sentence: str):
         len_sentence = len(sentence)
         len_words = len(sentence.split(' '))
-        if len_sentence > self.char_length_filter_sentence and len_words > self.word_length_filter_sentence:
+        if len_sentence >= self.char_length_filter_sentence and len_words >= self.word_length_filter_sentence:
             return True, None
         value = f"({round(len_sentence)} chars, {len_words} words)"
         return False, value
