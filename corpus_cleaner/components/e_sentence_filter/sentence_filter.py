@@ -11,10 +11,13 @@ import re
 class SentenceFilter(CleanerComponentMapper):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        parser.add_argument('--char-length-filter-sentence', type=int, default=30,
+        parser.add_argument('--char-length-filter-sentence', type=int, default=20,
                             help='filter sentences shorter than a given minimum character length')
         parser.add_argument('--word-length-filter-sentence', type=int, default=3,
                             help='filter sentences shorter than a given minimum word length')
+        parser.add_argument('--digits-filter-sentence', type=float,
+                            help='Maximum allowed proportion of digit characters in the sentence',
+                            default=0.1)
         parser.add_argument('--profanity-check', action='store_true',
                             help='filter sentences with sensible content')
         parser.add_argument('--fast-lang-filter-threshold', type=float, help='If --lang-filter is set, minimum'
@@ -23,6 +26,9 @@ class SentenceFilter(CleanerComponentMapper):
         parser.add_argument('--slow-lang-filter-threshold', type=float, help='If --lang-filter is set, minimum'
                                                                              'threshold for the slower lang identifier',
                             default=0.9)
+        parser.add_argument('--no-lang-filter-sentence', action='store_true',
+                            help='Avoid applying language filter on sentences')
+
         parser.add_argument('--code-threshold', type=float, help='Threshold (percentage) of code-like chars and tokens'
                                                                  'to filter a sentence (-1 to deactivate)',
                             default=0.25)
@@ -40,7 +46,10 @@ class SentenceFilter(CleanerComponentMapper):
 
     def __init__(self, args: argparse.Namespace, char_length_filter_sentence: int = 30,
                  word_length_filter_sentence: int = 3,
+                 digits_filter_sentence: float = 0.1,
                  lang_filter: Union[Tuple[str], None] = None, slow_lang_filter_threshold: float = 0.90,
+                 fast_lang_filter_threshold: float = 0.9,
+                 no_lang_filter_sentence: bool = False,
                  code_threshold: float = 0.25,
                  profanity_check: bool = False, dictionary_filter: Optional[str] = None,
                  dedup_same_doc_sentences: bool = True):
@@ -50,12 +59,17 @@ class SentenceFilter(CleanerComponentMapper):
                                                                                None else char_length_filter_sentence
         self.word_length_filter_sentence = args.word_length_filter_sentence if args.word_length_filter_sentence is not \
                                                                                None else word_length_filter_sentence
+        self.digits_filter_sentence = args.digits_filter_sentence if args.digits_filter_sentence is not None else digits_filter_sentence
         self.profanity_check = args.profanity_check if args.profanity_check is not None else profanity_check
         self.lang_filter = args.lang_filter if args.lang_filter is not None else lang_filter
         self.lang_id = None
         self.fasttext_lid = None
         self.slow_lang_filter_threshold = args.slow_lang_filter_threshold if args.slow_lang_filter_threshold is not \
                                                                              None else slow_lang_filter_threshold
+        self.fast_lang_filter_threshold = args.fast_lang_filter_threshold if args.fast_lang_filter_threshold is not \
+                                                                             None else fast_lang_filter_threshold
+        self.lang_filter_sentence = not args.no_lang_filter_sentence if args.no_lang_filter_sentence is not None else not no_lang_filter_sentence
+
         self.code_threshold = args.code_threshold if args.code_threshold is not None else code_threshold
         self.dictionary_filter = \
             args.dictionary_filter_sen if args.dictionary_filter_sen is not None else dictionary_filter
@@ -78,7 +92,9 @@ class SentenceFilter(CleanerComponentMapper):
             self.filters.append(self._filter_by_len)
         if self.code_threshold != -1:
             self.filters.append(self._filter_by_code)
-        if self.lang_filter is not None:
+        if self.digits_filter_sentence > 0:
+            self.filters.append(self._filter_by_digits)
+        if self.lang_filter is not None and self.lang_filter_sentence:
             self.fasttext_lid = fasttext.load_model(os.path.join('lib', 'lid.176.bin'))
             self.lang_id = LanguageIdentifier.from_modelstring(model, norm_probs=True)
             _ = self.lang_id.classify('')  # force init
@@ -104,11 +120,18 @@ class SentenceFilter(CleanerComponentMapper):
             return False, round(value, 2)
         return True, None
 
+    def _filter_by_digits(self, sentence):
+        sentence_chars = ''.join(sentence.split())
+        value = sum(c.isdigit() for c in sentence_chars) / len(sentence_chars)
+        if value >= self.digits_filter_sentence:
+            return False, round(value, 2)
+        return True, None
+
     def _filter_by_lang(self, sentence: str):
         res = self.fasttext_lid.predict(sentence.lower())
         lang = res[0][0][-2:]
         conf = res[1][0]
-        if lang in self.lang_filter and conf > self.slow_lang_filter_threshold - 0.1:
+        if lang in self.lang_filter and conf > self.fast_lang_filter_threshold:
             return True, None
         elif lang in self.lang_filter:
             res = self.lang_id.classify(sentence)
