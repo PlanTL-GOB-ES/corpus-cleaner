@@ -10,12 +10,10 @@ import subprocess
 
 class CleanerComponentReducer(CleanerComponent):
 
-    def __init__(self, args: argparse.Namespace, format_: str, tmp_file: str, final_path: str,
-                 input_path: Optional[str]):
+    def __init__(self, args: argparse.Namespace, format_: str, tmp_file: str, input_path: Optional[str]):
         super().__init__(args)
         self.format = format_
         self.tmp_file = tmp_file
-        self.final_path = final_path
         self.data_parser = DataParserFactory.get_parser(args, input_format=self.format, input_path=input_path)
 
     @staticmethod
@@ -45,12 +43,10 @@ class DummyReducer(CleanerComponentReducer):
     def __init__(self, args: argparse.Namespace, output_path: Optional[str] = None):
         out_path = output_path if output_path is not None else args.output_path
         onion_input_file = os.path.join(out_path, 'input.onion.debug')
-        final_path = onion_input_file
-        super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path,
-                         input_path=out_path)
+        super().__init__(args, format_='onion', tmp_file=onion_input_file, input_path=out_path)
         self.output_path = out_path
         self.onion_input_file = onion_input_file
-        self.onion_output_file = final_path
+        self.onion_output_file = onion_input_file
         self.onion_tmp = os.path.join(out_path, 'tmp')
 
     @staticmethod
