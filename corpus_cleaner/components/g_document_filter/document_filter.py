@@ -64,8 +64,8 @@ class DocumentFilter(CleanerComponentReducer):
         for line in lines:
             line_index = line.split('\t')[0]
             sentence = '\t'.join(line.split('\t')[1:])
-            seen[sentence] += 1
             if line_index == '0':
+                seen[sentence] += 1
                 if not sentence.startswith('<doc') and sentence not in ['<p>\n', '</p>\n', '</doc>\n']:
                     if seen[sentence] < threshold:
                         sentence_dupli.append(f"{line_index}\t{sentence}")
