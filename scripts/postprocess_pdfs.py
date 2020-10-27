@@ -6,13 +6,6 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-data_dir = sys.argv[1]
-output_dir = sys.argv[2]
-p = Path(os.path.realpath(data_dir))
-os.makedirs(output_dir, exist_ok=True)
-
-SUFFIX = ".txt"
-
 
 def postprocess(file):
     # remove bullets point starting with L
@@ -43,7 +36,15 @@ def postprocess(file):
                  f"Difference: {lines_raw - lines_postproc}, Outfile: {output_file}")
 
 
-files = list(p.rglob(f"*{SUFFIX}"))
-for file in files:
-    logging.info(f"Processing file {file}")
-    postprocess(file)
+if __name__ == '__main__':
+    data_dir = sys.argv[1]
+    output_dir = sys.argv[2]
+    p = Path(os.path.realpath(data_dir))
+    os.makedirs(output_dir, exist_ok=True)
+
+    SUFFIX = ".txt"
+
+    files = list(p.rglob(f"*{SUFFIX}"))
+    for file in files:
+        logging.info(f"Processing file {file}")
+        postprocess(file)
