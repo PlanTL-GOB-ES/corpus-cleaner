@@ -8,6 +8,7 @@
 #SBATCH --wait
 #SBATCH --wait-all-nodes=1
 
+# --parallel & --backend ray are needed to execute in distributed mode!
 PARAMETERS="example-output --input-path data/toy_wiki --input-format wikipedia --output-format fairseq-lm --parallel --backend ray --lang-filter ca"
 
 
