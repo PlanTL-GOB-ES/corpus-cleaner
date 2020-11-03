@@ -6,15 +6,19 @@ from .a_data_parser import DataParserFactory
 from typing import List, Optional
 import os
 import subprocess
+from typing import Tuple
 
 
 class CleanerComponentReducer(CleanerComponent):
 
-    def __init__(self, args: argparse.Namespace, format_: str, tmp_file: str, input_path: Optional[str]):
+    def __init__(self, args: argparse.Namespace, format_: str, tmp_file: str, final_path: str,
+                 input_path: Optional[str], extensions: Tuple[str]):
         super().__init__(args)
         self.format = format_
         self.tmp_file = tmp_file
-        self.data_parser = DataParserFactory.get_parser(args, input_format=self.format, input_path=input_path)
+        self.final_path = final_path
+        self.data_parser = DataParserFactory.get_parser(args, input_format=self.format, input_path=input_path,
+                                                        extensions=extensions)
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):

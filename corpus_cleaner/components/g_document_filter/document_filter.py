@@ -15,8 +15,17 @@ class DocumentFilter(CleanerComponentReducer):
         onion_input_file = os.path.join(out_path, 'input.onion')
         onion_output_file = os.path.join(out_path, 'output_deduplicate.onion.dedup')
         onion_output_dedup_sentences_file = os.path.join(out_path, 'output_deduplicate.onion.dedup.sentences')
-        super().__init__(args, format_='onion', tmp_file=onion_input_file,
-                         input_path=out_path)
+        remove_glob_rep_sen = args.remove_glob_rep_sen if args.remove_glob_rep_sen is not None else remove_glob_rep_sen
+        final_path = onion_output_file if remove_glob_rep_sen < 2 else onion_output_dedup_sentences_file
+        if args.debug:
+            extensions = '.debug'
+        elif remove_glob_rep_sen < 2:
+            extensions = '.dedup'
+        else:
+            extensions = '.sentences'
+        extensions = (extensions,)
+        super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path,
+                         input_path=out_path, extensions=extensions)
         self.output_path = out_path
         self.document_deduplication_threshold = args.document_deduplication_threshold \
             if args.document_deduplication_threshold is not None else document_deduplication_threshold
