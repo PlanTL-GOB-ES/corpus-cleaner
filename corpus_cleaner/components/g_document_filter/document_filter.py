@@ -1,7 +1,6 @@
 import subprocess
 import argparse
 import os
-from collections import defaultdict
 from ..cleaner_component_reducer import CleanerComponentReducer
 from typing import Optional
 
@@ -56,26 +55,28 @@ class DocumentFilter(CleanerComponentReducer):
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
     def _remove_global_duplicate_sentences(self, threshold: int):
-        with open(self.onion_output_file) as fn:
-            lines = fn.readlines()
-
-        seen = defaultdict(int)
-        sentence_dupli = []
-        for line in lines:
-            line_index = line.split('\t')[0]
-            sentence = '\t'.join(line.split('\t')[1:])
-            if line_index == '0':
-                seen[sentence] += 1
-                if not sentence.startswith('<doc') and sentence not in ['<p>\n', '</p>\n', '</doc>\n']:
-                    if seen[sentence] < threshold:
-                        sentence_dupli.append(f"{line_index}\t{sentence}")
-                else:
-                    sentence_dupli.append(f"{line_index}\t{sentence}")
-            else:
-                sentence_dupli.append(f"{line_index}\t{sentence}")
-
-        with open(self.onion_output_file, 'w') as fn:
-            fn.writelines(line for line in sentence_dupli)
+        awk = '''{
+                    switch($0)
+                    {
+                    case /0\t</:
+                        print
+                        break
+                    case /0\t/:
+                        seen[$0]++
+                        {if (seen[$0] <= ''' + str(threshold) + ''') {print} else {printf "1" "\t"; for (i=2; i<NF; i++) printf $i " "; print $NF}}
+                        break
+                    default:
+                        print
+                        break
+                    }
+                }
+        '''
+        awk_path = os.path.join(self.output_path, 'script.awk')
+        with open(awk_path, 'w') as f:
+            f.write(awk)
+        command = f"gawk -f {awk_path} {self.onion_output_file} > {self.onion_output_dedup_sentences_file}"
+        subprocess.run(command, shell=True, check=True, universal_newlines=True)
+        os.remove(awk_path)
 
     def _reduce(self):
         self._run_onion()
