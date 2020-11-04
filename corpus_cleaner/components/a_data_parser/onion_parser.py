@@ -8,7 +8,7 @@ from typing import Optional
 
 
 class OnionParser(DataParser):
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('.dedup', '.debug'),
+    def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('.dedup',),
                  input_path: Optional[str] = None,
                  **kwargs):
         super(OnionParser, self).__init__(args, encoding='utf-8',
