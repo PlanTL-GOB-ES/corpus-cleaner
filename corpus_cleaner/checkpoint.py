@@ -43,7 +43,9 @@ class Checkpoint:
 
     @staticmethod
     def init_logger(filename_path: str) -> logging.Logger:
-        logging.basicConfig(filename=filename_path, level=logging.INFO)
+        logging.basicConfig(filename=filename_path, level=logging.INFO,
+                            format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
         h = logging.StreamHandler(sys.stderr)
         h.flush = sys.stderr.flush
