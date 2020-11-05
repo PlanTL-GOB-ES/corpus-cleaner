@@ -29,6 +29,7 @@ class DataParserFactory:
             elif args.input_format == 'sentence':
                 return SentenceParser(args, **kwargs)
             elif args.input_format == 'warc':
+                kwargs['warc_warn'] = args.warc_warn
                 return WARCParser(args, **kwargs)
             elif args.input_format == 'document':
                 return DocumentParser(args, **kwargs)

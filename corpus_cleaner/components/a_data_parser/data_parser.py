@@ -25,6 +25,7 @@ class DataParser(CleanerComponent):
                             default='ignore')
         parser.add_argument('--url-doc', type=str, help='Path to a url list (plain text, one url per line)'
                                                         'that should be filtered and processed', default=None)
+        parser.add_argument('--warc-warn', action='store_true', help='Enable warnings of WARC parser')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
