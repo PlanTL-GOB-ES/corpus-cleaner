@@ -38,6 +38,8 @@ class SentenceFilter(CleanerComponentMapper):
                             default=None)
         parser.add_argument('--no-dedup-same-doc-sentences', action='store_true',
                             help='Do not eduplicate sentences in the same document.')
+        parser.add_argument('--no-src-tag-filter', action='store_true',
+                            help='Do not remvoe sentences with the pattern "src=".')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -52,7 +54,8 @@ class SentenceFilter(CleanerComponentMapper):
                  no_lang_filter_sentence: bool = False,
                  code_threshold: float = 0.25,
                  profanity_check: bool = False, dictionary_filter: Optional[str] = None,
-                 dedup_same_doc_sentences: bool = True):
+                 dedup_same_doc_sentences: bool = True,
+                 src_tag_filter: bool = True):
         # TODO: Review way of setting defaults, thresholds will never be None!
         super().__init__(args)
         self.char_length_filter_sentence = args.char_length_filter_sentence if args.char_length_filter_sentence is not \
@@ -84,6 +87,8 @@ class SentenceFilter(CleanerComponentMapper):
             not args.no_dedup_same_doc_sentences if args.no_dedup_same_doc_sentences is not None else dedup_same_doc_sentences
         self.debug = args.debug
         self.sentences_duplicate = None
+        self.lang_filter_sentence = not args.src_tag_filter if args.no_lang_filter_sentence is not None else src_tag_filter
+        self.src_tag_pattern = None
 
         self._get_filters()
 
@@ -104,6 +109,9 @@ class SentenceFilter(CleanerComponentMapper):
             self.filters.append(self._filter_by_dict)
         if self.dedup_same_doc_sentences:
             self.filters.append(self._filter_by_duplicate)
+        if self.lang_filter_sentence:
+            self.src_tag_pattern = re.compile('src=')
+            self.filters.append(self._filter_by_src_tag)
 
     def _filter_by_len(self, sentence: str):
         len_sentence = len(sentence)
@@ -126,6 +134,12 @@ class SentenceFilter(CleanerComponentMapper):
         if value >= self.digits_filter_sentence:
             return False, round(value, 2)
         return True, None
+
+    def _filter_by_src_tag(self, sentence):
+        found = self.src_tag_pattern.search(sentence)
+        if found is None:
+            return True, None
+        return False, found.span()
 
     def _filter_by_lang(self, sentence: str):
         res = self.fasttext_lid.predict(sentence.lower())
