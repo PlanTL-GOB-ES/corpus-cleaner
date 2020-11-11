@@ -87,7 +87,7 @@ class SentenceFilter(CleanerComponentMapper):
             not args.no_dedup_same_doc_sentences if args.no_dedup_same_doc_sentences is not None else dedup_same_doc_sentences
         self.debug = args.debug
         self.sentences_duplicate = None
-        self.lang_filter_sentence = not args.src_tag_filter if args.no_lang_filter_sentence is not None else src_tag_filter
+        self.lang_filter_sentence = not args.no_src_tag_filter if args.no_lang_filter_sentence is not None else src_tag_filter
         self.src_tag_pattern = None
 
         self._get_filters()
