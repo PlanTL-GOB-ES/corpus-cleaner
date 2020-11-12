@@ -51,6 +51,9 @@ def main():
     parser.add_argument('--output-path', type=str, help='Output data directory', default='output')
     parser.add_argument('--input-format', type=str, help='Input data format')
     parser.add_argument('--output-format', type=str, help='Output data format')
+    parser.add_argument('--checkpoint-backend', choices=['shelve', 'file'], default='shelve',
+                        help='Shelve is more convenient but file is more robust. For distributed executions,'
+                             'we recommend file.')
 
     Cleaner.add_args(parser)
     for component in Cleaner.get_components_classes():
