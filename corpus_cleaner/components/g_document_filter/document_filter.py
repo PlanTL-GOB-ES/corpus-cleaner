@@ -64,22 +64,27 @@ class DocumentFilter(CleanerComponentReducer):
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
     def _remove_global_duplicate_sentences(self, threshold: int):
+        # Do not consume an argument and ignore any format modifiers by setting the format-control OFMT letters to: "%%"
+        # from: https://www.gnu.org/software/gawk/manual/html_node/Control-Letters.html
         awk = '''{
-                    switch($0)
-                    {
-                    case /0\t</:
-                        print
-                        break
-                    case /0\t/:
-                        seen[$0]++
-                        {if (seen[$0] <= ''' + str(threshold) + ''') {print} else {printf "1" "\t"; for (i=2; i<NF; i++) printf $i " "; print $NF}}
-                        break
-                    default:
-                        print
-                        break
-                    }
-                }
-        '''
+                  switch($0)
+                  {
+                  case /0\t</:
+                      OFMT = "%%"
+                      print
+                      break
+                  case /0\t/:
+                      seen[$0]++
+                      {if (seen[$0] <= ''' + str(threshold) + ''') {OFMT = "%%"; print} 
+                       else {OFMT = "%%"; printf "1" "\t"; for (i=2; i<NF; i++); printf $i " "; print $NF}}
+                      break
+                  default:
+                      OFMT = "%%"
+                      print
+                      break
+                  }
+                  }
+               '''
         awk_path = os.path.join(self.output_path, 'script.awk')
         with open(awk_path, 'w') as f:
             f.write(awk)
