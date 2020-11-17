@@ -64,6 +64,11 @@ class DocumentFilter(CleanerComponentReducer):
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
     def _remove_global_duplicate_sentences(self, threshold: int):
+        # First, remove format-control letters to prevent errors in the awk script
+        remove_format_modifiers_command = f"sed -i 's/%[%a-zA-Z]//g' {self.onion_output_file}"
+        subprocess.run(remove_format_modifiers_command, shell=True, check=True, universal_newlines=True)
+
+        # Then, deduplicate with gawk command
         awk = '''{
                     switch($0)
                     {
