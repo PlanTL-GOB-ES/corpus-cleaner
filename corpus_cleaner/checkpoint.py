@@ -3,15 +3,15 @@ import json
 import argparse
 import logging
 import sys
-from typing import Optional
 import shelve
+from typing import Optional
 
 
 class Checkpoint:
     def __init__(self, output_path: str, args: Optional[argparse.Namespace] = None):
         self.output_path = output_path
         self.checkpoint_path = os.path.join(output_path, 'checkpoint')
-        if os.path.exists(self.checkpoint_path + '.db'):
+        if os.path.exists(self.checkpoint_path):
             assert args is None
             with open(os.path.join(output_path, 'args.json'), 'r') as f:
                 self.args = argparse.Namespace(**json.loads(f.read()))
@@ -27,8 +27,12 @@ class Checkpoint:
                 self.logger.info('Already cleaned!')
         else:
             assert args is not None
-            with shelve.open(self.checkpoint_path) as c:
-                c['done_paths'] = []
+            self.backend = args.checkpoint_backend
+            if self.backend == 'shelve':
+                with shelve.open(self.checkpoint_path) as c:
+                    c['done_paths'] = []
+            else:
+                os.makedirs(self.checkpoint_path)
             self.args = args
             self.resume = False
             self.args.done = False
@@ -63,6 +67,8 @@ class Checkpoint:
                 json.dump(self.args.__dict__, f, indent=2)
 
     def get_done_paths(self):
-        with shelve.open(self.checkpoint_path) as c:
-            done_paths = c['done_paths']
-        return done_paths
+        if self.backend == 'shelve':
+            with shelve.open(self.checkpoint_path) as c:
+                done_paths = c['done_paths']
+            return done_paths
+        return sorted(list(map(lambda x: x.replace('!', '/'), os.listdir(self.checkpoint_path))))
