@@ -71,4 +71,4 @@ class Checkpoint:
             with shelve.open(self.checkpoint_path) as c:
                 done_paths = c['done_paths']
             return done_paths
-        return sorted(list(map(lambda x: x.replace('_', '/'), os.listdir(self.checkpoint_path))))
+        return sorted(list(map(lambda x: x.replace('!', '/'), os.listdir(self.checkpoint_path))))

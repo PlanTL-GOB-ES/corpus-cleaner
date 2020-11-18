@@ -121,9 +121,6 @@ class MappingPipeline:
         """
         return G.F_MAPPERS(x)
 
-    def _write_checkpoint(self, e: str):
-        with open(os.path.join(self.checkpoint_path, e.replace('/', '_')), 'w') as f:
-            pass
 
     def run(self) -> Any:
         """
@@ -156,8 +153,6 @@ class MappingPipeline:
                                         if not os.path.isdir(self.checkpoint_path):
                                             c['done_paths'] += [e]
                                             c.sync()
-                                        else:
-                                            self._write_checkpoint(e)
                                     if self.par_logger and idx % self.log_every_iter == 0:
                                         self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} '
                                                                     f'({idx+current+1}/{total})')
@@ -171,8 +166,6 @@ class MappingPipeline:
                                 if not os.path.isdir(self.checkpoint_path):
                                     c['done_paths'] += [e]
                                     c.sync()
-                                else:
-                                    self._write_checkpoint(e)
 
                             if self.par_logger and idx % self.log_every_iter == 0:
                                 self.par_logger.logger.info(f'Processed {e} into {G.F_MAPPERS.target} '
@@ -187,8 +180,6 @@ class MappingPipeline:
                         if not os.path.isdir(self.checkpoint_path):
                             c['done_paths'] += [partial_res]
                             c.sync()
-                        else:
-                            self._write_checkpoint(partial_res)
                     if self.par_logger and idx % self.log_every_iter == 0:
                         self.par_logger.logger.info(f'Processed {partial_res} into {G.F_MAPPERS.target} '
                                                     f'({idx+current+1}/{total})')
