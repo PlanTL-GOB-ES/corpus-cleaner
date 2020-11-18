@@ -11,6 +11,9 @@ import gzip
 from urllib.parse import urlparse
 import re
 from typing import Dict
+import time
+
+TIMEOUT_ENCODING_GUESSING = 5.0
 
 
 class DataParser(CleanerComponent):
@@ -143,11 +146,17 @@ class DataParser(CleanerComponent):
     def _guess_encoding(self, path: str, gz: bool):
         # https://stackoverflow.com/questions/46037058/using-chardet-to-find-encoding-of-very-large-file/49621821
         self.detector.reset()
+        t0 = time.process_time()
+        timeout = False
         if not gz:
             with open(path, 'rb') as f:
                 for row in f:
                     self.detector.feed(row)
-                    if self.detector.done:
+                    if self.detector.done :
+                        break
+                    t1 = time.process_time()
+                    if t1 - t0 > TIMEOUT_ENCODING_GUESSING:
+                        timeout = True
                         break
         else:
             with gzip.open(path, 'rb') as f:
@@ -155,9 +164,17 @@ class DataParser(CleanerComponent):
                     self.detector.feed(row)
                     if self.detector.done:
                         break
+                    t1 = time.process_time()
+                    if t1 - t0 > TIMEOUT_ENCODING_GUESSING:
+                        timeout = True
+                        break
         self.detector.close()
-        confidence_ok = self.detector.result['confidence'] > self.encoding_threshold
-        encoding = self.detector.result['encoding'] if confidence_ok else 'utf-8'
+        if timeout:
+            encoding = 'utf-8'
+            confidence_ok = 0.0
+        else:
+            confidence_ok = self.detector.result['confidence'] > self.encoding_threshold
+            encoding = self.detector.result['encoding'] if confidence_ok else 'utf-8'
         return encoding, confidence_ok
 
     def parse(self) -> List[Iterable[Document]]:
