@@ -7,9 +7,11 @@ from typing import Tuple, Optional
 
 
 class OutputFormatterMapper(CleanerComponent):
-    def __init__(self, args: argparse.Namespace, output_formatter: OutputFormatter):
+    def __init__(self, args: argparse.Namespace, output_formatter: OutputFormatter,
+                 write_chekpoint: Optional[str] = None):
         super().__init__(args)
         self.output_formatter = output_formatter
+        self.write_checkpoint = write_chekpoint
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -26,5 +28,8 @@ class OutputFormatterMapper(CleanerComponent):
             self.output_formatter._write_document(document)
             filename = document.filename
         self.output_formatter.end_writing()
+        with open(self.write_checkpoint, 'a') as f:
+            pass
+
         return filename
 
