@@ -15,6 +15,7 @@ class Checkpoint:
             assert args is None
             with open(os.path.join(output_path, 'args.json'), 'r') as f:
                 self.args = argparse.Namespace(**json.loads(f.read()))
+            self.backend = self.args.checkpoint_backend
             self.resume = True
             if not self.args.only_reduce:
                 self.logger = self.init_logger(os.path.join(self.output_path, 'clean.log'))
