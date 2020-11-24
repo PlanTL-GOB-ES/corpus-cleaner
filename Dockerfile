@@ -15,7 +15,7 @@ RUN  apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 
-RUN git clone --branch new-cleaner --single-branch https://github.com/TeMU-BSC/corpus-cleaner.git
+RUN git clone https://github.com/TeMU-BSC/corpus-cleaner.git
 
 
 RUN mkdir /cc
