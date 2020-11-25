@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-docker build --no-cache -t corpuscleaner .
+docker build --build-arg SSH_PRIVATE_KEY=$1--no-cache -t corpuscleaner .
