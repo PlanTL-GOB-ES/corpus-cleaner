@@ -1,19 +1,12 @@
 FROM ubuntu as intermediate
 
-# install git
 RUN apt-get update
 RUN apt-get install -y git
 
-# add credentials on build
 ARG SSH_PRIVATE_KEY
-RUN mkdir /root/.ssh/
-RUN echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa
+ARG SSH_PUBLIC_KEY
 
-# make sure the domain is accepted
-RUN touch /root/.ssh/known_hosts
-RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
-
-RUN git clone git@github.com:TeMU-BSC/corpus-cleaner.git
+RUN echo "$SSH_PRIVATE_KEY" > /etc/ssh/id_rsa && echo "$SSH_PUBLIC_KEY" > /etc/ssh/id_rsa.pub && chmod 600 /etc/ssh/id_rsa && chmod 600 /etc/ssh/id_rsa.pub && chmod 600 /etc/ssh/ && eval $(ssh-agent -s) && ssh-add /etc/ssh/id_rsa && ssh-add -l && cat /etc/ssh/id_rsa && cat /etc/ssh/id_rsa.pub && ssh-keyscan -t rsa github.com > /etc/ssh/known_hosts && GIT_SSH_COMMAND='ssh -i /etc/ssh/id_rsa -o IdentitiesOnly=yes -o StrictHostKeyChecking=no' git clone git@github.com:TeMU-BSC/corpus-cleaner.git
 
 
 FROM ubuntu:18.04
