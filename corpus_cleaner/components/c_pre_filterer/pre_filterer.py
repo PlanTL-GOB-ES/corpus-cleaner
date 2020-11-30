@@ -48,6 +48,8 @@ class PreFilterer(CleanerComponentMapper):
                                                                           'common HTTP errors.')
         parser.add_argument('--digits_filter', type=float, help='Maximum allowed proportion of digit characters',
                             default=0.1)
+        parser.add_argument('--remove-citations', action='store_true',
+                            help='If used, remove citations in the common square brackets format, e.g [34]')
         parser.add_argument('--lang-chars-filter', type=float, help='Maximum allowed proportion of characters not'
                                                                     'belonging to the alphabet of the language',
                             default=0.1)
@@ -80,7 +82,7 @@ class PreFilterer(CleanerComponentMapper):
                  no_remove_hashtags_mentions: bool = False, no_remove_tags: bool = False,
                  no_space_normalization: bool = False, no_replace_urls: bool = False,
                  char_length_filter_document: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
-                 lang_chars_filter: float = 0.1,
+                 remove_citations: bool = False, lang_chars_filter: float = 0.1,
                  alphanum_filter: float = 0.3, uppercase_filter: float = 0.4,
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
                  initial_lang_filter_threshold: float = 0.3,
@@ -104,6 +106,7 @@ class PreFilterer(CleanerComponentMapper):
         self.char_length_filter_document = args.char_length_filter_document if args.char_length_filter_document is not None else char_length_filter_document
         self.head_filter = not args.no_head_filter if args.no_head_filter is not None else not no_head_filter
         self.digits_filter = args.digits_filter if args.digits_filter is not None else digits_filter
+        self.remove_citations = args.remove_citations if args.remove_citations else remove_citations
         self.alphanum_filter = args.alphanum_filter if args.alphanum_filter is not None else alphanum_filter
         self.lang_chars_filter = args.lang_chars_filter if args.lang_chars_filter is not None else lang_chars_filter
         self.uppercase_filter = args.uppercase_filter if args.uppercase_filter is not None else uppercase_filter
@@ -135,6 +138,10 @@ class PreFilterer(CleanerComponentMapper):
             return text, bool(subs)
         else:
             return text, False
+
+    def _remove_citations(self, text):
+        text, subs = self.remove_citations_pattern.subn('', text)
+        return text, bool(subs)
 
     def _replace_emails(self, text):
         replace = ' [EMAIL] '
@@ -178,9 +185,11 @@ class PreFilterer(CleanerComponentMapper):
         return text, bool(subs)
 
     def _build_filters(self):
-        # https://www.tutorialspoint.com/Extracting-email-addresses-using-regular-expressions-in-Python
+        if self.remove_citations:
+            self.remove_citations_pattern = re.compile(r'[[\d]*]')
         if self.language_normalization:
             self.geminate_l_pattern = re.compile(r'l\.l')
+        # https://www.tutorialspoint.com/Extracting-email-addresses-using-regular-expressions-in-Python
         if self.replace_emails:
             self.emails_pattern = re.compile(
                 rf'[{self.lang_chars}0-9_.+-]+@[a-zA-Z0-9-]+\.[a-z0-9-.]+')
@@ -348,6 +357,10 @@ class PreFilterer(CleanerComponentMapper):
             document.content, subs = self._seg_sentences(document.content)
             if self.debug and subs:
                 document.operations.append(f"{self.__class__.__name__}-{self._seg_sentences.__name__}")
+        if self.remove_citations:
+            document.content, subs = self._remove_citations(document.content)
+            if self.debug and subs:
+                document.operations.append(f"{self.__class__.__name__}-{self._remove_citations.__name__}")
 
         if len(document.content.split()) == 0:
             return None
