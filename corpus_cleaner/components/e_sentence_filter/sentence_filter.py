@@ -28,6 +28,8 @@ class SentenceFilter(CleanerComponentMapper):
                             default=0.9)
         parser.add_argument('--no-lang-filter-sentence', action='store_true',
                             help='Avoid applying language filter on sentences')
+        parser.add_argument('--no-lang-filter-sentence_src_tgt', action='store_true',
+                            help='Avoid applying language filter on sentences with "src=" pattern')
 
         parser.add_argument('--code-threshold', type=float, help='Threshold (percentage) of code-like chars and tokens'
                                                                  'to filter a sentence (-1 to deactivate)',
@@ -37,7 +39,7 @@ class SentenceFilter(CleanerComponentMapper):
                                                                       'sentence',
                             default=None)
         parser.add_argument('--no-dedup-same-doc-sentences', action='store_true',
-                            help='Do not eduplicate sentences in the same document.')
+                            help='Do not deduplicate sentences in the same document.')
         parser.add_argument('--no-src-tag-filter', action='store_true',
                             help='Do not remvoe sentences with the pattern "src=".')
 
@@ -71,7 +73,10 @@ class SentenceFilter(CleanerComponentMapper):
                                                                              None else slow_lang_filter_threshold
         self.fast_lang_filter_threshold = args.fast_lang_filter_threshold if args.fast_lang_filter_threshold is not \
                                                                              None else fast_lang_filter_threshold
-        self.lang_filter_sentence = not args.no_lang_filter_sentence if args.no_lang_filter_sentence is not None else not no_lang_filter_sentence
+        self.lang_filter_sentence = not args.no_lang_filter_sentence \
+            if args.no_lang_filter_sentence is not None else not no_lang_filter_sentence
+        self.lang_filter_sentence_src_tgt = not args.no_lang_filter_sentence_src_tgt \
+            if args.no_lang_filter_sentence_src_tgt is not None else not no_lang_filter_sentence_src_tgt
 
         self.code_threshold = args.code_threshold if args.code_threshold is not None else code_threshold
         self.dictionary_filter = \
@@ -87,7 +92,7 @@ class SentenceFilter(CleanerComponentMapper):
             not args.no_dedup_same_doc_sentences if args.no_dedup_same_doc_sentences is not None else dedup_same_doc_sentences
         self.debug = args.debug
         self.sentences_duplicate = None
-        self.lang_filter_sentence = not args.no_src_tag_filter if args.no_lang_filter_sentence is not None else src_tag_filter
+        self.lang_filter_sentence_src_tgt = not args.no_src_tag_filter if args.no_lang_filter_sentence is not None else src_tag_filter
         self.src_tag_pattern = None
 
         self._get_filters()
@@ -109,14 +114,14 @@ class SentenceFilter(CleanerComponentMapper):
             self.filters.append(self._filter_by_dict)
         if self.dedup_same_doc_sentences:
             self.filters.append(self._filter_by_duplicate)
-        if self.lang_filter_sentence:
+        if self.lang_filter_sentence_src_tgt:
             self.src_tag_pattern = re.compile('src=')
             self.filters.append(self._filter_by_src_tag)
 
     def _filter_by_len(self, sentence: str):
         len_sentence = len(sentence)
         len_words = len(sentence.split(' '))
-        if len_sentence >= self.char_length_filter_sentence and len_words >= self.word_length_filter_sentence:
+        if len_sentence > self.char_length_filter_sentence and len_words > self.word_length_filter_sentence:
             return True, None
         value = f"({round(len_sentence)} chars, {len_words} words)"
         return False, value

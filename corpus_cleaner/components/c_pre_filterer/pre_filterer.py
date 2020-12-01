@@ -33,6 +33,8 @@ class PreFilterer(CleanerComponentMapper):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
+        parser.add_argument('--no-lang-filter-document', action='store_true',
+                            help='Avoid applying language filter on documents')
         parser.add_argument('--no-language-normalization', action='store_true',
                             help='Avoid applying language-specific normalization')
         parser.add_argument('--no-replace-emails', action='store_true',
@@ -77,7 +79,9 @@ class PreFilterer(CleanerComponentMapper):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace, no_language_normalization: bool = False,
+    def __init__(self, args: argparse.Namespace,
+                 no_lang_filter_document: bool = False,
+                 no_language_normalization: bool = False,
                  no_replace_emails: bool = False,
                  no_remove_hashtags_mentions: bool = False, no_remove_tags: bool = False,
                  no_space_normalization: bool = False, no_replace_urls: bool = False,
@@ -89,6 +93,7 @@ class PreFilterer(CleanerComponentMapper):
                  dictionary_filter: Optional[str] = None,
                  seg_sentences: bool = False):
         super().__init__(args)
+        self.lang_filter_document = not args.no_lang_filter_document if args.no_lang_filter_document is not None else not no_lang_filter_document
         self.language_normalization = not args.no_language_normalization if args.no_language_normalization is \
                                                                             not None else not no_language_normalization
         self.replace_emails = not args.no_replace_emails if args.no_replace_emails is not None else not no_replace_emails
@@ -221,7 +226,7 @@ class PreFilterer(CleanerComponentMapper):
         if self.alphabet_filter is not None:
             self.ad = AlphabetDetector()
             self.filters.append(self._filter_by_alphabet)
-        if self.lang_filter is not None:
+        if self.lang_filter is not None and self.lang_filter_document:
             if self.replace_urls:
                 self.url_placeholder_pattern = re.compile('\s+\[URL\]')
             else:
