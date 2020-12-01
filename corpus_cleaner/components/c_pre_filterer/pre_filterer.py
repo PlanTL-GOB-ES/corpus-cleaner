@@ -190,8 +190,9 @@ class PreFilterer(CleanerComponentMapper):
         return text, bool(subs)
 
     def _build_filters(self):
+        # The regex includes citations placed after periods that may prevent the correct sentence splitting
         if self.remove_citations:
-            self.remove_citations_pattern = re.compile(r'[[\d]*]')
+            self.remove_citations_pattern = re.compile(r'[,.]*\[[\d]{,3}\]')
         if self.language_normalization:
             self.geminate_l_pattern = re.compile(r'l\.l')
         # https://www.tutorialspoint.com/Extracting-email-addresses-using-regular-expressions-in-Python
