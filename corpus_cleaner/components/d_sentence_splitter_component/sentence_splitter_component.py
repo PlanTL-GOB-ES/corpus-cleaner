@@ -43,9 +43,8 @@ class SentenceSplitterComponent(CleanerComponentMapper):
                     sentence_splitter.SentenceSplitter(language=self.args.lang_filter[0])
                 splitter = self.splitter_dict[self.args.lang_filter[0]]
             except:
-                self.splitter_dict['en'] = \
-                    sentence_splitter.SentenceSplitter(language='en')
-                splitter = self.splitter_dict['en']
+                self.splitter_dict[document.language] = sentence_splitter.SentenceSplitter(language='en')
+                splitter = self.splitter_dict[document.language]
 
         if self.debug:
             if not document.content:
