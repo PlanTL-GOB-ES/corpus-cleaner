@@ -3,44 +3,53 @@
 import optparse
 import re
 
+
 def parse_arguments():
     parser = optparse.OptionParser()
-    parser.add_option('-p','--path', action="store", default=False)
-    parser.add_option('-b','--boundary', action="store", default=False)
-    parser.add_option('-n','--number_of_files', action="store", default=False)
+    parser.add_option('-p', '--path', action="store", default=False, help="path to the file")
+    parser.add_option('-b', '--boundary', action="store", default=False, help="document boundaries (e.g '', '</doc>', ...")
+    parser.add_option('-n', '--number_of_files', action="store", default=False, type=int, help="Number of files into which you want to split")
+    parser.add_option('-l', '--lines', action="store", default=False, type=int, help="Total number of lines of the file you want to split")
     options, args = parser.parse_args()
-    return options.path, options.boundary, options.number_of_files
+    return options.path, options.boundary, options.number_of_files, options.lines
 
-def write_doc(file, filelines, index, boundary):
-    doc_len = 0
-    while filelines[index].strip() != boundary:
-        file.write(filelines[index])
-        index += 1
-        doc_len += 1
-    else:
-        file.write(filelines[index])
-        index += 1
-        doc_len += 1
-    return doc_len
+
+def line_is_not_boundary(line, boundary):
+    if line != boundary:
+        return True
+
 
 def main():
-    path, boundary, number_of_files = parse_arguments()
-    filename = re.sub('\.[a-z]+$','',path)
-    filelines = open(path,'r',encoding='utf-8').readlines()
-    max_lines = round(len(filelines)/int(number_of_files))
-    print("Filelines...{}".format(len(filelines)))
+    path, boundary, number_of_files, lines = parse_arguments()
+    if lines:
+        filelines = lines
+    else:
+        try:
+            filelines = len(open(path, 'r', encoding='utf-8').readlines())
+        except MemoryError:
+            print(
+                "The file you provided is too long, please run wc -l and provide the number of lines with the argument -l")
+    max_lines = round(filelines / number_of_files)
+    print("Filelines...{}".format(filelines))
     print("Number of files...{}".format(number_of_files))
-    print("Max lines per file...{}".format(int(max_lines)))
-    files = [open(filename+'%d.txt' % i, 'w', encoding='utf-8') for i in range(int(number_of_files))]
-    fileline_index = 0
-    try:
-        for file in files:
-            index = 0
-            while index < max_lines:
-                doc_len = write_doc(file, filelines, fileline_index, boundary)
-                print("Written {} lines to file {}".format(doc_len,file))
-                index += doc_len
-                fileline_index += doc_len
-    except IndexError:
-        print("The boundary doesn't appear in the file you provided")
-main()
+    print("Max lines per file...{}".format(max_lines))
+
+    filename = re.sub('\.[a-z]+$', '', path)
+    files = [open(filename+'%d.txt' % i, 'a', encoding='utf-8') for i in range(int(number_of_files))]
+    index = 0
+    filename_index = 0
+    for line in open(path, 'r', encoding='utf-8'):
+        file_to_write = files[filename_index]
+        if index < max_lines:
+            file_to_write.write(line)
+        else:
+            if line_is_not_boundary(line.strip(), boundary):
+                file_to_write.write(line)
+            else:
+                filename_index += 1
+                index = -1
+        index += 1
+
+
+if __name__ == '__main__':
+    main()
