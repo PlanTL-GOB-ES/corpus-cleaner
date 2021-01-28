@@ -33,6 +33,7 @@ class PreFilterer(CleanerComponentMapper):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
+        parser.add_argument('--none_filter', action='store_true', help='Apply no filters')
         parser.add_argument('--no-lang-filter-document', action='store_true',
                             help='Avoid applying language filter on documents')
         parser.add_argument('--no-language-normalization', action='store_true',
@@ -91,7 +92,8 @@ class PreFilterer(CleanerComponentMapper):
                  alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
                  initial_lang_filter_threshold: float = 0.3,
                  dictionary_filter: Optional[str] = None,
-                 seg_sentences: bool = False):
+                 seg_sentences: bool = False,
+                 none_filter: bool = False):
         super().__init__(args)
         self.lang_filter_document = not args.no_lang_filter_document if args.no_lang_filter_document is not None else not no_lang_filter_document
         self.language_normalization = not args.no_language_normalization if args.no_language_normalization is \
@@ -134,7 +136,10 @@ class PreFilterer(CleanerComponentMapper):
         self.seg_sentences = args.seg_sentences if args.seg_sentences is not None else seg_sentences
         self.input_format = args.input_format
         self.filters = []
+        self.do_filter = args.none_filter if args.none_filter is not None else none_filter
         self._build_filters()
+        if not self.do_filter:
+            self.filters = []
 
     # TODO: move the remove operations to a new component called CharFilter
     def _language_normalization(self, langs, text):
