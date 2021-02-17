@@ -8,7 +8,7 @@ from corpus_cleaner.transforms import FixEncodingStringTransform
 class EncodingFixer(CleanerComponentMapper):
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)
-        self._fix_encoding_transform = FixEncodingTransform()
+        self._fix_encoding_transform = FixEncodingStringTransform()
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
