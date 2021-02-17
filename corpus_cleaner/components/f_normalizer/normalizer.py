@@ -1,7 +1,7 @@
 from corpus_cleaner.document import Document
 from typing import Union, Dict, Optional
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
-from sacremoses import MosesPunctNormalizer
+from corpus_cleaner.transforms import PunctuationNormalizationStringTransform
 import argparse
 
 
@@ -45,20 +45,12 @@ class Normalizer(CleanerComponentMapper):
 
     def _build_normalizers(self):
         if self.punctuation_norm:
-            self.normalizers.append(self._punctuation_normalization)
+            self.normalizers.append(PunctuationNormalizationStringTransform(self.language[0]))
         if self.spell_check:
-            raise NotImplementedError()
+            raise NotImplementedError
         if self.terminology_norm is not None:
-            raise NotImplementedError()
+            raise NotImplementedError
 
-    def _spell_checking(self):
-        raise NotImplementedError()
-
-    def _terminology_normalization(self):
-        raise NotImplementedError()
-
-    def _punctuation_normalization(self, sentence: str):
-        return MosesPunctNormalizer(self.language[0]).normalize(sentence)
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
         return self._normalize(document)

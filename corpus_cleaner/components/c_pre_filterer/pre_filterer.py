@@ -142,57 +142,7 @@ class PreFilterer(CleanerComponentMapper):
             self.filters = []
 
     # TODO: move the remove operations to a new component called CharFilter
-    def _language_normalization(self, langs, text):
-        if 'ca' in langs:
-            text, subs = self.geminate_l_pattern.subn('l·l', text)
-            return text, bool(subs)
-        else:
-            return text, False
 
-    def _remove_citations(self, text):
-        text, subs = self.remove_citations_pattern.subn('', text)
-        return text, bool(subs)
-
-    def _replace_emails(self, text):
-        replace = ' [EMAIL] '
-        text, subs = self.emails_pattern.subn(replace, text)
-        return text, bool(subs)
-
-    def _remove_hashtags_mentions(self, text):
-        text, subs = self.remove_hashtags_pattern.subn(' ', text)
-        return text, bool(subs)
-
-    def _remove_tags(self, text):
-        text, subs = self.tags_pattern.subn(' ', self.p_tags_pattern.sub('\n', text))
-        return text, bool(subs)
-
-    def _space_normalization(self, text):
-        text = normalize_space(text, preserve=['\n'])
-        subs_all = []
-        text, subs = self.punc_space_pattern.subn('\\2', text)
-        subs_all.append(subs)
-        text = self.zero_width_space_pattern.sub('', text)
-        subs_all.append(subs)
-        text = self.punc_no_space_pattern.sub('\\1\\2 \\3', text)
-        subs_all.append(subs)
-        text = self.quote_no_space_pattern1.sub('\\1 \\2\\3\\5', text)
-        subs_all.append(subs)
-        text = self.quote_no_space_pattern2.sub('\\1\\2\\4 \\5', text)
-        subs_all.append(subs)
-        return text, any(subs_all)
-
-    def _seg_sentences(self, text):
-        subs_all = []
-        text, subs = self.final_sentence_pattern1.subfn("{1}{2}{3}\n{4}{5}{6}", text)
-        subs_all.append(subs)
-        text, subs = self.final_sentence_pattern2.subfn("{1}{2}{3}\n{4}{5}{6}{7}", text)
-        subs_all.append(subs)
-        return text, any(subs_all)
-
-    def _replace_urls(self, text):
-        replace = ' [URL] '
-        text, subs = self.urls_pattern2.subn(replace, self.urls_pattern.sub(replace, text))
-        return text, bool(subs)
 
     def _build_filters(self):
         # The regex includes citations placed after periods that may prevent the correct sentence splitting
