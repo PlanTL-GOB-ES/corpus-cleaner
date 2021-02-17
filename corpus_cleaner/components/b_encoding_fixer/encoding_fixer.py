@@ -2,7 +2,7 @@ from corpus_cleaner.document import Document
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 import argparse
 from typing import Optional
-from corpus_cleaner.transforms import FixEncodingTransform
+from corpus_cleaner.transforms import FixEncodingStringTransform
 
 
 class EncodingFixer(CleanerComponentMapper):
