@@ -33,7 +33,7 @@ class PreFilterer(CleanerComponentMapper):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        parser.add_argument('--none_filter', action='store_true', help='Apply no filters')
+        parser.add_argument('--none-filter', action='store_true', help='Apply no filters')
         parser.add_argument('--no-lang-filter-document', action='store_true',
                             help='Avoid applying language filter on documents')
         parser.add_argument('--no-language-normalization', action='store_true',
