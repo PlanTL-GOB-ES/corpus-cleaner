@@ -34,18 +34,18 @@ def process_corpora(corpora_list, level):
             corpora_list_processed.extend(file_processed)
     return corpora_list_processed
 
-def write_file(doc_level_processed,sen_level_processed,output):
+def write_file(corpus_processed,output):
     """Concatenate all corpora and write it to output file"""
-    concatenated_corpora = "\n".join(doc_level_processed + sen_level_processed)
-    ouput_file = open(output,'w')
-    ouput_file.write(concatenated_corpora)
-    print(len(concatenated_corpora.split("\n")),"lines written to",output)
+    with open(output,'a') as ouput_file:
+        for document in corpus_processed: # generator
+            ouput_file.write(document+'\n')
 
 if __name__ == "__main__":
     # Obtain arguments
     doc_level, sen_level, output = parse_arguments()
     print(len(doc_level), "corpora at document level.")
-    doc_level_processed = process_corpora(doc_level,"doc")
+    doc_level_processed = process_corpora(doc_level,"doc") # return generator
     print(len(sen_level), "corpora at sentence level.")
     sen_level_processed = process_corpora(sen_level,"sen")
-    write_file(doc_level_processed,sen_level_processed, output)
+    write_file(doc_level_processed, output)
+    write_file(sen_level_processed, output)
