@@ -3,6 +3,7 @@ from typing import Union, Tuple, Optional
 import fasttext
 import re
 import os
+from corpus_cleaner.document import Document
 
 
 class StringFilter:
@@ -14,94 +15,103 @@ class StringFilter:
         return self.filter(text)
 
 
-class FilterByCharLen(StringFilter):
-    def __init__(self, char_length_filter_document):
-        self.char_length_filter_document = char_length_filter_document
+class CharLenStringFilter(StringFilter):
+    def __init__(self, char_length_threshold: int):
+        self._char_length_threshold = char_length_threshold
 
     def filter(self, text: str) -> bool:
         value = len(text)
-        if value < self.char_length_filter_document:
+        if value < self._char_length_threshold:
             return False
         return True
 
 
-class FilterByDigits:
-    def __init__(self, digits_filter: float):
-        self.digits_filter = digits_filter
+class DigitsStringFilter(StringFilter):
+    def __init__(self, digits_percentage_threshold: float):
+        self._digits_percentage_threshold = digits_percentage_threshold
 
     def filter(self, text: str):
         value = sum(c.isdigit() for c in text) / len(text)
-        if value > self.digits_filter:
+        if value > self._digits_percentage_threshold:
             return False
         return True
 
 
-class FilterByAlphanum:
-    def __init__(self, alphanum_filter: float):
-        self.alphanum_filter = alphanum_filter
+class AlphanumStringFilter(StringFilter):
+    def __init__(self, alphanum_percentage_threshold: float):
+        self._alphanum_percentage_threshold = alphanum_percentage_threshold
 
     def filter(self, text: str):
         concat_content = ''.join(text.split())
         value = (1 - (sum(c.isalnum() for c in concat_content) / len(concat_content)))
-        if value > self.alphanum_filter:
+        if value > self._alphanum_percentage_threshold:
             return False
         return True
 
 
-class FilterByLangChars:
-    def __init__(self, alphabet, lang_chars_filter: float):
-        self.alphabet = alphabet
-        self.lang_chars_filter = lang_chars_filter
+class LangCharsStringFilter(StringFilter):
+    def __init__(self, alphabet, lang_chars_percentage_threshold: float):
+        self._alphabet = alphabet
+        self._lang_chars_percentage_threshold = lang_chars_percentage_threshold
 
     def filter(self, text: str):
         concat_content = ''.join(text.split())
-        value = (1 - (sum(c in self.alphabet for c in concat_content) / len(concat_content)))
-        if value > self.lang_chars_filter:
+        value = (1 - (sum(c in self._alphabet for c in concat_content) / len(concat_content)))
+        if value > self._lang_chars_percentage_threshold:
             return False
         return True
 
 
-class FilterByUppercase:
-    def __init__(self, uppercase_filter: int):
-        self.uppercase_filter = uppercase_filter
+class UppercaseStringFilter(StringFilter):
+    def __init__(self, uppercase_percentage_threshold: float):
+        self._uppercase_percentage_threshold = uppercase_percentage_threshold
 
     def filter(self, text: str):
         value = sum(c.isupper() for c in text) / len(text)
-        if value > self.uppercase_filter:
+        if value > self._uppercase_percentage_threshold:
             return False
         return True
 
 
-class FilterByAlphabet:
-    def __init__(self, alphabet_filter: Union[Tuple[str], None]):
-        self.ad = AlphabetDetector()
-        self.alphabet_filter = alphabet_filter
+class AlphabetFilter(StringFilter):
+    def __init__(self, alphabets: Union[Tuple[str], None]):
+        self._ad = AlphabetDetector()
+        self._alphabets = alphabets
 
     def filter(self, text: str):
         # TODO: Check thresholds?
         try:
-            value = len(self.ad.detect_alphabet(text).intersection(set(self.alphabet_filter)))
+            value = len(self._ad.detect_alphabet(text).intersection(set(self._alphabets)))
             if value == 0:
                 return False
+            else:
+                return True
         # TODO: catch proper exception
         except Exception:
             return True
-        return True
 
 
-class FilterByDict:
-    def __init__(self, dictionary_filter: Optional[str]):
-        self.dictionary_filter_pattern = re.compile("|".join(dictionary_filter))
+class DictStringFilter(StringFilter):
+    def __init__(self, dictionary_terms: Optional[str]):
+        self._dictionary_filter_pattern = re.compile("|".join(dictionary_terms))  # TODO: What are these terms? Lines?
 
-    def _filter_by_dict(self, text: str):
-        if self.dictionary_filter_pattern.search(text):
+    def filter(self, text: str):
+        if self._dictionary_filter_pattern.search(text):
             return False
         return True
 
 
-# TOFIX: this filter needs a document objects as input
-class FilterByHeads(StringFilter):
-    def filter(self, text: str) -> bool:
+class MetadataFilter:
+
+    def filter(self, doc: Document) -> bool:
+        raise NotImplementedError
+
+    def __call__(self, doc: Document) -> bool:
+        return self.filter(doc)
+
+
+class HeadsMetadataFilter(MetadataFilter):
+    def filter(self, doc: Document) -> bool:
         value = []
         if doc.heads is not None:
             for token in ['found', '404', 'robots.txt', 'error', 'trouvée']:
@@ -111,12 +121,24 @@ class FilterByHeads(StringFilter):
         return True
 
 
+class LangIdentifier:
+
+    def filter(self, text: str) -> Tuple[bool, float]:
+        raise NotImplementedError
+
+    def __call__(self, text: str) -> Tuple[bool, float]:
+        return self.filter(text)
+
 # TOFIX: this filter needs a document objects as input
 class FilterByLang:
-    def __init__(self, lang_filter: str, initial_lang_filter_threshold: float):
-        self.url_placeholder_pattern = re.compile(
-            "((\w+):\/\/)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)"
-        )
+    def __init__(self, lang_filter: str, initial_lang_filter_threshold: float, replace_urls: bool):
+        self.replace_urls = replace_urls
+        if self.replace_urls:
+            self.url_placeholder_pattern = re.compile('\s+\[URL\]')
+        else:
+            self.url_placeholder_pattern = re.compile(
+                "((\w+):\/\/)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)"
+            )
         self.no_eols_pattern = re.compile('\n')
         self.fasttext_lid = fasttext.load_model(os.path.join('lib', 'lid.176.bin'))
         self.lang_filter = lang_filter
