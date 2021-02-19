@@ -66,6 +66,16 @@ class RemoveHashtagsMentionsStringTransform(StringTransform):
         return text
 
 
+class RemoveTagsStringTransform(StringTransform):
+    def __init__(self):
+        self._tags_pattern = re.compile(' *(<.*?> ?)+ *')
+        self._p_tags_pattern = re.compile('(\s*)(<p>)+')
+
+    def transform(self, text: str) -> str:
+        text = self._tags_pattern.sub(' ', self._p_tags_pattern.sub('\n', text))
+        return text
+
+
 class SpaceNormalizationTransform(StringTransform):
     def __init__(self, langs: List[str]):
         self._punc_no_space_pattern = re.compile("(\w+|\"|')([!,:;?])([a-zA-Z]\w)")

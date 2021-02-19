@@ -12,8 +12,53 @@ from urllib.parse import urlparse
 import re
 from typing import Dict
 import time
+from dataclasses import dataclass
+from typing import List
 
-TIMEOUT_ENCODING_GUESSING = 5.0
+
+@dataclass
+class DataParserConfig:
+    extensions: List[str]  # File extensions to work with (eg. json)
+    encoding_thresold: float  # Encoding threshold if --encoding auto (ignored otherwise. If the encoding detector is
+    # not above this threshold, it assigns utf-8.
+    encoding: str = 'auto'  # Input encoding format (eg. utf-8. If set to auto, the program tries to guess the
+    # encoding)
+    encoding_error_policy: str = float  # Encoding error policy (same options as open())
+    url_doc: Optional[str] = None  # Path to a url list (plain text, one url per line) that should be filtered and
+    # processed'
+    warc_warn: bool = False  # Enable warnings of WARC parser
+    bytes_: bool = False
+    done_paths: Iterable[str] = ()
+    timeout_encoding_guessing: int = 5.0
+
+    r"""
+        # TODO: docstring
+        This is the configuration class to store the configuration of a :class:`~corpus_cleaner.RawDocumentTransform. It is
+        used to instantiate a RawDocumentTransform component according to the specified arguments.
+
+        Args:
+
+
+            vocab_size (:obj:`int`, `optional`, defaults to 30522):
+                Vocabulary size of the BERT model. Defines the number of different tokens that can be represented by the
+                :obj:`inputs_ids` passed when calling :class:`~transformers.BertModel` or
+                :class:`~transformers.TFBertModel`.
+
+
+        Examples::
+
+            #>>> from corpus_cleaner import DataParserFactory, DataParserConfig
+
+            #>>> # Initializing a BERT bert-base-uncased style configuration
+            #>>> configuration = BertConfig()
+
+            #>>> # Initializing a model from the bert-base-uncased style configuration
+            #>>> model = BertModel(configuration)
+
+            #>>> # Accessing the model configuration
+            #>>> configuration = model.config
+        """
+
 
 
 class DataParser(CleanerComponent):

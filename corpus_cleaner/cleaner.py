@@ -4,6 +4,7 @@ from corpus_cleaner.components.b_encoding_fixer.encoding_fixer import EncodingFi
 from corpus_cleaner.components.c_pre_filterer.pre_filterer import PreFilterer
 from corpus_cleaner.components.d_sentence_splitter_component.sentence_splitter_component import \
     SentenceSplitterComponent
+
 from corpus_cleaner.components.e_sentence_filter.sentence_filter import SentenceFilter
 from corpus_cleaner.components.f_normalizer.normalizer import Normalizer
 from corpus_cleaner.components.g_document_filter.document_filter import DocumentFilter
