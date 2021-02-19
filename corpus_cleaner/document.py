@@ -84,3 +84,6 @@ class Document:
                         heads=get_att('heads'),
                         language=get_att('language')
                         )
+
+    def register_operation(self, operation: str):
+        self.operations.append(operation)

@@ -106,7 +106,7 @@ class PreFilterer(CleanerComponentMapper):
         return transforms
 
     def _build_string_filters(self) -> List[StringFilter]:
-        filters = []
+        filters = [FixEncodingStringTransform()]
 
         if self._config.char_length_filter_document > 0:
             filters.append(CharLenStringFilter(char_length_threshold=self._config.char_length_filter_document))
@@ -128,37 +128,38 @@ class PreFilterer(CleanerComponentMapper):
             filters.append(AlphabetFilter(alphabets=self._config.alphabet_filter))
 
         if self._config.target_langs is not None and self._config.lang_filter:
-            if self.replace_urls:
-                self.url_placeholder_pattern = re.compile('\s+\[URL\]')
-            else:
-                self.url_placeholder_pattern = re.compile(
-                    "((\w+):\/\/)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)"
-                )
-            self.no_eols_pattern = re.compile('\n')
-            self.fasttext_lid = fasttext.load_model(os.path.join('lib', 'lid.176.bin'))
-            self.filters.append(self._filter_by_lang)
+            filters
 
-        if self.dictionary_filter is not None:
-            self.dictionary_filter_pattern = re.compile("|".join(self.dictionary_filter))
-            self.filters.append(self._filter_by_dict)
+        if self._config.dictionary_filter_doc is not None:
+            filters.append(DictStringFilter(dictionary_terms=self._config.dictionary_filter_doc))
 
         return filters
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
         for metadata_filter in self._metadata_filters:
-            keep = metadata_filter(document)
+            keep, value = metadata_filter(document)
             if not keep:
+                document.register_operation(f"{self.__class__.__name__}-{metadata_filter.__class__.__name__}:{value}")
                 return None
 
         for string_transform in self._string_transforms:
-            document.content = string_transform(document.content)
+            transformed = string_transform(document.content)
+            if transformed != document.content:
+                document.register_operation(f"{self.__class__.__name__}-{string_transform.__class__.__name__}")
 
         if len(document.content.split()) == 0:
+            document.register_operation('NoWordsLeftAtDocAfterTransformsDocument')
             return None
 
         for string_filter in self._string_filters:
-            keep = string_filter(document.content)
+            keep, value = string_filter(document.content)
             if not keep:
+                document.register_operation(f"{self.__class__.__name__}-{string_filter.__class__.__name__}:{value}")
                 return None
+
+        lang, confidence = self._lang_identifier(document)
+        if lang in self._config.target_langs and confidence > self.config.initial_lang_filter_threshold:
+            document.language = lang
+            return True
 
         return document

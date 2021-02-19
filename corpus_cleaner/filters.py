@@ -30,7 +30,7 @@ class DigitsStringFilter(StringFilter):
     def __init__(self, digits_percentage_threshold: float):
         self._digits_percentage_threshold = digits_percentage_threshold
 
-    def filter(self, text: str):
+    def filter(self, text: str) -> bool:
         value = sum(c.isdigit() for c in text) / len(text)
         if value > self._digits_percentage_threshold:
             return False
@@ -41,7 +41,7 @@ class AlphanumStringFilter(StringFilter):
     def __init__(self, alphanum_percentage_threshold: float):
         self._alphanum_percentage_threshold = alphanum_percentage_threshold
 
-    def filter(self, text: str):
+    def filter(self, text: str) -> bool:
         concat_content = ''.join(text.split())
         value = (1 - (sum(c.isalnum() for c in concat_content) / len(concat_content)))
         if value > self._alphanum_percentage_threshold:
@@ -54,7 +54,7 @@ class LangCharsStringFilter(StringFilter):
         self._alphabet = alphabet
         self._lang_chars_percentage_threshold = lang_chars_percentage_threshold
 
-    def filter(self, text: str):
+    def filter(self, text: str) -> bool:
         concat_content = ''.join(text.split())
         value = (1 - (sum(c in self._alphabet for c in concat_content) / len(concat_content)))
         if value > self._lang_chars_percentage_threshold:
@@ -66,7 +66,7 @@ class UppercaseStringFilter(StringFilter):
     def __init__(self, uppercase_percentage_threshold: float):
         self._uppercase_percentage_threshold = uppercase_percentage_threshold
 
-    def filter(self, text: str):
+    def filter(self, text: str) -> bool:
         value = sum(c.isupper() for c in text) / len(text)
         if value > self._uppercase_percentage_threshold:
             return False
@@ -78,7 +78,7 @@ class AlphabetFilter(StringFilter):
         self._ad = AlphabetDetector()
         self._alphabets = alphabets
 
-    def filter(self, text: str):
+    def filter(self, text: str) -> bool:
         # TODO: Check thresholds?
         try:
             value = len(self._ad.detect_alphabet(text).intersection(set(self._alphabets)))
@@ -95,7 +95,7 @@ class DictStringFilter(StringFilter):
     def __init__(self, dictionary_terms: Optional[str]):
         self._dictionary_filter_pattern = re.compile("|".join(dictionary_terms))  # TODO: What are these terms? Lines?
 
-    def filter(self, text: str):
+    def filter(self, text: str) -> bool:
         if self._dictionary_filter_pattern.search(text):
             return False
         return True
