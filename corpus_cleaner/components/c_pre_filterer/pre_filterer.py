@@ -3,6 +3,7 @@ from corpus_cleaner.configs.langs import langs
 from dataclasses import dataclass
 from corpus_cleaner.transforms import *
 from corpus_cleaner.filters import *
+from corpus_cleaner.lang_identifier import FasttextLangIdentifier
 
 
 @dataclass
@@ -67,6 +68,9 @@ class PreFilterer(CleanerComponentMapper):
         self._metadata_filters = self._build_metadata_filters()
         self._string_transforms = self._build_string_transforms()
         self._string_filters = self._build_string_filters()
+        # If string transforms already remove URLs, not required to do it again for the lang id. But the lang id
+        # itself needs it to work properly
+        self._lang_identifier = FasttextLangIdentifier(replace_urls=not self._config.replace_urls)
 
     def _build_metadata_filters(self) -> List[MetadataFilter]:
         filters = []
@@ -127,9 +131,6 @@ class PreFilterer(CleanerComponentMapper):
         if self._config.alphabet_filter is not None:
             filters.append(AlphabetFilter(alphabets=self._config.alphabet_filter))
 
-        if self._config.target_langs is not None and self._config.lang_filter:
-            filters
-
         if self._config.dictionary_filter_doc is not None:
             filters.append(DictStringFilter(dictionary_terms=self._config.dictionary_filter_doc))
 
@@ -157,9 +158,10 @@ class PreFilterer(CleanerComponentMapper):
                 document.register_operation(f"{self.__class__.__name__}-{string_filter.__class__.__name__}:{value}")
                 return None
 
-        lang, confidence = self._lang_identifier(document)
-        if lang in self._config.target_langs and confidence > self.config.initial_lang_filter_threshold:
-            document.language = lang
-            return True
+        lang, confidence = self._lang_identifier(document.content)
+        if lang in self._config.target_langs and confidence > self._config.initial_lang_filter_threshold:
+            document.language = lang  # Set language. TODO: If not --lang-filter, it should be set anyway somehow
+        else:
+            return None
 
         return document
