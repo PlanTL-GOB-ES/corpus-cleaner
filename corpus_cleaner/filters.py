@@ -1,40 +1,42 @@
 from alphabet_detector import AlphabetDetector
 from typing import Union, Tuple, Optional
-import fasttext
 import re
-import os
 from corpus_cleaner.document import Document
 
 
 class StringFilter:
 
-    def filter(self, text: str) -> bool:
+    def keep(self, text: str) -> Tuple[bool, str]:
+        """
+        Check whether to keep a text.
+        :param text: Text to filter
+        :return: Tuple result, reason, where result is True iff the text is okay, and False otherwise, and reason is
+        the reason why it was filtered (e.g., value checked against the threshold).
+        """
         raise NotImplementedError
 
-    def __call__(self, text: str) -> bool:
-        return self.filter(text)
+    def __call__(self, text: str) -> Tuple[bool, str]:
+        return self.keep(text)
 
 
 class CharLenStringFilter(StringFilter):
     def __init__(self, char_length_threshold: int):
         self._char_length_threshold = char_length_threshold
 
-    def filter(self, text: str) -> bool:
+    def keep(self, text: str) -> Tuple[bool, str]:
         value = len(text)
-        if value < self._char_length_threshold:
-            return False
-        return True
+        res = value < self._char_length_threshold
+        return res, str(value)
 
 
 class DigitsStringFilter(StringFilter):
     def __init__(self, digits_percentage_threshold: float):
         self._digits_percentage_threshold = digits_percentage_threshold
 
-    def filter(self, text: str) -> bool:
+    def keep(self, text: str) -> Tuple[bool, str]:
         value = sum(c.isdigit() for c in text) / len(text)
-        if value > self._digits_percentage_threshold:
-            return False
-        return True
+        res = value > self._digits_percentage_threshold
+        return res, str(value)
 
 
 class AlphanumStringFilter(StringFilter):
@@ -119,39 +121,3 @@ class HeadsMetadataFilter(MetadataFilter):
                     value.append(token)
                     return False
         return True
-
-
-class LangIdentifier:
-
-    def filter(self, text: str) -> Tuple[bool, float]:
-        raise NotImplementedError
-
-    def __call__(self, text: str) -> Tuple[bool, float]:
-        return self.filter(text)
-
-# TOFIX: this filter needs a document objects as input
-class FilterByLang:
-    def __init__(self, lang_filter: str, initial_lang_filter_threshold: float, replace_urls: bool):
-        self.replace_urls = replace_urls
-        if self.replace_urls:
-            self.url_placeholder_pattern = re.compile('\s+\[URL\]')
-        else:
-            self.url_placeholder_pattern = re.compile(
-                "((\w+):\/\/)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)"
-            )
-        self.no_eols_pattern = re.compile('\n')
-        self.fasttext_lid = fasttext.load_model(os.path.join('lib', 'lid.176.bin'))
-        self.lang_filter = lang_filter
-        self.initial_lang_filter_threshold = initial_lang_filter_threshold
-
-    def fitler(self, text: str):
-        content = self.url_placeholder_pattern.sub('', text)
-        content = self.no_eols_pattern.sub('. ', content)
-        res = self.fasttext_lid.predict(content)
-        lang = res[0][0][-2:]
-        conf = res[1][0]
-        if lang in self.lang_filter and conf > self.initial_lang_filter_threshold:
-            doc.language = lang
-            return True
-        value = f"({round(conf, 2)}, {lang})"
-        return False, value

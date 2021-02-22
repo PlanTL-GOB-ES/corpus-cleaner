@@ -1,4 +1,4 @@
-from .data_parser import DataParser
+from .data_parser import DataParser, DataParserConfig
 from typing import Iterable
 from corpus_cleaner.document import Document
 import json
@@ -10,6 +10,7 @@ import argparse
 class BSCCrawlJSONParser(DataParser):
 
     def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.json', '.json.gz'), **kwargs):
+        data_parser_config = DataParserConfig()
         super(BSCCrawlJSONParser, self).__init__(args, input_path=args.input_path, extensions=extensions,
                                                  **kwargs)
 

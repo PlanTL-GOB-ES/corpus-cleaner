@@ -27,7 +27,7 @@ class PreFiltererConfig:
 
     replace_urls: bool = False  # Avoid replacing URLs with "[URL]". PREVIOUSLY: Don't write --no-replace-urls.
 
-    char_length_filter_document: int = 40   # Minimum char length per document. Set to 0 not to apply any filter.
+    char_length_filter: int = 40   # Minimum char length per document. Set to 0 not to apply any filter.
 
     head_filter: bool = False  # Filtering documents coming from a crawler (having a "heads" attribute) with
     # common HTTP errors. PREVIOUSLY: Don't write --no-head-filter.
@@ -45,12 +45,12 @@ class PreFiltererConfig:
 
     alphabet_filter: Union[Tuple[str], None] = ('LATIN',)  # Maximum allowed proportion of non-alphanumeric characters.
 
-    target_langs: Union[Tuple[str], None] = None  # Target languages. PREVIUSLY: --lang-
+    target_langs: Union[Tuple[str], None] = None  # Target languages. PREVIOUSLY: --lang-
 
     initial_lang_filter_threshold: float = 0.3  # 'If --lang-filter is set, minimum threshold for the initial lang
     # identifier.
 
-    dictionary_filter_doc: Optional[str] = None  # Path to dictionary (plain text, one term per line of terms that
+    dictionary_filter: Optional[str] = None  # Path to dictionary (plain text, one term per line of terms that
     # should not appear in a document). PREVIOUSLY: DO write dictionary_filter.
 
     seg_sentences: bool = False  # Segment wrongfully concatenated sentences (Example: "My name is Peter.I'm 30 years
@@ -112,8 +112,8 @@ class PreFilterer(CleanerComponentMapper):
     def _build_string_filters(self) -> List[StringFilter]:
         filters = [FixEncodingStringTransform()]
 
-        if self._config.char_length_filter_document > 0:
-            filters.append(CharLenStringFilter(char_length_threshold=self._config.char_length_filter_document))
+        if self._config.char_length_filter > 0:
+            filters.append(CharLenStringFilter(char_length_threshold=self._config.char_length_filter))
 
         if self._config.digits_filter > 0:
             filters.append(DigitsStringFilter(digits_percentage_threshold=self._config.digits_filter))
@@ -131,37 +131,53 @@ class PreFilterer(CleanerComponentMapper):
         if self._config.alphabet_filter is not None:
             filters.append(AlphabetFilter(alphabets=self._config.alphabet_filter))
 
-        if self._config.dictionary_filter_doc is not None:
-            filters.append(DictStringFilter(dictionary_terms=self._config.dictionary_filter_doc))
+        if self._config.dictionary_filter is not None:
+            filters.append(DictStringFilter(dictionary_terms=self._config.dictionary_filter))
 
         return filters
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
+        # Metadata filters: based on document metadata (e.g., document.heads might contain "404" (Error 404), in which
+        # case we can already discard it.
         for metadata_filter in self._metadata_filters:
-            keep, value = metadata_filter(document)
+            keep, reason = metadata_filter(document)
             if not keep:
-                document.register_operation(f"{self.__class__.__name__}-{metadata_filter.__class__.__name__}:{value}")
+                document.register_operation(f"{self.__class__.__name__}-{metadata_filter.__class__.__name__}:{reason}")
                 return None
 
+        # String transforms. Transform document contents. (E.g., regex-based replaces).
+        # String transforms modify the content of the documents, but they do not discard any of them.
         for string_transform in self._string_transforms:
             transformed = string_transform(document.content)
             if transformed != document.content:
                 document.register_operation(f"{self.__class__.__name__}-{string_transform.__class__.__name__}")
+                document.content = transformed
 
+        # If the result of the transformations is an empty document, then discard it.
         if len(document.content.split()) == 0:
-            document.register_operation('NoWordsLeftAtDocAfterTransformsDocument')
+            document.register_operation(f"{self.__class__.__name__}-NoWordsLeftAtDocAfterTransformsDocument")
             return None
 
+        # String filters. Don't modify documents, but decide whether to keep them.
         for string_filter in self._string_filters:
-            keep, value = string_filter(document.content)
+            keep, reason = string_filter(document.content)
             if not keep:
-                document.register_operation(f"{self.__class__.__name__}-{string_filter.__class__.__name__}:{value}")
+                document.register_operation(f"{self.__class__.__name__}-{string_filter.__class__.__name__}:{reason}")
                 return None
 
-        lang, confidence = self._lang_identifier(document.content)
-        if lang in self._config.target_langs and confidence > self._config.initial_lang_filter_threshold:
-            document.language = lang  # Set language. TODO: If not --lang-filter, it should be set anyway somehow
-        else:
+        # Language identifier. Similar to filter, but handled as a particular case since we do more complex stuff.
+        # The first condition is for cases in which the document metadata already contained information on the language.
+        if document.language and document.language not in self._config.target_langs:
+            document.register_operation(f"{self.__class__.__name__}-MetadataLanguage")
             return None
+        if not document.language:
+            lang, confidence = self._lang_identifier(document.content)
+            if lang in self._config.target_langs and confidence > self._config.initial_lang_filter_threshold:
+                document.language = lang  # Set inferred language.
+            else:
+                reason = f"({round(confidence, 2)}, {lang})"
+                document.register_operation(f"{self.__class__.__name__}-{self._lang_identifier.__class__.__name__}:"
+                                            f"{reason}")
+                return None
 
         return document

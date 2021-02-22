@@ -1,32 +1,21 @@
 from typing import List
 from typing import Optional
+from dataclasses import dataclass
 
 
+@dataclass
 class Document:
-    def __init__(self,
-                 content: str,
-                 filename: Optional[str] = None,
-                 sentences: Optional[List[str]] = None,
-                 sentences_orig: Optional[List[str]] = None,
-                 title: Optional[str] = None,
-                 url: Optional[str] = None,
-                 id_: Optional[str] = None,
-                 keywords: Optional[str] = None,
-                 heads: Optional[str] = None,
-                 language: Optional[str] = None,
-                 operations: Optional[List] = None):
-        self.content = content
-        self.content_orig = content
-        self.sentences = sentences
-        self.sentences_orig = sentences_orig
-        self.title = title
-        self.url = url
-        self.id = id_
-        self.keywords = keywords
-        self.heads = heads
-        self.filename = filename
-        self.language = language
-        self.operations = operations
+    content: str
+    filename: Optional[str] = None
+    sentences: Optional[List[str]] = None
+    sentences_orig: Optional[List[str]] = None
+    title: Optional[str] = None
+    url: Optional[str] = None
+    id_: Optional[str] = None
+    keywords: Optional[str] = None
+    heads: Optional[str] = None
+    language: Optional[str] = None
+    operations: Optional[List] = None
 
     def attr_str(self) -> str:
         res = []
@@ -34,8 +23,8 @@ class Document:
             res.append(('title', self.title.replace('\n', ' ')))
         if self.url is not None:
             res.append(('url', self.url.replace('\n', ' ')))
-        if self.id is not None:
-            res.append(('id', self.id.replace('\n', ' ')))
+        if self.id_ is not None:
+            res.append(('id', self.id_.replace('\n', ' ')))
         if self.heads is not None:
             res.append(('heads', self.heads.replace('\n', ' ')))
         if self.keywords is not None:
