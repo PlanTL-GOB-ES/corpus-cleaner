@@ -6,7 +6,7 @@ from . import CleanerComponent
 
 class CleanerComponentMapper:
 
-    def apply(self, document: Optional[Document]) -> Optional[Document]:
+    def apply(self, document: Document) -> Optional[Document]:
         raise NotImplementedError()
 
     def __call__(self, documents: Iterable[Optional[Document]]) -> Iterable[Document]:

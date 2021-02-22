@@ -1,6 +1,5 @@
 from corpus_cleaner.components.a_data_parser.data_parser import DataParser
 from corpus_cleaner.components.a_data_parser.data_parser_factory import DataParserFactory
-from corpus_cleaner.components.b_encoding_fixer.encoding_fixer import EncodingFixer
 from corpus_cleaner.components.c_pre_filterer.pre_filterer import PreFilterer
 from corpus_cleaner.components.d_sentence_splitter_component.sentence_splitter_component import \
     SentenceSplitterComponent
@@ -26,7 +25,7 @@ from typing import Optional
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 
 MAPPERS = [
-    EncodingFixer, PreFilterer,
+    PreFilterer,
     SentenceSplitterComponent, SentenceFilter, Normalizer
 ]
 REDUCER = DocumentFilter
@@ -38,7 +37,7 @@ class Cleaner:
 
     @staticmethod
     def get_components_classes() -> List:
-        return [DataParser, EncodingFixer, PreFilterer, SentenceSplitterComponent, SentenceFilter, Normalizer,
+        return [DataParser, PreFilterer, SentenceSplitterComponent, SentenceFilter, Normalizer,
                 DocumentFilter, DocumentOrganizer, OutputFormatter]
 
     @staticmethod

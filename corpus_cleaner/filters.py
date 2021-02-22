@@ -6,7 +6,7 @@ from corpus_cleaner.document import Document
 
 class StringFilter:
 
-    def keep(self, text: str) -> Tuple[bool, str]:
+    def keep(self, text: str) -> Tuple[bool, Optional[str]]:
         """
         Check whether to keep a text.
         :param text: Text to filter
@@ -15,7 +15,7 @@ class StringFilter:
         """
         raise NotImplementedError
 
-    def __call__(self, text: str) -> Tuple[bool, str]:
+    def __call__(self, text: str) -> Tuple[bool, Optional[str]]:
         return self.keep(text)
 
 
@@ -23,9 +23,9 @@ class CharLenStringFilter(StringFilter):
     def __init__(self, char_length_threshold: int):
         self._char_length_threshold = char_length_threshold
 
-    def keep(self, text: str) -> Tuple[bool, str]:
+    def keep(self, text: str) -> Tuple[bool, Optional[str]]:
         value = len(text)
-        res = value < self._char_length_threshold
+        res = value > self._char_length_threshold
         return res, str(value)
 
 
@@ -33,7 +33,7 @@ class DigitsStringFilter(StringFilter):
     def __init__(self, digits_percentage_threshold: float):
         self._digits_percentage_threshold = digits_percentage_threshold
 
-    def keep(self, text: str) -> Tuple[bool, str]:
+    def keep(self, text: str) -> Tuple[bool, Optional[str]]:
         value = sum(c.isdigit() for c in text) / len(text)
         res = value > self._digits_percentage_threshold
         return res, str(value)
@@ -43,12 +43,11 @@ class AlphanumStringFilter(StringFilter):
     def __init__(self, alphanum_percentage_threshold: float):
         self._alphanum_percentage_threshold = alphanum_percentage_threshold
 
-    def filter(self, text: str) -> bool:
+    def keep(self, text: str) -> Tuple[bool, Optional[str]]:
         concat_content = ''.join(text.split())
         value = (1 - (sum(c.isalnum() for c in concat_content) / len(concat_content)))
-        if value > self._alphanum_percentage_threshold:
-            return False
-        return True
+        res = value > self._alphanum_percentage_threshold
+        return res, str(value)
 
 
 class LangCharsStringFilter(StringFilter):
@@ -56,23 +55,21 @@ class LangCharsStringFilter(StringFilter):
         self._alphabet = alphabet
         self._lang_chars_percentage_threshold = lang_chars_percentage_threshold
 
-    def filter(self, text: str) -> bool:
+    def keep(self, text: str) -> Tuple[bool, Optional[str]]:
         concat_content = ''.join(text.split())
         value = (1 - (sum(c in self._alphabet for c in concat_content) / len(concat_content)))
-        if value > self._lang_chars_percentage_threshold:
-            return False
-        return True
+        res = value > self._lang_chars_percentage_threshold
+        return res, str(value)
 
 
 class UppercaseStringFilter(StringFilter):
     def __init__(self, uppercase_percentage_threshold: float):
         self._uppercase_percentage_threshold = uppercase_percentage_threshold
 
-    def filter(self, text: str) -> bool:
+    def keep(self, text: str) -> Tuple[bool, Optional[str]]:
         value = sum(c.isupper() for c in text) / len(text)
-        if value > self._uppercase_percentage_threshold:
-            return False
-        return True
+        res = value > self._uppercase_percentage_threshold
+        return res, str(value)
 
 
 class AlphabetFilter(StringFilter):
@@ -80,44 +77,39 @@ class AlphabetFilter(StringFilter):
         self._ad = AlphabetDetector()
         self._alphabets = alphabets
 
-    def filter(self, text: str) -> bool:
+    def keep(self, text: str) -> Tuple[bool, Optional[str]]:
         # TODO: Check thresholds?
         try:
             value = len(self._ad.detect_alphabet(text).intersection(set(self._alphabets)))
-            if value == 0:
-                return False
-            else:
-                return True
+            return value != 0, str(value)
         # TODO: catch proper exception
         except Exception:
-            return True
+            return True, None
 
 
 class DictStringFilter(StringFilter):
     def __init__(self, dictionary_terms: Optional[str]):
         self._dictionary_filter_pattern = re.compile("|".join(dictionary_terms))  # TODO: What are these terms? Lines?
 
-    def filter(self, text: str) -> bool:
+    def keep(self, text: str) -> Tuple[bool, Optional[str]]:
         if self._dictionary_filter_pattern.search(text):
-            return False
-        return True
+            return False, None
+        return True, None
 
 
 class MetadataFilter:
 
-    def filter(self, doc: Document) -> bool:
+    def filter(self, doc: Document) -> Tuple[bool, Optional[str]]:
         raise NotImplementedError
 
-    def __call__(self, doc: Document) -> bool:
+    def __call__(self, doc: Document) -> Tuple[bool, Optional[str]]:
         return self.filter(doc)
 
 
 class HeadsMetadataFilter(MetadataFilter):
-    def filter(self, doc: Document) -> bool:
-        value = []
+    def filter(self, doc: Document) -> Tuple[bool, Optional[str]]:
         if doc.heads is not None:
             for token in ['found', '404', 'robots.txt', 'error', 'trouvée']:
                 if re.search(token, doc.heads, re.IGNORECASE):
-                    value.append(token)
-                    return False
-        return True
+                    return False, token
+        return True, None

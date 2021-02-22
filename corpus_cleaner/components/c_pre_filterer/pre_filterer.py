@@ -136,7 +136,7 @@ class PreFilterer(CleanerComponentMapper):
 
         return filters
 
-    def apply(self, document: Optional[Document]) -> Optional[Document]:
+    def apply(self, document: Document) -> Optional[Document]:
         # Metadata filters: based on document metadata (e.g., document.heads might contain "404" (Error 404), in which
         # case we can already discard it.
         for metadata_filter in self._metadata_filters:
