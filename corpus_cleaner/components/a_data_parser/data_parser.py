@@ -34,7 +34,7 @@ class DataParserConfig:
 
 
 class DataParser:
-    def __init__(self, config: DataParserConfig, logger: PipelineLogger):
+    def __init__(self, config: DataParserConfig, logger: Optional[PipelineLogger] = None):
         self._config = config
         if self._config.url_doc is not None:
             self._url_filter = self._config.url_doc
@@ -49,7 +49,14 @@ class DataParser:
         self._logger = logger
 
     def _log(self, text: str):
+        if self._logger is None:
+            raise RuntimeError("Logger is not defined in DataParser")
         self._logger.logger.info(text)
+
+    def _warn(self, text: str):
+        if self._logger is None:
+            raise RuntimeError("Logger is not defined in DataParser")
+        self._logger.logger.warning(text)
 
     def _check_url(self, url: str) -> bool:
         def url_belongs_to(u1, u2):
