@@ -1,5 +1,5 @@
 from alphabet_detector import AlphabetDetector
-from typing import Union, Tuple, Optional
+from typing import Union, Tuple, Optional, List
 import re
 from corpus_cleaner.document import Document
 
@@ -27,6 +27,21 @@ class CharLenStringFilter(StringFilter):
         value = len(text)
         res = value > self._char_length_threshold
         return res, str(value)
+
+
+# TOFIX: this filter include the CharLenStringFilter!
+class LenStringFilter(StringFilter):
+    def __init__(self, char_length_threshold: int, word_length_threshold: int):
+        self._char_length_threshold = char_length_threshold
+        self._word_length_threshold = word_length_threshold
+
+    def keep(self, text: str) -> Tuple[bool, Optional[str]]:
+        len_sentence = len(text)
+        len_words = len(text.split(' '))
+        if len_sentence < self._char_length_threshold and len_words < self._word_length_threshold:
+            value = f"({round(len_sentence)} chars, {len_words} words)"
+            return False, str(value)
+        return True, None
 
 
 class DigitsStringFilter(StringFilter):
@@ -88,7 +103,7 @@ class AlphabetFilter(StringFilter):
 
 
 class DictStringFilter(StringFilter):
-    def __init__(self, dictionary_terms: Optional[str]):
+    def __init__(self, dictionary_terms: List[str]):
         self._dictionary_filter_pattern = re.compile("|".join(dictionary_terms))  # TODO: What are these terms? Lines?
 
     def keep(self, text: str) -> Tuple[bool, Optional[str]]:
@@ -96,6 +111,30 @@ class DictStringFilter(StringFilter):
             return False, None
         return True, None
 
+
+class CodeStringFilter(StringFilter):
+    def __init__(self, code_threshold):
+        self._code_keywords_pattern = re.compile('\\b(var|function|const|if|else|script)\\b')
+        self._code_chars_pattern = re.compile(r'[;=&\[\](){}/\\\\]')
+        self._code_threshold = code_threshold
+
+    def keep(self, text: str) -> Tuple[bool, Optional[str]]:
+        value = (len(re.findall(self._code_keywords_pattern, text)) / len(text.split())) \
+                + len(re.findall(self._code_chars_pattern, text)) / len(text)
+        if value > self._code_threshold:
+            return False, str(value)
+        return True, None
+
+
+class SrcTgtStringFilter(StringFilter):
+    def __init__(self):
+        self.src_tag_pattern = re.compile('src=')
+
+    def keep(self, text: str) -> Tuple[bool, Optional[str]]:
+        found = self.src_tag_pattern.search(text)
+        if not found:
+            return False, str(found.span())
+        return True, None
 
 class MetadataFilter:
 
