@@ -2,6 +2,7 @@ from alphabet_detector import AlphabetDetector
 from typing import Union, Tuple, Optional, List
 import re
 from corpus_cleaner.document import Document
+from corpus_cleaner.lang_identifier import FasttextLangIdentifier, LangIdLangIdentifier
 
 
 class StringFilter:
@@ -135,6 +136,36 @@ class SrcTgtStringFilter(StringFilter):
         if not found:
             return False, str(found.span())
         return True, None
+
+
+class CascadeLangStringFilter(StringFilter):
+    def __init__(self, lang_filter, fast_lang_filter_threshold, slow_lang_filter_threshold):
+        self.lang_filter = lang_filter
+        self.fast_lang_filter_threshold = fast_lang_filter_threshold
+        self.slow_lang_filter_threshold = slow_lang_filter_threshold
+
+        # We set the cascade sequence to 1) fasttext and 2) langid for speed and accuracy reasons.
+        # We also set reaplace_urls to True by default
+        self.language_id1 = FasttextLangIdentifier(replace_urls=True)
+        self.language_id2 = LangIdLangIdentifier(replace_urls=True)
+
+    def keep(self, text: str) -> Tuple[bool, Optional[str]]:
+        lang, conf = self.language_id1.identify(text.lower())
+        if lang in self.lang_filter and conf > self.fast_lang_filter_threshold:
+            return True, None
+
+        elif lang in self.lang_filter:
+            lang, conf = self.language_id2.identify(text)
+            if lang in self.lang_filter and conf > self.slow_lang_filter_threshold:
+                return True, None
+            else:
+                value = f"({round(conf, 2)}, {lang})"
+                return False, value
+
+        else:
+            value = f"({round(conf, 2)}, {lang})"
+            return False, value
+
 
 class MetadataFilter:
 
