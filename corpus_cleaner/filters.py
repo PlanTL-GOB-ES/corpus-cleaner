@@ -140,9 +140,9 @@ class SrcTgtStringFilter(StringFilter):
 
 class CascadeLangStringFilter(StringFilter):
     def __init__(self, lang_filter, fast_lang_filter_threshold, slow_lang_filter_threshold):
-        self.lang_filter = lang_filter
-        self.fast_lang_filter_threshold = fast_lang_filter_threshold
-        self.slow_lang_filter_threshold = slow_lang_filter_threshold
+        self._langs_filter = lang_filter
+        self._fast_lang_filter_threshold = fast_lang_filter_threshold
+        self._slow_lang_filter_threshold = slow_lang_filter_threshold
 
         # We set the cascade sequence to 1) fasttext and 2) langid for speed and accuracy reasons.
         # We also set reaplace_urls to True by default
@@ -151,12 +151,12 @@ class CascadeLangStringFilter(StringFilter):
 
     def keep(self, text: str) -> Tuple[bool, Optional[str]]:
         lang, conf = self.language_id1.identify(text.lower())
-        if lang in self.lang_filter and conf > self.fast_lang_filter_threshold:
+        if lang in self._langs_filter and conf > self._fast_lang_filter_threshold:
             return True, None
 
-        elif lang in self.lang_filter:
+        elif lang in self._langs_filter:
             lang, conf = self.language_id2.identify(text)
-            if lang in self.lang_filter and conf > self.slow_lang_filter_threshold:
+            if lang in self._langs_filter and conf > self._slow_lang_filter_threshold:
                 return True, None
             else:
                 value = f"({round(conf, 2)}, {lang})"

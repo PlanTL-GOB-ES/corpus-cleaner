@@ -28,9 +28,11 @@ class SentenceFilterConfig:
 
     slow_lang_filter_threshold: float = 0.9  # If --lang-filter is set, minimum threshold for the slower lang identifier
 
-    lang_filter: str  # Apply language identifier for a given language
+    lang_filter: bool = True  # Apply language filter on documents. PREVIOUSLY: Don't write --no-lang-filter-document.
 
     lang_filter_src_tgt: bool = True  # Apply language filter on sentences with "src=" pattern
+
+    target_langs: Union[Tuple[str], None] = None  # Target languages. PREVIOUSLY: --lang-
 
     code_threshold: float = 0.25  # Threshold (percentage) of code-like chars and tokens to filter
     # a sentence (-1 to deactivate)
@@ -65,7 +67,7 @@ class SentenceFilter(CleanerComponentMapper):
 
         if self._config.lang_filter:
             filters.append(self._config.CascadeLangStringFilter(
-                lang_filter=self._config.lang_filter,
+                langs_filter=self._config.target_langs,
                 fast_lang_filter_threshold=self._config.fast_lang_filter_threshold,
                 slow_lang_filter_threshold=self._config.slow_lang_filter_threshold))
 
@@ -93,7 +95,8 @@ class SentenceFilter(CleanerComponentMapper):
                     if sentence:
                         class_name = self.__class__.__name__
                         filter_name = string_filter.__class__.__name__
-                        document.operations[sentence_idx].append(f"{class_name}-{filter_name}:{reason}")
+                        document.register_operation(operation=f"{class_name}-{filter_name}:{reason}",
+                                                    sublist_index=sentence_idx)
                     sentences.append('')
                     break
                 else:

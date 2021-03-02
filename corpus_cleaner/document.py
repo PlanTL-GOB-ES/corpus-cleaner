@@ -74,5 +74,9 @@ class Document:
                         language=get_att('language')
                         )
 
-    def register_operation(self, operation: str):
-        self.operations.append(operation)
+    def register_operation(self, operation: str, sublist_index: Optional[int] = None):
+        # Append to the sublist
+        if sublist_index:
+            self.operations[sublist_index].append(operation)
+        else:
+            self.operations.append(operation)
