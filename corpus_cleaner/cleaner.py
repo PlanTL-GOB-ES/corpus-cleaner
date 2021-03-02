@@ -7,7 +7,6 @@ from corpus_cleaner.components.d_sentence_splitter_component.sentence_splitter_c
 from corpus_cleaner.components.e_sentence_filter.sentence_filter import SentenceFilter
 from corpus_cleaner.components.f_normalizer.normalizer import Normalizer
 from corpus_cleaner.components.g_document_filter.document_filter import DocumentFilter
-from corpus_cleaner.components.h_document_organizer.document_organizer import DocumentOrganizer
 from corpus_cleaner.components.i_output_formatter.output_formatter import OutputFormatter
 from corpus_cleaner.components.i_output_formatter.output_formatter_factory import OutputFormatterFactory
 from typing import Iterable, List, Tuple
@@ -30,20 +29,10 @@ MAPPERS = [
 ]
 REDUCER = DocumentFilter
 
-POSTMAPPERS = [DocumentOrganizer]
+POSTMAPPERS = []
 
 
 class Cleaner:
-
-    @staticmethod
-    def get_components_classes() -> List:
-        return [DataParser, PreFilterer, SentenceSplitterComponent, SentenceFilter, Normalizer,
-                DocumentFilter, DocumentOrganizer, OutputFormatter]
-
-    @staticmethod
-    def get_valid_input_output_formats() -> Tuple:
-        return DataParserFactory.VALID_INPUT_FORMATS, OutputFormatterFactory.VALID_OUTPUT_FORMATS
-
     def __init__(self, args: argparse.Namespace, logger: logging, checkpoint: Checkpoint):
         self.args = args
         self.logger = PipelineLogger(logger)
@@ -58,10 +47,11 @@ class Cleaner:
                 if comp.__name__ in args.components:
                     self.mappers.append(comp)
         if not self.args.only_reduce:
-            self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
+            self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers + \
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                            args=self.args, output_format='onion',
-                            output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
+                               args=self.args, output_format='onion',
+                               output_path=os.path.join(self.tmp_dir,
+                                                        os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
         else:
             class SentencePacker(CleanerComponentMapper):
 
@@ -71,8 +61,9 @@ class Cleaner:
 
             self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + [SentencePacker] + \
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                            args=self.args, output_format='onion',
-                            output_path=os.path.join(self.tmp_dir,  os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
+                               args=self.args, output_format='onion',
+                               output_path=os.path.join(self.tmp_dir,
+                                                        os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
         self.reducer = REDUCER if not args.debug else DummyReducer
         if args.components is not None and not args.debug:
             self.reducer = None
@@ -89,6 +80,15 @@ class Cleaner:
         self.documents = None
         self.stats = OrderedDict()
         self.checkpoint = checkpoint
+
+    @staticmethod
+    def get_components_classes() -> List:
+        return [DataParser, PreFilterer, SentenceSplitterComponent, SentenceFilter, Normalizer,
+                DocumentFilter, OutputFormatter]
+
+    @staticmethod
+    def get_valid_input_output_formats() -> Tuple:
+        return DataParserFactory.VALID_INPUT_FORMATS, OutputFormatterFactory.VALID_OUTPUT_FORMATS
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
@@ -162,4 +162,3 @@ class Cleaner:
             self.logger.logger.info(f'onion -> {self.args.output_format}')
             self.logger.logger.info('Writing deduplicated documents')
             self._output(self.reducer.get_documents()[0])
-

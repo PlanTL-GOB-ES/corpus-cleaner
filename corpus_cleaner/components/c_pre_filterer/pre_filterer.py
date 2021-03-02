@@ -170,7 +170,7 @@ class PreFilterer(CleanerComponentMapper):
         if document.language and document.language not in self._config.target_langs:
             document.register_operation(f"{self.__class__.__name__}-MetadataLanguage")
             return None
-        if not document.language:
+        if not document.language and self._config.lang_filter:
             lang, confidence = self._lang_identifier(document.content)
             if lang in self._config.target_langs and confidence > self._config.initial_lang_filter_threshold:
                 document.language = lang  # Set inferred language.
@@ -179,5 +179,6 @@ class PreFilterer(CleanerComponentMapper):
                 document.register_operation(f"{self.__class__.__name__}-{self._lang_identifier.__class__.__name__}:"
                                             f"{reason}")
                 return None
-
+        else:
+            return document
         return document
