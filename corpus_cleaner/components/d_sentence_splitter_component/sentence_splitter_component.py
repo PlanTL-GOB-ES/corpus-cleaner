@@ -1,33 +1,31 @@
 from corpus_cleaner.document import Document
 from typing import Optional
 import sentence_splitter
+from dataclass import dataclass
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
-import argparse
+from typing import Union, Tuple
+
+
+@dataclass
+class SentenceSplitterConfig:
+    target_langs: Union[Tuple[str], None] = None  # Target languages. PREVIOUSLY: --lang-
 
 
 class SentenceSplitterComponent(CleanerComponentMapper):
-    @staticmethod
-    def add_args(parser: argparse.ArgumentParser):
-        pass
-
-    @staticmethod
-    def check_args(args: argparse.Namespace):
-        # TODO check custom args
-        pass
-
-    def __init__(self, args: argparse.Namespace):
-        super().__init__(args)
+    def __init__(self, config: SentenceSplitterConfig):
+        super().__init__()
+        self._config = config
         self.splitter_dict = {}
 
-    def _split(self, document: Optional[Document]) -> Optional[Document]:
+    def apply(self, document: Optional[Document]) -> Optional[Document]:
         if document.language in self.splitter_dict:
             splitter = self.splitter_dict[document.language]
         elif document.language is None:
-            if self.args.lang_filter is not None:
+            if self._config.target_langs is not None:
                 try:
-                    self.splitter_dict[self.args.lang_filter[0]] = \
-                        sentence_splitter.SentenceSplitter(language=self.args.lang_filter[0])
-                    splitter = self.splitter_dict[self.args.lang_filter[0]]
+                    self.splitter_dict[self._config.target_langs[0]] = \
+                        sentence_splitter.SentenceSplitter(language=self._config.target_langs[0])
+                    splitter = self.splitter_dict[self._config.target_langs[0]]
                 except:
                     self.splitter_dict['en'] = \
                         sentence_splitter.SentenceSplitter(language='en')
@@ -39,13 +37,14 @@ class SentenceSplitterComponent(CleanerComponentMapper):
 
         else:
             try:
-                self.splitter_dict[self.args.lang_filter[0]] = \
-                    sentence_splitter.SentenceSplitter(language=self.args.lang_filter[0])
-                splitter = self.splitter_dict[self.args.lang_filter[0]]
+                self.splitter_dict[self._config.target_langs[0]] = \
+                    sentence_splitter.SentenceSplitter(language=self._config.target_langs[0])
+                splitter = self.splitter_dict[self._config.target_langs[0]]
             except:
                 self.splitter_dict[document.language] = sentence_splitter.SentenceSplitter(language='en')
                 splitter = self.splitter_dict[document.language]
 
+        # TODO: implemente debug param
         if self.debug:
             if not document.content:
                 # If the document received is empty since has been filtered out in the previous step,
@@ -67,7 +66,8 @@ class SentenceSplitterComponent(CleanerComponentMapper):
                     if len(document.sentences) > len(document.sentences_orig):
                         content_orig = document.content_orig.replace('\n', '')
                         document.sentences_orig = [f'UNALIGNED:{content_orig}']
-                        document.sentences_orig.extend(['UNALIGNED:'] * (len(document.sentences) - len(document.sentences_orig)))
+                        document.sentences_orig.extend(
+                            ['UNALIGNED:'] * (len(document.sentences) - len(document.sentences_orig)))
                     else:
                         return None
             # add operations for each sentence in the document
@@ -75,6 +75,3 @@ class SentenceSplitterComponent(CleanerComponentMapper):
         else:
             document.sentences = [sent for sent in splitter.split(document.content)]
         return document
-
-    def apply(self, document: Optional[Document]) -> Optional[Document]:
-        return self._split(document)
