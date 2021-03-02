@@ -2,55 +2,52 @@ from corpus_cleaner.document import Document
 from typing import Union, Dict, Optional
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 from corpus_cleaner.transforms import PunctuationNormalizationStringTransform
-import argparse
+from dataclass import dataclass
+from typing import Union, Tuple
+from transforms import PunctuationNormalizationStringTransform, StringTransform
+
+
+class NormalizerConfig:
+    punctuation_norm: bool  # Apply punctuation normalization
+
+    target_langs: Union[Tuple[str], None] = None  # Target languages. PREVIOUSLY: --lang-
+
+    spell_check: bool  # Apply spell checking (not implemented)
+
+    terminology_norm: Union[None, Dict[str, str]]  # Apply terminology normalization (not implemented)
 
 
 class Normalizer(CleanerComponentMapper):
-    @staticmethod
-    def add_args(parser: argparse.ArgumentParser):
-        parser.add_argument('--spell-check', action='store_true', help='Apply spell checking.')
-        parser.add_argument('--terminology-norm', type=str, help='Path to a terminology dictionary to appliy'
-                                                                 'normalization',
-                            default=None)
-        parser.add_argument('--punctuation-norm', action='store_true', help='Apply punctuation normalization.')
+    def __init__(self, config: NormalizerConfig):
+        super().__init__()
+        self._config = config
+        self._string_transforms = self._build_string_transforms()
 
-    @staticmethod
-    def check_args(args: argparse.Namespace):
-        # TODO check custom args
-        pass
-
-    def __init__(self, args: argparse.Namespace, spell_check: bool = False,
-                 terminology_norm: Union[None, Dict[str, str]] = None, punctuation_norm: bool = False):
-        super().__init__(args)
-        self.spell_check = args.spell_check if args.spell_check is not None else spell_check
-        self.terminology_norm = args.terminology_norm if args.terminology_norm is not None else terminology_norm
-        self.punctuation_norm = args.punctuation_norm if args.punctuation_norm is not None else punctuation_norm
-        self.language = args.lang_filter
-        self.normalizers = []
-        self._build_normalizers()
+    def _build_string_transforms(self):
+        transforms = []
+        if self._config.punctuation_norm:
+            transforms.append(PunctuationNormalizationStringTransform(self._config.target_langs[0]))
+        if self._config.spell_check:
+            raise NotImplementedError
+        if self._config.terminology_norm is not None:
+            raise NotImplementedError
+        return transforms
 
     def _normalize(self, document: Optional[Document]) -> Optional[Document]:
         sent_norms = []
         for idx_sent, sent in enumerate(document.sentences):
             sent_norm = sent
-            for normalizer in self.normalizers:
-                sent_norm = normalizer(sent_norm)
+            for string_transform in self._string_transforms:
+                sent_norm = string_transform(sent_norm)
+                # TODO: implement debug param
                 if self.debug and sent_norm:
                     if sent_norm != sent:
                         class_name = self.__class__.__name__
-                        document.operations[idx_sent].append(f"{class_name}-{normalizer.__name__}")
+                        document.register_operation(operation=f"{class_name}-{string_transform.__name__}",
+                                                    sublist_index=idx_sent)
             sent_norms.append(sent_norm)
         document.sentences = sent_norms
         return document
-
-    def _build_normalizers(self):
-        if self.punctuation_norm:
-            self.normalizers.append(PunctuationNormalizationStringTransform(self.language[0]))
-        if self.spell_check:
-            raise NotImplementedError
-        if self.terminology_norm is not None:
-            raise NotImplementedError
-
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
         return self._normalize(document)

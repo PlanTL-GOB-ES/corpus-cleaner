@@ -122,6 +122,14 @@ class ReplaceURLsStringTransform(StringTransform):
         return text
 
 
+class PunctuationNormalizationStringTransform(StringTransform):
+    def __init__(self, lang: str):
+        self._punct_normalizer = MosesPunctNormalizer(lang)
+
+    def transform(self, text: str) -> str:
+        return self._punct_normalizer.normalize(text)
+
+
 class SpellCheckStringTransform:
     def transform(self, text: str) -> str:
         raise NotImplementedError
@@ -130,11 +138,3 @@ class SpellCheckStringTransform:
 class TerminologyNormalizationStringTransform:
     def transform(self, text: str) -> str:
         raise NotImplementedError
-
-
-class PunctuationNormalizationStringTransform:
-    def __init__(self, lang: str):
-        self._punct_normalizer = MosesPunctNormalizer(lang)
-
-    def transform(self, text: str) -> str:
-        return self._punct_normalizer.normalize(text)
