@@ -3,6 +3,8 @@ import argparse
 import os
 from ..cleaner_component_reducer import CleanerComponentReducer
 from typing import Optional
+from corpus_cleaner.constants import ONION_PATH, DEBUG_EXTENSION, DEDUP_EXTENSION, SENTENCES_EXTENSIONS, TMP_PATH,\
+    ONION_INPUT, ONION_OUTPUT, ONION_OUTPUT_DEDUP_SENTENCES
 
 
 class DocumentFilter(CleanerComponentReducer):
@@ -12,17 +14,17 @@ class DocumentFilter(CleanerComponentReducer):
         # TODO: Modify "args.document_deduplication_threshold if args.document_deduplication_threshold is not None
         # else..." pattern
         out_path = output_path if output_path is not None else args.output_path
-        onion_input_file = os.path.join(out_path, 'input.onion')
-        onion_output_file = os.path.join(out_path, 'output_deduplicate.onion.dedup')
-        onion_output_dedup_sentences_file = os.path.join(out_path, 'output_deduplicate.onion.dedup.sentences')
+        onion_input_file = os.path.join(out_path, ONION_INPUT)
+        onion_output_file = os.path.join(out_path, ONION_OUTPUT)
+        onion_output_dedup_sentences_file = os.path.join(out_path, ONION_OUTPUT_DEDUP_SENTENCES)
         remove_glob_rep_sen = args.remove_glob_rep_sen if args.remove_glob_rep_sen is not None else remove_glob_rep_sen
         final_path = onion_output_file if remove_glob_rep_sen < 2 else onion_output_dedup_sentences_file
         if args.debug:
-            extensions = '.debug'
+            extensions = DEBUG_EXTENSION
         elif remove_glob_rep_sen < 2:
-            extensions = '.dedup'
+            extensions = DEDUP_EXTENSION
         else:
-            extensions = '.sentences'
+            extensions = SENTENCES_EXTENSIONS
         extensions = (extensions,)
         super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path,
                          input_path=out_path, extensions=extensions)
@@ -35,8 +37,8 @@ class DocumentFilter(CleanerComponentReducer):
             if args.dedup_buffer is not None else dedup_buffer
         self.onion_input_file = onion_input_file
         self.onion_output_file = onion_output_file
-        self.onion_path = os.path.join('lib', 'onion-1.2', 'bin', 'onion')
-        self.onion_tmp = os.path.join(out_path, 'tmp')
+        self.onion_path = ONION_PATH
+        self.onion_tmp = os.path.join(out_path, TMP_PATH)
         self.onion_output_dedup_sentences_file = onion_output_dedup_sentences_file
 
     @staticmethod

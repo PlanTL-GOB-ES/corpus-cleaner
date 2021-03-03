@@ -1,17 +1,23 @@
-from .data_parser import DataParser
+from .data_parser import DataParser, DataParserConfig
 from typing import Iterable
 from corpus_cleaner.document import Document
 import json
-from typing import TextIO
-from typing import Tuple
-import argparse
+from typing import TextIO, Optional
+from corpus_cleaner.par_utils import PipelineLogger
+from corpus_cleaner.constants import HARDCODED_EXTENSIONS
 
 
 class BSCCrawlJSONParser(DataParser):
 
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.json', '.json.gz'), **kwargs):
-        super(BSCCrawlJSONParser, self).__init__(args, input_path=args.input_path, extensions=extensions,
-                                                 **kwargs)
+    def __init__(self, config: DataParserConfig, logger: Optional[PipelineLogger] = None):
+        hardcoded = False
+        if not config.extensions:
+            config.extensions = ('.json', '.json.gz')
+        else:
+            hardcoded = True
+        super().__init__(config, logger)
+        if hardcoded:
+            self._warn(HARDCODED_EXTENSIONS)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) ->\
             Iterable[Document]:

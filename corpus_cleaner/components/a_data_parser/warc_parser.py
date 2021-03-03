@@ -1,19 +1,14 @@
-from .data_parser import DataParser
+from .data_parser import DataParser, DataParserConfig
 from typing import Iterable
 from corpus_cleaner.document import Document
-import json
 from typing import TextIO
-from typing import Tuple
-import argparse
-import sys
-import os.path
 from warcio.archiveiterator import ArchiveIterator
 import re
-import json
-import codecs
 from selectolax.parser import HTMLParser
-from time import time
-from typing import BinaryIO, List
+from typing import BinaryIO, List, Optional
+from corpus_cleaner.constants import WARC_SKIP
+from corpus_cleaner.par_utils import PipelineLogger
+from corpus_cleaner.constants import HARDCODED_EXTENSIONS, HARDCODED_ENCODING
 
 
 # BSC Soup from BSC for BNE
@@ -32,16 +27,30 @@ from typing import BinaryIO, List
 
 class WARCParser(DataParser):
 
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.warc', '.warc.gz'), warc_warn: bool = False,
-                 **kwargs):
-        super(WARCParser, self).__init__(args, input_path=args.input_path, extensions=extensions, bytes_=True, **kwargs)
+    def __init__(self, config: DataParserConfig, logger: Optional[PipelineLogger] = None):
+        hardcoded_extensions = False
+        if not config.extensions:
+            config.extensions = ('.warc', '.warc.gz')
+        else:
+            hardcoded_extensions = True
+        hardcoded_bytes = False
+        if not config.encoding:
+            config.bytes_ = True
+        else:
+            hardcoded_bytes = False
+        super().__init__(config, logger)
+        if hardcoded_extensions:
+            self._warn(HARDCODED_EXTENSIONS)
+        if hardcoded_bytes:
+            self._warn(HARDCODED_ENCODING)
+
         self.file_data = {}
         self.error_msgs = ['404. That’s an error.', 'was not found on this server', '400. That’s an error.',
                            'The document has moved here.', 'You don\'t have permission to access',
                            'The requested file could not be found.', 'You do not have permission to access']
-        self.skip = ['mp4', 'mp3', 'jpg', 'png', 'svg', '.js']
+        self.skip = WARC_SKIP
         self.compulsory = 'p'
-        if not warc_warn:
+        if not self._config.warc_warn:
             import logging
             logging.getLogger('warcio').setLevel(logging.ERROR)
 

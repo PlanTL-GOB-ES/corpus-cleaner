@@ -1,19 +1,26 @@
-from .data_parser import DataParser
+from .data_parser import DataParser, DataParserConfig
 from typing import Iterable
 from corpus_cleaner.document import Document
-from typing import TextIO
-from typing import Tuple
-import argparse
+from typing import TextIO, Optional
 import xml.etree.ElementTree as ET
 from xml.sax.saxutils import escape, unescape
 import re
+from corpus_cleaner.par_utils import PipelineLogger
+from corpus_cleaner.constants import HARDCODED_EXTENSIONS
 
 
 class DocumentParser(DataParser):
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('*',), **kwargs):
-        super(DocumentParser, self).__init__(args, input_path=args.input_path, extensions=extensions, **kwargs)
-        self.url = re.compile('(url=\")(.*)(\"\s)')
-        self.tags = re.compile('<.*?>')
+    def __init__(self, config: DataParserConfig, logger: Optional[PipelineLogger] = None):
+        hardcoded = False
+        if not config.extensions:
+            config.extensions = ('*',)
+        else:
+            hardcoded = True
+        super().__init__(config, logger)
+        if hardcoded:
+            self._warn(HARDCODED_EXTENSIONS)
+        self._url = re.compile('(url=\")(.*)(\"\s)')
+        self._tags = re.compile('<.*?>')
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:
         raw = ''
@@ -23,11 +30,11 @@ class DocumentParser(DataParser):
                     try:
                         ls = raw.splitlines()
                         l1 = ls[0]
-                        url_search = self.url.search(l1)
+                        url_search = self._url.search(l1)
                         if url_search:
                             url = url_search.group(2)
                             escaped_url = escape(url)
-                            l1 = self.url.sub('\\1' + escaped_url + '\\3', l1)
+                            l1 = self._url.sub('\\1' + escaped_url + '\\3', l1)
                             tree = ET.fromstring(l1 + '</doc>')
                             sentences = None
                             filename = relative_filepath
@@ -49,9 +56,9 @@ class DocumentParser(DataParser):
                         content = ''
                         for l in ls[1:-1]:
                             if l.startswith('<p'):
-                                content += self.tags.sub('', l) + '\n'
+                                content += self._tags.sub('', l) + '\n'
                     except BaseException as e:
-                        self.logger.logger.info(e)
+                        self._log(str(e))
                         raw = ''
                         continue
 
