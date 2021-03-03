@@ -69,16 +69,18 @@ class SentenceFilter(CleanerComponentMapper):
 
         if self._config.lang_filter:
             filters.append(CascadeLangStringFilter(
-                langs_filter=self._config.target_langs,
+                languages=set(self._config.target_langs),
                 fast_lang_filter_threshold=self._config.fast_lang_filter_threshold,
-                slow_lang_filter_threshold=self._config.slow_lang_filter_threshold))
+                slow_lang_filter_threshold=self._config.slow_lang_filter_threshold,
+                replace_urls=True
+            ))
 
         if self._config.dictionary_filter is not None:
             with open(self._config.dictionary_filter) as df:
                 dictionary_terms = [t.strip('\n') for t in df.readlines()]
             filters.append(DictStringFilter(dictionary_terms=dictionary_terms))
 
-        if self._config.lang_filter_sentence_src_tgt:
+        if self._config.lang_filter_src_tgt:
             filters.append(SrcTgtStringFilter())
 
         return filters

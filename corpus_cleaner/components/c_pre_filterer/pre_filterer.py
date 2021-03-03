@@ -6,6 +6,7 @@ from corpus_cleaner.filters import *
 from corpus_cleaner.lang_identifier import FasttextLangIdentifier
 from corpus_cleaner import DiscardedDocument
 
+
 @dataclass
 class PreFiltererConfig:
     none_filter: bool = False  # Apply no filters.
@@ -143,7 +144,8 @@ class PreFilterer(CleanerComponentMapper):
             keep, reason = metadata_filter(document)
             if not keep:
                 document_discarded = DiscardedDocument(document.content)
-                document_discarded.register_operation(f"{self.__class__.__name__}-{metadata_filter.__class__.__name__}:{reason}")
+                document_discarded.register_operation(
+                    f"{self.__class__.__name__}-{metadata_filter.__class__.__name__}:{reason}")
                 return document_discarded
 
         # String transforms. Transform document contents. (E.g., regex-based replaces).
@@ -152,7 +154,8 @@ class PreFilterer(CleanerComponentMapper):
             transformed = string_transform(document.content)
             if transformed != document.content:
                 document_discarded = DiscardedDocument(document.content)
-                document_discarded.register_operation(f"{self.__class__.__name__}-{string_transform.__class__.__name__}")
+                document_discarded.register_operation(
+                    f"{self.__class__.__name__}-{string_transform.__class__.__name__}")
                 document.content = transformed
 
         # If the result of the transformations is an empty document, then discard it.
@@ -166,7 +169,8 @@ class PreFilterer(CleanerComponentMapper):
             keep, reason = string_filter(document.content)
             if not keep:
                 document_discarded = DiscardedDocument(document.content)
-                document_discarded.register_operation(f"{self.__class__.__name__}-{string_filter.__class__.__name__}:{reason}")
+                document_discarded.register_operation(
+                    f"{self.__class__.__name__}-{string_filter.__class__.__name__}:{reason}")
                 return document_discarded
 
         # Language identifier. Similar to filter, but handled as a particular case since we do more complex stuff.
@@ -182,8 +186,8 @@ class PreFilterer(CleanerComponentMapper):
             else:
                 reason = f"({round(confidence, 2)}, {lang})"
                 document_discarded = DiscardedDocument(document.content)
-                document_discarded.register_operation(f"{self.__class__.__name__}-{self._lang_identifier.__class__.__name__}:"
-                                            f"{reason}")
+                document_discarded.register_operation(
+                    f"{self.__class__.__name__}-{self._lang_identifier.__class__.__name__}:{reason}")
                 return document_discarded
         else:
             return document
