@@ -50,7 +50,7 @@ class PreFiltererConfig:
     initial_lang_filter_threshold: float = 0.3  # 'If --lang-filter is set, minimum threshold for the initial lang
     # identifier.
 
-    dictionary_filter: Optional[str] = None  # Path to dictionary (plain text, one term per line of terms that
+    dictionary_filter: Optional[List[str]] = None  # Path to dictionary (plain text, one term per line of terms that
     # should not appear in a document). PREVIOUSLY: DO write dictionary_filter.
 
     seg_sentences: bool = False  # Segment wrongfully concatenated sentences (Example: "My name is Peter.I'm 30 years

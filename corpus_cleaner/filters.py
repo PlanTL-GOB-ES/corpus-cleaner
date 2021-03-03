@@ -139,8 +139,8 @@ class SrcTgtStringFilter(StringFilter):
 
 
 class CascadeLangStringFilter(StringFilter):
-    def __init__(self, lang_filter, fast_lang_filter_threshold, slow_lang_filter_threshold):
-        self._langs_filter = lang_filter
+    def __init__(self, langs_filter, fast_lang_filter_threshold, slow_lang_filter_threshold):
+        self._langs_filter = langs_filter
         self._fast_lang_filter_threshold = fast_lang_filter_threshold
         self._slow_lang_filter_threshold = slow_lang_filter_threshold
 
