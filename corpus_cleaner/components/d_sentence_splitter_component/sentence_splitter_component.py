@@ -1,7 +1,7 @@
 from corpus_cleaner.document import Document
 from typing import Optional
 import sentence_splitter
-from dataclass import dataclass
+from dataclasses import dataclass
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 from typing import Union, Tuple
 

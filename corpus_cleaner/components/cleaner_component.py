@@ -6,9 +6,7 @@ class CleanerComponentConfig:
 
 
 class CleanerComponent:
-    @staticmethod
-    def add_config() -> CleanerComponentConfig:
-        raise NotImplementedError
+    pass
 
 
 class LegacyCleanerComponent:

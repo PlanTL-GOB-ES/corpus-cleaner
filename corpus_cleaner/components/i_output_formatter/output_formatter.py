@@ -4,16 +4,19 @@ from corpus_cleaner.components.cleaner_component import CleanerComponent
 import argparse
 from typing import TextIO
 from typing import Optional
+from corpus_cleaner.constants import DEBUG_SEPARATOR
+from dataclasses import dataclass
 
-SEPARATOR = "|"
-
+@dataclass
+class OutputFormatterConfig:
+    pass
 
 class OutputFormatter(CleanerComponent):
     def __init__(self, args: argparse.Namespace, output_path: Optional[str] = None):
         super().__init__(args)
         self.path = output_path if output_path is not None else args.output_path
         self.fd: Union[TextIO, None] = None
-        self.separator = SEPARATOR
+        self.separator = DEBUG_SEPARATOR
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):

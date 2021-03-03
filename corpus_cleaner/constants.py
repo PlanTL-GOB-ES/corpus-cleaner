@@ -23,3 +23,5 @@ ONION_OUTPUT = 'output_deduplicate.onion.dedup'
 ONION_OUTPUT_DEDUP_SENTENCES = 'output_deduplicate.onion.dedup.sentences'
 
 WARC_SKIP = ['mp4', 'mp3', 'jpg', 'png', 'svg', '.js']
+
+DEBUG_SEPARATOR = "|"

@@ -22,6 +22,14 @@ from . import __version__
 from typing import Optional
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 import enum
+from dataclasses import dataclass
+from corpus_cleaner.components.cleaner_component import CleanerComponentConfig
+from corpus_cleaner.components.a_data_parser.data_parser import DataParserConfig
+from corpus_cleaner.components.c_pre_filterer.pre_filterer import PreFiltererConfig
+from corpus_cleaner.components.d_sentence_splitter_component.sentence_splitter_component import SentenceSplitterConfig
+from corpus_cleaner.components.e_sentence_filter.sentence_filter import SentenceFilterConfig
+from corpus_cleaner.components.g_document_filter.document_filter import DocumentFilterConfig
+from corpus_cleaner.components.i_output_formatter.output_formatter import OutputFormatterConfig
 
 MAPPERS = [
     PreFilterer,
@@ -34,7 +42,7 @@ class ParallelBackend(enum.Enum):
     MP = 'mp'
     RAY = 'ray'
 
-
+@dataclass
 class GlobalConfig:
     parallel: bool = False  # Run the cleaner in parallel. Only useful if there are multiple files.
     log_every_iter: int = -1  # Log the pipeline every N iterations (-1, silent)
@@ -44,13 +52,24 @@ class GlobalConfig:
     debug: bool = False  # Activate the debug error mode to compare the original and cleaned sentences
 
 
+
+@dataclass
+class CleanerConfig:
+    global_config: GlobalConfig
+    parser_config: DataParserConfig
+    prefilterer_config: Optional[PreFiltererConfig]
+    sentence_splitter_config: Optional[SentenceSplitterConfig]
+    sentence_filter_config: Optional[SentenceFilterConfig]
+    document_filter_config: Optional[DocumentFilterConfig]
+    output_formatter_config: OutputFormatterConfig
+
+
 class Cleaner:
-    def __init__(self, args: argparse.Namespace, logger: logging, checkpoint: Checkpoint):
-        self.args = args
+    def __init__(self, config: CleanerConfig, logger: logging, checkpoint: Checkpoint):
+        self._config = config
         self.logger = PipelineLogger(logger)
-        self.args.logger = self.logger
         self.mappers = MAPPERS
-        self.tmp_dir = os.path.join(args.output_path, 'tmp')
+        self.tmp_dir = os.path.join(self._config.global_config., 'tmp')
         if not checkpoint.resume:
             os.makedirs(self.tmp_dir)
         if args.components is not None:
@@ -89,8 +108,7 @@ class Cleaner:
 
     @staticmethod
     def get_components_classes() -> List:
-        return [DataParser, PreFilterer, SentenceSplitterComponent, SentenceFilter, Normalizer,
-                DocumentFilter, OutputFormatter]
+        return [DataParser, PreFilterer, SentenceSplitterComponent, SentenceFilter, DocumentFilter, OutputFormatter]
 
     @staticmethod
     def get_valid_input_output_formats() -> Tuple:
@@ -100,14 +118,6 @@ class Cleaner:
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--components', type=str, help='Elements of the pipeline', nargs='+',
                             default=list(map(lambda x: x.__name__, MAPPERS + [REDUCER])))
-        parser.add_argument('--parallel', action='store_true', help='Run the cleaner in parallel')
-        parser.add_argument('--log-every-iter', type=int, default=-1, help='Log the pipeline every N iterations'
-                                                                           '(-1, silent)')
-        parser.add_argument('--backend', type=str, default='mp', help='Parallel backend (mp or ray)')
-        parser.add_argument('--only-reduce', action='store_true', help='Only document filter')
-        parser.add_argument('--only-reduce-output', action='store_true', help='Only document filter for output files')
-        parser.add_argument('--debug', action='store_true',
-                            help='Activate the debug error mode to compare the original and cleaned sentences')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -139,7 +149,7 @@ class Cleaner:
         if self.reducer is None:
             raise NotImplementedError()
         else:
-            if not self.args.only_reduce_output:
+            if not self._config.global_config.only_reduce_output:
                 self.reducer = self.reducer(self.args)
                 components_str = self.args.input_format + ' -> '
                 for idx, c in enumerate(self.mappers):
