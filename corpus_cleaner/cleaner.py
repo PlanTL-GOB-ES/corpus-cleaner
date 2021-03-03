@@ -5,7 +5,6 @@ from corpus_cleaner.components.d_sentence_splitter_component.sentence_splitter_c
     SentenceSplitterComponent
 
 from corpus_cleaner.components.e_sentence_filter.sentence_filter import SentenceFilter
-from corpus_cleaner.components.f_normalizer.normalizer import Normalizer
 from corpus_cleaner.components.g_document_filter.document_filter import DocumentFilter
 from corpus_cleaner.components.i_output_formatter.output_formatter import OutputFormatter
 from corpus_cleaner.components.i_output_formatter.output_formatter_factory import OutputFormatterFactory
@@ -22,14 +21,27 @@ import os
 from . import __version__
 from typing import Optional
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
+import enum
 
 MAPPERS = [
     PreFilterer,
-    SentenceSplitterComponent, SentenceFilter, Normalizer
+    SentenceSplitterComponent, SentenceFilter
 ]
 REDUCER = DocumentFilter
 
-POSTMAPPERS = []
+
+class ParallelBackend(enum.Enum):
+    MP = 'mp'
+    RAY = 'ray'
+
+
+class GlobalConfig:
+    parallel: bool = False  # Run the cleaner in parallel. Only useful if there are multiple files.
+    log_every_iter: int = -1  # Log the pipeline every N iterations (-1, silent)
+    backend: ParallelBackend = ParallelBackend.MP  # Parallel backend (mp or ray)
+    only_reduce: bool = False  # Only document filter
+    only_reduce_output: bool = False  # Only document filter for output files (tmp/.onion)
+    debug: bool = False  # Activate the debug error mode to compare the original and cleaned sentences
 
 
 class Cleaner:
@@ -71,12 +83,6 @@ class Cleaner:
                 if comp == REDUCER.__name__:
                     self.reducer = REDUCER
                     break
-        self.postmappers = POSTMAPPERS
-        if args.components is not None:
-            self.postmappers = []
-            for comp in POSTMAPPERS:
-                if comp.__name__ in args.components:
-                    self.postmappers.append(comp)
         self.documents = None
         self.stats = OrderedDict()
         self.checkpoint = checkpoint
@@ -93,7 +99,7 @@ class Cleaner:
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--components', type=str, help='Elements of the pipeline', nargs='+',
-                            default=list(map(lambda x: x.__name__, MAPPERS + [REDUCER] + POSTMAPPERS)))
+                            default=list(map(lambda x: x.__name__, MAPPERS + [REDUCER])))
         parser.add_argument('--parallel', action='store_true', help='Run the cleaner in parallel')
         parser.add_argument('--log-every-iter', type=int, default=-1, help='Log the pipeline every N iterations'
                                                                            '(-1, silent)')
@@ -123,9 +129,6 @@ class Cleaner:
 
     def _create_pipeline_mappers(self) -> List[CleanerComponent]:
         return [component(self.args) for component in self.mappers]
-
-    def _create_pipeline_postmappers(self) -> List[CleanerComponent]:
-        return [component(self.args) for component in self.postmappers]
 
     def _output(self, documents: Iterable[Document]):
         # self.logger.info('Outputting...')

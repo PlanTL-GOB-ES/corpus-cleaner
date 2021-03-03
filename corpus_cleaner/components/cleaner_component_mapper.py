@@ -1,10 +1,13 @@
 import argparse
+from abc import ABC
+
 from corpus_cleaner.document import Document
 from typing import Optional, Iterable
 from . import CleanerComponent
+from corpus_cleaner.components.cleaner_component import LegacyCleanerComponent
 
 
-class CleanerComponentMapper:
+class CleanerComponentMapper(CleanerComponent, ABC):
 
     def apply(self, document: Document) -> Optional[Document]:
         raise NotImplementedError()
@@ -15,7 +18,7 @@ class CleanerComponentMapper:
                 yield self.apply(document)
 
 
-class LegacyCleanerComponentMapper(CleanerComponent):
+class LegacyCleanerComponentMapper(LegacyCleanerComponent):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):

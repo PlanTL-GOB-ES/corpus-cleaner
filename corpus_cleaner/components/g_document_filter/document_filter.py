@@ -5,12 +5,21 @@ from ..cleaner_component_reducer import CleanerComponentReducer
 from typing import Optional
 from corpus_cleaner.constants import ONION_PATH, DEBUG_EXTENSION, DEDUP_EXTENSION, SENTENCES_EXTENSIONS, TMP_PATH,\
     ONION_INPUT, ONION_OUTPUT, ONION_OUTPUT_DEDUP_SENTENCES
+from dataclasses import dataclass
+
+
+@dataclass
+class DocumentFilterConfig:
+    document_deduplication_threshold: float = 0.5  # Threshold for document de-duplication, expressed as the percentage
+    # of sentences overlap between documents
+    remove_glob_rep_sen: int = 5  # Whether to remove corpus-level repeated sentences (threshold of repetitions; -1
+    # to deactivate)
+    dedup_buffer: int = 100000000  # Deduplication buffer size, in bytes (default: 100000000)
 
 
 class DocumentFilter(CleanerComponentReducer):
-    def __init__(self, args: argparse.Namespace, document_deduplication_threshold: float = 0.5,
-                 dedup_buffer: int = 16777216,
-                 remove_glob_rep_sen: int = 5, output_path: Optional[str] = None):
+    def __init__(self, args: argparse.Namespace, config: DocumentFilterConfig,
+                 output_path: Optional[str] = None):
         # TODO: Modify "args.document_deduplication_threshold if args.document_deduplication_threshold is not None
         # else..." pattern
         out_path = output_path if output_path is not None else args.output_path
@@ -29,29 +38,17 @@ class DocumentFilter(CleanerComponentReducer):
         super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path,
                          input_path=out_path, extensions=extensions)
         self.output_path = out_path
-        self.document_deduplication_threshold = args.document_deduplication_threshold \
-            if args.document_deduplication_threshold is not None else document_deduplication_threshold
-        self.remove_glob_rep_sen = args.remove_glob_rep_sen \
-            if args.remove_glob_rep_sen is not None else remove_glob_rep_sen
-        self.dedup_buffer = args.dedup_buffer \
-            if args.dedup_buffer is not None else dedup_buffer
         self.onion_input_file = onion_input_file
         self.onion_output_file = onion_output_file
         self.onion_path = ONION_PATH
         self.onion_tmp = os.path.join(out_path, TMP_PATH)
         self.onion_output_dedup_sentences_file = onion_output_dedup_sentences_file
 
+        self._config = config
+
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
-        parser.add_argument('--document-deduplication-threshold', type=float,
-                            help='Threshold for document de-duplication, expressed as the percentage of sentences'
-                                 'overlap between documents',
-                            default=0.5)
-        parser.add_argument('--remove-glob-rep-sen', type=int, default=5,
-                            help='Whether to remove corpus-level repeated sentences (threshold of repetitions; -1'
-                                 'to deactivate)')
-        parser.add_argument('--dedup-buffer', type=int, default=100000000,
-                            help='Deduplication buffer size, in bytes (default: 100000000)')
+        pass
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -61,7 +58,7 @@ class DocumentFilter(CleanerComponentReducer):
     def _run_onion(self):
         cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_input_file
         subprocess.run(cat_command, shell=True, check=True, universal_newlines=True)
-        onion_command = f'{self.onion_path} -m -n 1 -t {self.document_deduplication_threshold} -b {self.dedup_buffer} ' \
+        onion_command = f'{self.onion_path} -m -n 1 -t {self._configdocument_deduplication_threshold} -b {self._config.dedup_buffer} ' \
             f'{self.onion_input_file} > {self.onion_output_file}'
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
