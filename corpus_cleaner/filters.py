@@ -51,7 +51,7 @@ class DigitsStringFilter(StringFilter):
 
     def keep(self, text: str) -> Tuple[bool, Optional[str]]:
         value = sum(c.isdigit() for c in text) / len(text)
-        res = value > self._digits_percentage_threshold
+        res = value < self._digits_percentage_threshold
         return res, str(value)
 
 

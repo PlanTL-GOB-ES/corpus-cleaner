@@ -1,14 +1,9 @@
-from corpus_cleaner.document import Document
-from typing import Union, Tuple, Optional
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
-from langid.langid import LanguageIdentifier, model
-from dataclass import dataclass
+from dataclasses import dataclass
 from ordered_set import OrderedSet
 from corpus_cleaner.filters import *
-from filters import CascadeLangStringFilter
-import fasttext
-import os
-import re
+from typing import Dict
+from corpus_cleaner.transforms import *
 
 
 @dataclass
@@ -32,17 +27,23 @@ class SentenceFilterConfig:
 
     lang_filter_src_tgt: bool = True  # Apply language filter on sentences with "src=" pattern
 
-    target_langs: Union[Tuple[str], None] = None  # Target languages. PREVIOUSLY: --lang-
+    target_langs: Optional[Tuple[str]] = None  # Target languages. PREVIOUSLY: --lang-
 
     code_threshold: float = 0.25  # Threshold (percentage) of code-like chars and tokens to filter
     # a sentence (-1 to deactivate)
 
-    dictionary_filter: str  # Path to dictionary (plain text, one term per line of terms that
+    dictionary_filter: Optional[str] = None  # Path to dictionary (plain text, one term per line of terms that
     # should not appear in a sentence
 
     dedup_same_doc_sentences: bool = True  # Deduplicate sentences in the same document
 
     src_tag_filter: bool = True  # Remove sentences with the pattern "src=".
+
+    punctuation_norm: bool = False  # Apply punctuation normalization
+
+    spell_check: bool = False  # Apply spell checking (not implemented)
+
+    terminology_norm: Optional[Dict[str, str]] = None  # Apply terminology normalization (not implemented)
 
 
 class SentenceFilter(CleanerComponentMapper):
@@ -51,8 +52,9 @@ class SentenceFilter(CleanerComponentMapper):
         super().__init__()
         self._config = config
         self._string_filters = self._build_string_filters()
+        self._string_transforms = self._build_string_transforms()
 
-    def _build_string_filters(self):
+    def _build_string_filters(self) -> List[StringFilter]:
         filters = []
 
         if self._config.length_filter is not None:
@@ -66,7 +68,7 @@ class SentenceFilter(CleanerComponentMapper):
             filters.append(DigitsStringFilter(digits_percentage_threshold=self._config.digits_percentage_threshold))
 
         if self._config.lang_filter:
-            filters.append(self._config.CascadeLangStringFilter(
+            filters.append(CascadeLangStringFilter(
                 langs_filter=self._config.target_langs,
                 fast_lang_filter_threshold=self._config.fast_lang_filter_threshold,
                 slow_lang_filter_threshold=self._config.slow_lang_filter_threshold))
@@ -77,10 +79,19 @@ class SentenceFilter(CleanerComponentMapper):
             filters.append(DictStringFilter(dictionary_terms=dictionary_terms))
 
         if self._config.lang_filter_sentence_src_tgt:
-            self._config.src_tag_pattern = re.compile('src=')
             filters.append(SrcTgtStringFilter())
 
         return filters
+
+    def _build_string_transforms(self) -> List[StringTransform]:
+        transforms = []
+        if self._config.punctuation_norm:
+            transforms.append(PunctuationNormalizationStringTransform(self._config.target_langs[0]))
+        if self._config.spell_check:
+            raise NotImplementedError
+        if self._config.terminology_norm is not None:
+            raise NotImplementedError
+        return transforms
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
         sentences = []
@@ -88,6 +99,7 @@ class SentenceFilter(CleanerComponentMapper):
         if self._config.dedup_same_doc_sentences:
             document.sentences = list(OrderedSet(document.sentences))
 
+        # Sentence-level filters
         for sentence_idx, sentence in enumerate(document.sentences):
             for string_filter in self._string_filters:
                 keep, reason = string_filter(sentence)
@@ -102,8 +114,28 @@ class SentenceFilter(CleanerComponentMapper):
                 else:
                     sentences.append(sentence)
 
+        # Sentence-level string transforms. Here, we apply them AFTER filtering, not before (unlike in PreFilterer)
+        # because they are normalizations, so we don't really need to apply them unless we are sure that we are going to
+        # keep the sentence.
+        # In previous implementations, this was within Normalizer
+        sent_norms = []
+        for idx_sent, sent in enumerate(document.sentences):
+            if sent == '':
+                continue
+            sent_norm = sent
+            for string_transform in self._string_transforms:
+                sent_norm = string_transform(sent_norm)
+                # TODO: implement debug param
+                if self.debug and sent_norm:
+                    if sent_norm != sent:
+                        class_name = self.__class__.__name__
+                        document.register_operation(operation=f"{class_name}-{string_transform.__name__}",
+                                                    sublist_index=idx_sent)
+            sent_norms.append(sent_norm)
+        document.sentences = sent_norms
+
         # In normal model, return the document only when all the sentences are not empty
-        if not '' in sentences and len(sentences) > 0:
+        if '' not in sentences and len(sentences) > 0:
             document.sentences = sentences
             return document
         else:
