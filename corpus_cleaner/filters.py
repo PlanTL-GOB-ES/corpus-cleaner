@@ -30,7 +30,7 @@ class CharLenStringFilter(StringFilter):
         return res, str(value)
 
 
-# TOFIX: this filter include the CharLenStringFilter!
+# TODO: this filter include the CharLenStringFilter!
 class LenStringFilter(StringFilter):
     def __init__(self, char_length_threshold: int, word_length_threshold: int):
         self._char_length_threshold = char_length_threshold
@@ -84,7 +84,7 @@ class UppercaseStringFilter(StringFilter):
 
     def keep(self, text: str) -> Tuple[bool, Optional[str]]:
         value = sum(c.isupper() for c in text) / len(text)
-        res = value > self._uppercase_percentage_threshold
+        res = value < self._uppercase_percentage_threshold
         return res, str(value)
 
 
