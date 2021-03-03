@@ -8,14 +8,12 @@ class Document:
     content: str
     filename: Optional[str] = None
     sentences: Optional[List[str]] = None
-    sentences_orig: Optional[List[str]] = None
     title: Optional[str] = None
     url: Optional[str] = None
     id_: Optional[str] = None
     keywords: Optional[str] = None
     heads: Optional[str] = None
     language: Optional[str] = None
-    operations: Optional[List] = None
 
     def attr_str(self) -> str:
         res = []
@@ -73,6 +71,15 @@ class Document:
                         heads=get_att('heads'),
                         language=get_att('language')
                         )
+
+
+class DiscardedDocument(Document):
+    def __init__(self, content):
+        super().__init__()
+        self.content = content
+        self.sentences: Optional[List[str]] = None
+        self.sentences_cleaned: Optional[List[str]] = None
+        self.operations: Optional[List] = None
 
     def register_operation(self, operation: str, sublist_index: Optional[int] = None):
         # Append to the sublist
