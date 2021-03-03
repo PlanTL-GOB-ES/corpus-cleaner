@@ -1,5 +1,5 @@
 from alphabet_detector import AlphabetDetector
-from typing import Union, Tuple, Optional, List
+from typing import Union, Tuple, Optional, List, Set
 import re
 from corpus_cleaner.document import Document
 from corpus_cleaner.lang_identifier import FasttextLangIdentifier, LangIdLangIdentifier
@@ -30,7 +30,7 @@ class CharLenStringFilter(StringFilter):
         return res, str(value)
 
 
-# TOFIX: this filter include the CharLenStringFilter!
+# TODO: this filter include the CharLenStringFilter!
 class LenStringFilter(StringFilter):
     def __init__(self, char_length_threshold: int, word_length_threshold: int):
         self._char_length_threshold = char_length_threshold
@@ -84,7 +84,7 @@ class UppercaseStringFilter(StringFilter):
 
     def keep(self, text: str) -> Tuple[bool, Optional[str]]:
         value = sum(c.isupper() for c in text) / len(text)
-        res = value > self._uppercase_percentage_threshold
+        res = value < self._uppercase_percentage_threshold
         return res, str(value)
 
 
@@ -114,7 +114,7 @@ class DictStringFilter(StringFilter):
 
 
 class CodeStringFilter(StringFilter):
-    def __init__(self, code_threshold):
+    def __init__(self, code_threshold: float):
         self._code_keywords_pattern = re.compile('\\b(var|function|const|if|else|script)\\b')
         self._code_chars_pattern = re.compile(r'[;=&\[\](){}/\\\\]')
         self._code_threshold = code_threshold
@@ -133,30 +133,30 @@ class SrcTgtStringFilter(StringFilter):
 
     def keep(self, text: str) -> Tuple[bool, Optional[str]]:
         found = self.src_tag_pattern.search(text)
-        if not found:
+        if found is not None:
             return False, str(found.span())
         return True, None
 
 
 class CascadeLangStringFilter(StringFilter):
-    def __init__(self, langs_filter, fast_lang_filter_threshold, slow_lang_filter_threshold):
-        self._langs_filter = langs_filter
+    def __init__(self, languages: Set[str], fast_lang_filter_threshold: float, slow_lang_filter_threshold: float,
+                 replace_urls: bool):
+        self._languages = languages
         self._fast_lang_filter_threshold = fast_lang_filter_threshold
         self._slow_lang_filter_threshold = slow_lang_filter_threshold
 
         # We set the cascade sequence to 1) fasttext and 2) langid for speed and accuracy reasons.
-        # We also set reaplace_urls to True by default
-        self.language_id1 = FasttextLangIdentifier(replace_urls=True)
-        self.language_id2 = LangIdLangIdentifier(replace_urls=True)
+        self._language_id1 = FasttextLangIdentifier(replace_urls=replace_urls)
+        self._language_id2 = LangIdLangIdentifier(replace_urls=replace_urls)
 
     def keep(self, text: str) -> Tuple[bool, Optional[str]]:
-        lang, conf = self.language_id1.identify(text.lower())
-        if lang in self._langs_filter and conf > self._fast_lang_filter_threshold:
+        lang, conf = self._language_id1.identify(text.lower())
+        if lang in self._languages and conf > self._fast_lang_filter_threshold:
             return True, None
 
-        elif lang in self._langs_filter:
-            lang, conf = self.language_id2.identify(text)
-            if lang in self._langs_filter and conf > self._slow_lang_filter_threshold:
+        elif lang in self._languages:
+            lang, conf = self._language_id2.identify(text)
+            if lang in self._languages and conf > self._slow_lang_filter_threshold:
                 return True, None
             else:
                 value = f"({round(conf, 2)}, {lang})"
