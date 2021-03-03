@@ -44,7 +44,7 @@ class SentenceSplitterComponent(CleanerComponentMapper):
                 self.splitter_dict[document.language] = sentence_splitter.SentenceSplitter(language='en')
                 splitter = self.splitter_dict[document.language]
 
-        # TODO: implemente debug param
+        # TODO: implement debug param
         if self.debug:
             if not document.content:
                 # If the document received is empty since has been filtered out in the previous step,
