@@ -57,29 +57,14 @@ class LegacyCleanerComponentReducer(LegacyCleanerComponent):
 
 class CleanerComponentReducer(CleanerComponent, ABC):
     def __init__(self, config: CleanerComponentConfig, reduce_config: ReduceConfig):
-        input_path: str  # Directory path of the input data.
-        extensions: List[str]  # File extensions to work with (eg. json).
-        encoding_threshold: float  # Encoding threshold if --encoding auto (ignored otherwise. If the encoding detector is
-        # not above this threshold, it assigns utf-8.
-        encoding: str = 'auto'  # Input encoding format (eg. utf-8. If set to auto, the program tries to guess the
-        # encoding).
-        encoding_error_policy: str = float  # Encoding error policy (same options as open()).
-        url_doc: Optional[str] = None  # Path to a url list (plain text, one url per line) that should be filtered and
-        # processed'.
-        warc_warn: bool = False  # Enable warnings of WARC parser.
-        bytes_: bool = False  # Whether input is compressed (GZIP).
-        done_paths: Iterable[str] = ()  # Already preprocessed paths (for checkpointing).
-        timeout_encoding_guessing: int = 5.0  # Timeout for encoding guessing (otherwise, UTF-8).
-        input_lang: Optional[
-            str] = None  # Assume that input is in a given language (e.g., if we know fore sure that all
-        # input is in Spanish).
+        self._config = CleanerComponentConfig
+        self._reduce_config = ReduceConfig
 
-        data_parser_config = DataParserConfig(input_path=reduce_config.input_path, extensions=reduce_config.input_path,
-                                              extensions=reduce_config.extensions)
+        data_parser_config = DataParserConfig(input_path=reduce_config.input_path, extensions=reduce_config.extensions)
         self._data_parser = DataParserFactory.get_parser(input_format=data_parser_config)
 
     def _reduce(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def reduce(self):
         self._reduce()

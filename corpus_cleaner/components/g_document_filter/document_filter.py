@@ -20,8 +20,6 @@ class DocumentFilterConfig:
 class DocumentFilter(CleanerComponentReducer):
     def __init__(self, args: argparse.Namespace, config: DocumentFilterConfig,
                  output_path: Optional[str] = None):
-        # TODO: Modify "args.document_deduplication_threshold if args.document_deduplication_threshold is not None
-        # else..." pattern
         out_path = output_path if output_path is not None else args.output_path
         onion_input_file = os.path.join(out_path, ONION_INPUT)
         onion_output_file = os.path.join(out_path, ONION_OUTPUT)
@@ -46,19 +44,10 @@ class DocumentFilter(CleanerComponentReducer):
 
         self._config = config
 
-    @staticmethod
-    def add_args(parser: argparse.ArgumentParser):
-        pass
-
-    @staticmethod
-    def check_args(args: argparse.Namespace):
-        # TODO check custom args
-        pass
-
     def _run_onion(self):
         cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_input_file
         subprocess.run(cat_command, shell=True, check=True, universal_newlines=True)
-        onion_command = f'{self.onion_path} -m -n 1 -t {self._configdocument_deduplication_threshold} -b {self._config.dedup_buffer} ' \
+        onion_command = f'{self.onion_path} -m -n 1 -t {self._config.document_deduplication_threshold} -b {self._config.dedup_buffer} ' \
             f'{self.onion_input_file} > {self.onion_output_file}'
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
@@ -95,5 +84,5 @@ class DocumentFilter(CleanerComponentReducer):
 
     def _reduce(self):
         self._run_onion()
-        if self.remove_glob_rep_sen != -1:
-            self._remove_global_duplicate_sentences(self.remove_glob_rep_sen)
+        if self._config.remove_glob_rep_sen != -1:
+            self._remove_global_duplicate_sentences(self._config.remove_glob_rep_sen)
