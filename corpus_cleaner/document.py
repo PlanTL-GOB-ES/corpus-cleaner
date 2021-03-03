@@ -73,9 +73,9 @@ class Document:
                         )
 
 
-class DiscardDocument(Document):
+class DiscardedDocument(Document):
     def __init__(self, content):
-        super(DiscardDocument, self).__init__()
+        super().__init__()
         self.content = content
         self.sentences: Optional[List[str]] = None
         self.sentences_cleaned: Optional[List[str]] = None

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from corpus_cleaner.transforms import *
 from corpus_cleaner.filters import *
 from corpus_cleaner.lang_identifier import FasttextLangIdentifier
-
+from corpus_cleaner import DiscardedDocument
 
 @dataclass
 class PreFiltererConfig:
@@ -27,7 +27,7 @@ class PreFiltererConfig:
 
     replace_urls: bool = False  # Avoid replacing URLs with "[URL]". PREVIOUSLY: Don't write --no-replace-urls.
 
-    char_length_filter: int = 40   # Minimum char length per document. Set to 0 not to apply any filter.
+    char_length_filter: int = 40  # Minimum char length per document. Set to 0 not to apply any filter.
 
     head_filter: bool = False  # Filtering documents coming from a crawler (having a "heads" attribute) with
     # common HTTP errors. PREVIOUSLY: Don't write --no-head-filter.
@@ -142,43 +142,49 @@ class PreFilterer(CleanerComponentMapper):
         for metadata_filter in self._metadata_filters:
             keep, reason = metadata_filter(document)
             if not keep:
-                document.register_operation(f"{self.__class__.__name__}-{metadata_filter.__class__.__name__}:{reason}")
-                return None
+                document_discarded = DiscardedDocument(document.content)
+                document_discarded.register_operation(f"{self.__class__.__name__}-{metadata_filter.__class__.__name__}:{reason}")
+                return document_discarded
 
         # String transforms. Transform document contents. (E.g., regex-based replaces).
         # String transforms modify the content of the documents, but they do not discard any of them.
         for string_transform in self._string_transforms:
             transformed = string_transform(document.content)
             if transformed != document.content:
-                document.register_operation(f"{self.__class__.__name__}-{string_transform.__class__.__name__}")
+                document_discarded = DiscardedDocument(document.content)
+                document_discarded.register_operation(f"{self.__class__.__name__}-{string_transform.__class__.__name__}")
                 document.content = transformed
 
         # If the result of the transformations is an empty document, then discard it.
         if len(document.content.split()) == 0:
-            document.register_operation(f"{self.__class__.__name__}-NoWordsLeftAtDocAfterTransformsDocument")
-            return None
+            document_discarded = DiscardedDocument(document.content)
+            document_discarded.register_operation(f"{self.__class__.__name__}-NoWordsLeftAtDocAfterTransformsDocument")
+            return document_discarded
 
         # String filters. Don't modify documents, but decide whether to keep them.
         for string_filter in self._string_filters:
             keep, reason = string_filter(document.content)
             if not keep:
-                document.register_operation(f"{self.__class__.__name__}-{string_filter.__class__.__name__}:{reason}")
-                return None
+                document_discarded = DiscardedDocument(document.content)
+                document_discarded.register_operation(f"{self.__class__.__name__}-{string_filter.__class__.__name__}:{reason}")
+                return document_discarded
 
         # Language identifier. Similar to filter, but handled as a particular case since we do more complex stuff.
         # The first condition is for cases in which the document metadata already contained information on the language.
         if document.language and document.language not in self._config.target_langs:
-            document.register_operation(f"{self.__class__.__name__}-MetadataLanguage")
-            return None
+            document_discarded = DiscardedDocument(document.content)
+            document_discarded.register_operation(f"{self.__class__.__name__}-MetadataLanguage")
+            return document_discarded
         if not document.language and self._config.lang_filter:
             lang, confidence = self._lang_identifier(document.content)
             if lang in self._config.target_langs and confidence > self._config.initial_lang_filter_threshold:
                 document.language = lang  # Set inferred language.
             else:
                 reason = f"({round(confidence, 2)}, {lang})"
-                document.register_operation(f"{self.__class__.__name__}-{self._lang_identifier.__class__.__name__}:"
+                document_discarded = DiscardedDocument(document.content)
+                document_discarded.register_operation(f"{self.__class__.__name__}-{self._lang_identifier.__class__.__name__}:"
                                             f"{reason}")
-                return None
+                return document_discarded
         else:
             return document
         return document
