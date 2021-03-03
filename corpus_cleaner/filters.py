@@ -1,5 +1,5 @@
 from alphabet_detector import AlphabetDetector
-from typing import Union, Tuple, Optional, List, Iterable, Set
+from typing import Union, Tuple, Optional, List, Set
 import re
 from corpus_cleaner.document import Document
 from corpus_cleaner.lang_identifier import FasttextLangIdentifier, LangIdLangIdentifier
