@@ -1,8 +1,10 @@
 import argparse
+from dataclass import dataclass
 
 
+@dataclass
 class CleanerComponentConfig:
-    pass
+    debug: bool = False  # Activate debug mode (default is False)
 
 
 class CleanerComponent:

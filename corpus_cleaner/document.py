@@ -6,8 +6,10 @@ from dataclasses import dataclass
 @dataclass
 class Document:
     content: str
+    content_cleaned: Optional[str] = None
     filename: Optional[str] = None
     sentences: Optional[List[str]] = None
+    sentences_cleaned: Optional[List[str]] = None
     title: Optional[str] = None
     url: Optional[str] = None
     id_: Optional[str] = None
@@ -72,18 +74,19 @@ class Document:
                         language=get_att('language')
                         )
 
-
-class DiscardedDocument(Document):
-    def __init__(self, content):
-        super().__init__()
-        self.content = content
-        self.sentences: Optional[List[str]] = None
-        self.sentences_cleaned: Optional[List[str]] = None
-        self.operations: Optional[List] = None
-
     def register_operation(self, operation: str, sublist_index: Optional[int] = None):
         # Append to the sublist
         if sublist_index:
             self.operations[sublist_index].append(operation)
         else:
             self.operations.append(operation)
+
+
+class DiscardedDocument(Document):
+    def __init__(self, content, content_cleaned):
+        super().__init__()
+        self.content = content
+        self.content_cleaned = content_cleaned
+        self.sentences: Optional[List[str]] = None
+        self.sentences_cleaned: Optional[List[str]] = None
+        self.operations: Optional[List] = None

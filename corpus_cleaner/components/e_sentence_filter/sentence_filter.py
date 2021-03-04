@@ -1,4 +1,5 @@
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
+from corpus_cleaner import DiscardedDocument
 from dataclasses import dataclass
 from ordered_set import OrderedSet
 from corpus_cleaner.filters import *
@@ -35,7 +36,7 @@ class SentenceFilterConfig:
     dictionary_filter: Optional[str] = None  # Path to dictionary (plain text, one term per line of terms that
     # should not appear in a sentence
 
-    dedup_same_doc_sentences: bool = True  # Deduplicate sentences in the same document
+    dedup_same_within_sentences: bool = True  # Deduplicate sentences within the same document
 
     src_tag_filter: bool = True  # Remove sentences with the pattern "src=".
 
@@ -96,54 +97,33 @@ class SentenceFilter(CleanerComponentMapper):
         return transforms
 
     def apply(self, document: Optional[Document]) -> Optional[Document]:
-        sentences = []
-        # For each document, get the set of duplicate sentences to remove
-        if self._config.dedup_same_doc_sentences:
-            document.sentences = list(OrderedSet(document.sentences))
+        if not isinstance(document, DiscardedDocument):
+            # For each document, get the set of duplicate sentences to remove
+            if self._config.dedup_same_within_sentences:
+                document.sentences_cleaned = list(OrderedSet(document.sentences_cleaned))
 
-        # Sentence-level filters
-        for sentence_idx, sentence in enumerate(document.sentences):
-            for string_filter in self._string_filters:
-                keep, reason = string_filter(sentence)
-                if not keep:
-                    if sentence:
+            # Sentence-level filters
+            for sentence_idx, sentence in enumerate(document.sentences_cleaned):
+                for string_filter in self._string_filters:
+                    keep, reason = string_filter(sentence)
+                    if not keep:
                         class_name = self.__class__.__name__
                         filter_name = string_filter.__class__.__name__
                         document.register_operation(operation=f"{class_name}-{filter_name}:{reason}",
-                                                    sublist_index=sentence_idx)
-                    sentences.append('')
-                    break
-                else:
-                    sentences.append(sentence)
+                                                        sublist_index=sentence_idx)
+                        document.sentences_cleaned[sentence_idx] = None
+                        break
 
-        # Sentence-level string transforms. Here, we apply them AFTER filtering, not before (unlike in PreFilterer)
-        # because they are normalizations, so we don't really need to apply them unless we are sure that we are going to
-        # keep the sentence.
-        # In previous implementations, this was within Normalizer
-        sent_norms = []
-        for idx_sent, sent in enumerate(document.sentences):
-            if sent == '':
-                continue
-            sent_norm = sent
-            for string_transform in self._string_transforms:
-                sent_norm = string_transform(sent_norm)
-                # TODO: implement debug param
-                if self.debug and sent_norm:
-                    if sent_norm != sent:
+            # Sentence-level string transforms. Here, we apply them AFTER filtering, not before (unlike in PreFilterer)
+            # because they are normalizations, so we don't really need to apply them unless we are sure that we are
+            # going to keep the sentence. In previous implementations, this was within Normalizer
+            for sentence_idx, sentence in enumerate(document.sentences_cleaned):
+                for string_transform in self._string_transforms:
+                    sentence_norm = string_transform(sentence)
+                    if sentence_norm != sentence:
                         class_name = self.__class__.__name__
                         document.register_operation(operation=f"{class_name}-{string_transform.__name__}",
-                                                    sublist_index=idx_sent)
-            sent_norms.append(sent_norm)
-        document.sentences = sent_norms
+                                                    sublist_index=sentence_idx)
+                        document.sentences_cleaned[sentence_idx] = sentence_norm
 
-        # In normal model, return the document only when all the sentences are not empty
-        if '' not in sentences and len(sentences) > 0:
-            document.sentences = sentences
-            return document
-        else:
-            # if debug mode is on, return also document with
-            # TOFIX: implement the debug attribute for this component
-            if self.debug:
-                document.sentences = sentences
-                return document
-        return None
+        return document

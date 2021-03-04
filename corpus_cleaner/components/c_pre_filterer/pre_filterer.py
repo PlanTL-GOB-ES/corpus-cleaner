@@ -1,4 +1,5 @@
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
+from corpus_cleaner.components.cleaner_component import CleanerComponentConfig
 from corpus_cleaner.configs.langs import langs
 from dataclasses import dataclass
 from corpus_cleaner.transforms import *
@@ -138,37 +139,37 @@ class PreFilterer(CleanerComponentMapper):
         return filters
 
     def apply(self, document: Document) -> Optional[Document]:
+        document.content_cleaned = document.content
+
+        # String transforms. Transform document contents. (E.g., regex-based replaces).
+        # String transforms modify the content of the documents, but they do not discard any of them.
+        for string_transform in self._string_transforms:
+            transformed = string_transform(document.content_cleaned)
+            if transformed != document.content_cleaned:
+                document.register_operation(f"{self.__class__.__name__}-{string_transform.__class__.__name__}")
+                document.content_cleaned = transformed
+
+        # If the result of the transformations is an empty document, then discard it and set its content to None
+        if len(document.content_cleaned.split()) == 0:
+            document_discarded = DiscardedDocument(content=document.content, content_cleaned=None)
+            document_discarded.register_operation(f"{self.__class__.__name__}-NoWordsLeftAtDocAfterTransformsDocument")
+            return document_discarded
+
         # Metadata filters: based on document metadata (e.g., document.heads might contain "404" (Error 404), in which
         # case we can already discard it.
         for metadata_filter in self._metadata_filters:
             keep, reason = metadata_filter(document)
             if not keep:
-                document_discarded = DiscardedDocument(document.content)
+                document_discarded = DiscardedDocument(content=document.content, content_cleaned=None)
                 document_discarded.register_operation(
                     f"{self.__class__.__name__}-{metadata_filter.__class__.__name__}:{reason}")
                 return document_discarded
 
-        # String transforms. Transform document contents. (E.g., regex-based replaces).
-        # String transforms modify the content of the documents, but they do not discard any of them.
-        for string_transform in self._string_transforms:
-            transformed = string_transform(document.content)
-            if transformed != document.content:
-                document_discarded = DiscardedDocument(document.content)
-                document_discarded.register_operation(
-                    f"{self.__class__.__name__}-{string_transform.__class__.__name__}")
-                document.content = transformed
-
-        # If the result of the transformations is an empty document, then discard it.
-        if len(document.content.split()) == 0:
-            document_discarded = DiscardedDocument(document.content)
-            document_discarded.register_operation(f"{self.__class__.__name__}-NoWordsLeftAtDocAfterTransformsDocument")
-            return document_discarded
-
         # String filters. Don't modify documents, but decide whether to keep them.
         for string_filter in self._string_filters:
-            keep, reason = string_filter(document.content)
+            keep, reason = string_filter(document.content_cleaned)
             if not keep:
-                document_discarded = DiscardedDocument(document.content)
+                document_discarded = DiscardedDocument(content=document.content, content_cleaned=None)
                 document_discarded.register_operation(
                     f"{self.__class__.__name__}-{string_filter.__class__.__name__}:{reason}")
                 return document_discarded
@@ -176,16 +177,16 @@ class PreFilterer(CleanerComponentMapper):
         # Language identifier. Similar to filter, but handled as a particular case since we do more complex stuff.
         # The first condition is for cases in which the document metadata already contained information on the language.
         if document.language and document.language not in self._config.target_langs:
-            document_discarded = DiscardedDocument(document.content)
+            document_discarded = DiscardedDocument(content=document.content, content_cleaned=None)
             document_discarded.register_operation(f"{self.__class__.__name__}-MetadataLanguage")
             return document_discarded
         if not document.language and self._config.lang_filter:
-            lang, confidence = self._lang_identifier(document.content)
+            lang, confidence = self._lang_identifier(document.content_cleaned)
             if lang in self._config.target_langs and confidence > self._config.initial_lang_filter_threshold:
                 document.language = lang  # Set inferred language.
             else:
                 reason = f"({round(confidence, 2)}, {lang})"
-                document_discarded = DiscardedDocument(document.content)
+                document_discarded = DiscardedDocument(content=document.content, content_cleaned=None)
                 document_discarded.register_operation(
                     f"{self.__class__.__name__}-{self._lang_identifier.__class__.__name__}:{reason}")
                 return document_discarded

@@ -1,4 +1,4 @@
-from corpus_cleaner.document import Document
+from corpus_cleaner.document import Document, DiscardedDocument
 from typing import Optional
 import sentence_splitter
 from dataclasses import dataclass
@@ -44,34 +44,27 @@ class SentenceSplitterComponent(CleanerComponentMapper):
                 self.splitter_dict[document.language] = sentence_splitter.SentenceSplitter(language='en')
                 splitter = self.splitter_dict[document.language]
 
-        # TODO: implement debug param
-        if self.debug:
-            if not document.content:
-                # If the document received is empty since has been filtered out in the previous step,
-                # but the debug mode is activated, store a number of empty cleaned sentences equal to
-                # the number of lines in the original content
-                empty_sentences_number = len(document.content_orig.splitlines())
-                document.sentences = [''] * empty_sentences_number
-                document.sentences_orig = document.content_orig.splitlines()
-            else:
-                document.sentences = [sent for sent in splitter.split(document.content)]
-                document.sentences_orig = [sent for sent in splitter.split(document.content_orig)]
-
-                if len(document.sentences) > 1:
-                    document.operations.append(f'{self.__class__.__name__}-_sentence_splitter')
-
-                # If the original sentences are not aligned to the cleaned ones, place the whole document on the first
-                # line to allow manual alignment
-                if not len(document.sentences) == len(document.sentences_orig):
-                    if len(document.sentences) > len(document.sentences_orig):
-                        content_orig = document.content_orig.replace('\n', '')
-                        document.sentences_orig = [f'UNALIGNED:{content_orig}']
-                        document.sentences_orig.extend(
-                            ['UNALIGNED:'] * (len(document.sentences) - len(document.sentences_orig)))
-                    else:
-                        return None
-            # add operations for each sentence in the document
-            document.operations = [document.operations.copy() for _ in range(len(document.sentences))]
+        # If the document received is empty since has been filtered out in the previous step,
+        # store a number of empty cleaned sentences equal to the number of lines in the original content
+        if isinstance(document, DiscardedDocument):
+            empty_sentences_number = len(document.content.splitlines())
+            document.sentences_cleaned = [''] * empty_sentences_number
+            document.sentences = document.content.splitlines()
         else:
+            document.sentences_cleaned = [sent for sent in splitter.split(document.content_cleaned)]
             document.sentences = [sent for sent in splitter.split(document.content)]
+            if len(document.sentences_cleaned) > 1:
+                document.register_operation(f'{self.__class__.__name__}-SentenceSplitter')
+
+            # If the original sentences are not aligned to the cleaned ones, place the whole document on the first
+            # line to allow manual alignment
+            if len(document.sentences_cleaned) != len(document.sentences):
+                content_one_line = document.content.replace('\n', '')
+                document.sentences = [f'UNALIGNED:{content_one_line}']  # make sure the original content is one line
+                document.sentences.extend(
+                    ['UNALIGNED:'] * (len(document.sentences_cleaned) - len(document.sentences)))
+
+        # add operations for each sentence in the document
+        document.operations = [document.operations.copy() for _ in range(len(document.sentences_cleaned))]
+
         return document
