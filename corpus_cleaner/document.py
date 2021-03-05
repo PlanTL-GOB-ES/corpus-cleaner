@@ -16,6 +16,7 @@ class Document:
     keywords: Optional[str] = None
     heads: Optional[str] = None
     language: Optional[str] = None
+    operations: Optional[List] = None
 
     def attr_str(self) -> str:
         res = []
