@@ -16,7 +16,7 @@ class SentenceFilterConfig:
     length_filter: bool = True  # filter sentences shorter than a given minimum number of words AND
     # a minimum number of chars
 
-    digits_percentage_threshold: float = 0.1  # maximum percentange of allowed digit characters
+    digits_percentage_threshold: float = 0.1  # maximum percentage of allowed digit characters
 
     profanity_check: bool = True  # filter sentences with sensible content
 
