@@ -1,31 +1,17 @@
 from corpus_cleaner.document import Document
 from typing import Iterable, Union
-from corpus_cleaner.components.cleaner_component import CleanerComponent
-import argparse
+from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 from typing import TextIO
-from typing import Optional
 from corpus_cleaner.constants import DEBUG_SEPARATOR
-from dataclasses import dataclass
+from cleaner import GlobalConfig
 
-@dataclass
-class OutputFormatterConfig:
-    pass
 
-class OutputFormatter(CleanerComponent):
-    def __init__(self, args: argparse.Namespace, output_path: Optional[str] = None):
-        super().__init__(args)
-        self.path = output_path if output_path is not None else args.output_path
+class OutputFormatter(CleanerComponentMapper):
+    def __int__(self, config: GlobalConfig):
+        self._config = config
+        self.path = self._config.output_path
         self.fd: Union[TextIO, None] = None
         self.separator = DEBUG_SEPARATOR
-
-    @staticmethod
-    def add_args(parser: argparse.ArgumentParser):
-        pass
-
-    @staticmethod
-    def check_args(args: argparse.Namespace):
-        # TODO check custom args
-        pass
 
     def _init_writing(self):
         raise NotImplementedError()
@@ -47,9 +33,6 @@ class OutputFormatter(CleanerComponent):
 
     def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
         return self._output_format(documents)
-
-    #def __del__(self):
-    #    self._end_writing()
 
     def init_writing(self):
         self._init_writing()

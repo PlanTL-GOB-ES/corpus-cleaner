@@ -131,7 +131,7 @@ class Cleaner:
 
     def _get_documents(self) -> List[Iterable[Document]]:
         # self.logger.info('Parsing...')
-        parser = DataParserFactory.get_parser(self._config.parser_config, input_format=self._config.)
+        parser = DataParserFactory.get_parser(self._config.parser_config, input_format=self._config)
         return parser.parse()
 
     def _get_paths(self) -> List[Tuple[int, str]]:
