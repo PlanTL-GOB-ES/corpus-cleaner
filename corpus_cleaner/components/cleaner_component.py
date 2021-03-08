@@ -1,4 +1,4 @@
-import argparse
+from corpus_cleaner.cleaner import GlobalConfig
 
 
 class CleanerComponent:
@@ -7,14 +7,5 @@ class CleanerComponent:
 
 class LegacyCleanerComponent:
 
-    def __init__(self, args: argparse.Namespace):
-        self.args = args
-        self.debug = self.args.debug if args is not None else None
-
-    @staticmethod
-    def add_args(parser: argparse.ArgumentParser):
-        raise NotImplementedError()
-
-    @staticmethod
-    def check_args(args: argparse.Namespace):
-        raise NotImplementedError()
+    def __init__(self, config: GlobalConfig):
+        self.debug = config.debug
