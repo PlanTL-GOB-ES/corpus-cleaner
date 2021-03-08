@@ -17,13 +17,13 @@ class OutputFormatter(CleanerComponentMapper):
         self.separator = DEBUG_SEPARATOR
 
     def _init_writing(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _write_document(self, document: Document):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _end_writing(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _output_format(self, documents: Iterable[Document]):
         if self.fd is None:

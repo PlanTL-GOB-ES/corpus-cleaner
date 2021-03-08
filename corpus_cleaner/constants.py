@@ -31,3 +31,7 @@ ONION_START_P_TAG = ' >\n<p>\n'
 ONION_END_P_TAG = '\n</p>\n</doc>\n'
 
 WARC_SKIP = ['mp4', 'mp3', 'jpg', 'png', 'svg', '.js']
+
+TXT_OUTPUT_PATH = 'output.txt'
+
+CHECKPOINT_PATH_ESCAPE = '__PATH__'

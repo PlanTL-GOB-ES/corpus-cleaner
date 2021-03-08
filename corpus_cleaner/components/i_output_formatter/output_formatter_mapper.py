@@ -4,6 +4,7 @@ from corpus_cleaner.document import Document
 from typing import Iterable
 from typing import Tuple, Optional
 import os
+from corpus_cleaner.constants import CHECKPOINT_PATH_ESCAPE
 
 
 class OutputFormatterMapper(CleanerComponent):
@@ -12,7 +13,7 @@ class OutputFormatterMapper(CleanerComponent):
         self.output_formatter = output_formatter
 
     def _write_checkpoint(self, e: str):
-        with open(os.path.join(self._config.write_checkpoint_path, e.replace('/', '!')), 'w') as f:
+        with open(os.path.join(self._config.write_checkpoint_path, e.replace('/', CHECKPOINT_PATH_ESCAPE)), 'w') as f:
             pass
 
     def __call__(self, documents: Iterable[Document]) -> Tuple[int, Optional[Tuple], Optional[str]]:

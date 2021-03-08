@@ -1,12 +1,13 @@
 from .output_formatter import OutputFormatter
 from corpus_cleaner.document import Document
 import os
+from corpus_cleaner.constants import TXT_OUTPUT_PATH
 
 
 class FairseqLMOutputFormatter(OutputFormatter):
 
     def _init_writing(self):
-        self.fd = open(os.path.join(self.path, 'output.txt'), 'a')
+        self.fd = open(os.path.join(self.path, TXT_OUTPUT_PATH), 'a')
 
     def _write_document(self, document: Document):
         if len(document.sentences) > 0:

@@ -42,17 +42,10 @@ class ParallelBackend(enum.Enum):
     RAY = 'ray'
 
 
-class CheckpointBackend(enum.Enum):
-    SHELVE = 'shelve'
-    FILE = 'file'
-
-
 @dataclass
 class GlobalConfig:
     name: str  # A name to identify the run
     output_path: str  # Input data directory
-    checkpoint_backend: CheckpointBackend = CheckpointBackend.FILE  # Shelve is more convenient but file is more robust.
-    # For distributed executions, we recommend file.
     write_checkpoint_path: Optional[str] = None  # Checkpoint path
     parallel: bool = False  # Run the cleaner in parallel. Only useful if there are multiple files.
     log_every_iter: int = -1  # Log the pipeline every N iterations (-1, silent)

@@ -27,6 +27,8 @@ class CleanerComponentReducer(CleanerComponent, ABC):
         data_parser_config = DataParserConfig(input_path=reduce_config.input_path, extensions=reduce_config.extensions)
         self._data_parser = DataParserFactory.get_parser(config=data_parser_config)
 
+        output_formatter = OutputFormatterFactory.get_output_formatter()
+
     def _reduce(self):
         raise NotImplementedError
 

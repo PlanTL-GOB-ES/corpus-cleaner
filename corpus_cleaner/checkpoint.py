@@ -5,6 +5,7 @@ import logging
 import sys
 import shelve
 from typing import Optional
+from corpus_cleaner.constants import CHECKPOINT_PATH_ESCAPE
 
 
 class Checkpoint:
@@ -29,11 +30,7 @@ class Checkpoint:
         else:
             assert args is not None
             self.backend = args.checkpoint_backend
-            if self.backend == 'shelve':
-                with shelve.open(self.checkpoint_path) as c:
-                    c['done_paths'] = []
-            else:
-                os.makedirs(self.checkpoint_path)
+            os.makedirs(self.checkpoint_path)
             self.args = args
             self.resume = False
             self.args.done = False
@@ -68,8 +65,4 @@ class Checkpoint:
                 json.dump(self.args.__dict__, f, indent=2)
 
     def get_done_paths(self):
-        if self.backend == 'shelve':
-            with shelve.open(self.checkpoint_path) as c:
-                done_paths = c['done_paths']
-            return done_paths
-        return sorted(list(map(lambda x: x.replace('!', '/'), os.listdir(self.checkpoint_path))))
+        return sorted(list(map(lambda x: x.replace(CHECKPOINT_PATH_ESCAPE, '/'), os.listdir(self.checkpoint_path))))
