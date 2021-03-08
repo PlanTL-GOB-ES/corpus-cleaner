@@ -1,8 +1,6 @@
 import subprocess
-import argparse
 import os
-from ..cleaner_component_reducer import CleanerComponentReducer
-from typing import Optional
+from ..cleaner_component_reducer import CleanerComponentReducer, ReduceConfig
 from corpus_cleaner.constants import ONION_PATH, DEBUG_EXTENSION, DEDUP_EXTENSION, SENTENCES_EXTENSIONS, TMP_PATH,\
     ONION_INPUT, ONION_OUTPUT, ONION_OUTPUT_DEDUP_SENTENCES
 from dataclasses import dataclass
@@ -17,32 +15,46 @@ class DocumentFilterConfig:
     dedup_buffer: int = 100000000  # Deduplication buffer size, in bytes (default: 100000000)
 
 
+class DummyReducer(CleanerComponentReducer):
+    def __init__(self, output_path: str):
+        onion_input_file = os.path.join(output_path, 'input.onion.debug')
+        reduce_config = ReduceConfig(path=output_path, after_reduce_extension='debug')
+        super().__init__(reduce_config)
+        self.onion_final_file = onion_input_file
+        self.onion_tmp = os.path.join(output_path, 'tmp')
+
+    def _reduce(self):
+        cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_final_file
+        subprocess.run(cat_command, shell=True, check=True, universal_newlines=True)
+
+
 class DocumentFilter(CleanerComponentReducer):
-    def __init__(self, args: argparse.Namespace, config: DocumentFilterConfig,
-                 output_path: Optional[str] = None):
-        out_path = output_path if output_path is not None else args.output_path
-        onion_input_file = os.path.join(out_path, ONION_INPUT)
-        onion_output_file = os.path.join(out_path, ONION_OUTPUT)
-        onion_output_dedup_sentences_file = os.path.join(out_path, ONION_OUTPUT_DEDUP_SENTENCES)
-        remove_glob_rep_sen = args.remove_glob_rep_sen if args.remove_glob_rep_sen is not None else remove_glob_rep_sen
-        final_path = onion_output_file if remove_glob_rep_sen < 2 else onion_output_dedup_sentences_file
-        if args.debug:
-            extensions = DEBUG_EXTENSION
+    def __init__(self, config: DocumentFilterConfig, output_path: str, debug: bool = False):
+        onion_input_file = os.path.join(output_path, ONION_INPUT)
+        onion_output_file = os.path.join(output_path, ONION_OUTPUT)
+        onion_output_dedup_sentences_file = os.path.join(output_path, ONION_OUTPUT_DEDUP_SENTENCES)
+        remove_glob_rep_sen = config.remove_glob_rep_sen
+        self.final_path = onion_output_file if remove_glob_rep_sen < 2 else onion_output_dedup_sentences_file
+        if debug:
+            extension = DEBUG_EXTENSION
         elif remove_glob_rep_sen < 2:
-            extensions = DEDUP_EXTENSION
+            extension = DEDUP_EXTENSION
         else:
-            extensions = SENTENCES_EXTENSIONS
-        extensions = (extensions,)
-        super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path,
-                         input_path=out_path, extensions=extensions)
-        self.output_path = out_path
+            extension = SENTENCES_EXTENSIONS
+        reduce_config = ReduceConfig(path=output_path, after_reduce_extension=extension)
+        super().__init__(reduce_config)
+        self.output_path = output_path
         self.onion_input_file = onion_input_file
         self.onion_output_file = onion_output_file
         self.onion_path = ONION_PATH
-        self.onion_tmp = os.path.join(out_path, TMP_PATH)
+        self.onion_tmp = os.path.join(output_path, TMP_PATH)
         self.onion_output_dedup_sentences_file = onion_output_dedup_sentences_file
 
         self._config = config
+
+    @property
+    def reduced_path(self) -> str:
+        return self.final_path
 
     def _run_onion(self):
         cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_input_file
