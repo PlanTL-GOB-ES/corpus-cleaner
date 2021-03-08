@@ -3,7 +3,6 @@ from corpus_cleaner.components.a_data_parser.data_parser_factory import DataPars
 from corpus_cleaner.components.c_pre_filterer.pre_filterer import PreFilterer
 from corpus_cleaner.components.d_sentence_splitter_component.sentence_splitter_component import \
     SentenceSplitterComponent
-
 from corpus_cleaner.components.e_sentence_filter.sentence_filter import SentenceFilter
 from corpus_cleaner.components.g_document_filter.document_filter import DocumentFilter
 from corpus_cleaner.components.i_output_formatter.output_formatter import OutputFormatter
@@ -30,7 +29,6 @@ from corpus_cleaner.components.e_sentence_filter.sentence_filter import Sentence
 from corpus_cleaner.components.g_document_filter.document_filter import DocumentFilterConfig
 from corpus_cleaner.components.i_output_formatter.output_formatter import OutputFormatterConfig
 
-
 MAPPERS = [
     PreFilterer,
     SentenceSplitterComponent, SentenceFilter
@@ -38,13 +36,16 @@ MAPPERS = [
 REDUCER = DocumentFilter
 COMPONENTS = [DataParser] + MAPPERS + [REDUCER, OutputFormatter]
 
+
 class ParallelBackend(enum.Enum):
     MP = 'mp'
     RAY = 'ray'
 
+
 class CheckpointBackend(enum.Enum):
     SHELVE = 'shelve'
     FILE = 'file'
+
 
 @dataclass
 class GlobalConfig:
@@ -67,7 +68,6 @@ class GlobalConfig:
     assert log_every_iter == -1 or log_every_iter >= 1
 
 
-
 @dataclass
 class CleanerConfig:
     global_config: GlobalConfig
@@ -84,6 +84,7 @@ class SentencePacker(CleanerComponentMapper):
     def apply(self, document: Optional[Document]) -> Optional[Document]:
         document.sentences = [sen for sen in document.content.splitlines() if len(sen.split()) > 0]
         return document
+
 
 class Cleaner:
     def __init__(self, config: CleanerConfig, logger: logging, checkpoint: Checkpoint):
@@ -128,7 +129,6 @@ class Cleaner:
     @staticmethod
     def get_valid_input_output_formats() -> Tuple:
         return DataParserFactory.VALID_INPUT_FORMATS, OutputFormatterFactory.VALID_OUTPUT_FORMATS
-
 
     def _get_documents(self) -> List[Iterable[Document]]:
         # self.logger.info('Parsing...')
