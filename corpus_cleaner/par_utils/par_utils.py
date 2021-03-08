@@ -121,7 +121,6 @@ class MappingPipeline:
         """
         return G.F_MAPPERS(x)
 
-
     def run(self) -> Any:
         """
         Runs the pipeline with the aforementioned parallelization strategy if parallel is set to True. Otherwise, the
