@@ -50,10 +50,7 @@ class CheckpointBackend(enum.Enum):
 @dataclass
 class GlobalConfig:
     name: str  # A name to identify the run
-    input_path: str  # Input data directory
     output_path: str  # Input data directory
-    input_format: str  # Input data format
-    output_format: str  # Output data format
     checkpoint_backend: CheckpointBackend = CheckpointBackend.FILE  # Shelve is more convenient but file is more robust.
     # For distributed executions, we recommend file.
     write_checkpoint_path: Optional[str] = None  # Checkpoint path

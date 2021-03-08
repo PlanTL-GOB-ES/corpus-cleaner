@@ -3,13 +3,16 @@ from typing import Iterable, Union
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 from typing import TextIO
 from corpus_cleaner.constants import DEBUG_SEPARATOR
-from cleaner import GlobalConfig
+
+
+class OutputFormatterConfig:
+    output_format: str
 
 
 class OutputFormatter(CleanerComponentMapper):
-    def __int__(self, config: GlobalConfig):
+    def __int__(self, config: OutputFormatterConfig, output_path: str):
         self._config = config
-        self.path = self._config.output_path
+        self.path = output_path
         self.fd: Union[TextIO, None] = None
         self.separator = DEBUG_SEPARATOR
 

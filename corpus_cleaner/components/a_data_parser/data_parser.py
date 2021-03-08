@@ -17,12 +17,13 @@ from corpus_cleaner.par_utils.par_utils import PipelineLogger
 @dataclass
 class DataParserConfig:
     input_path: str  # Directory path of the input data.
-    extensions: List[str]  # File extensions to work with (eg. json).
-    encoding_threshold: float  # Encoding threshold if --encoding auto (ignored otherwise. If the encoding detector is
-    # not above this threshold, it assigns utf-8.
+    input_format: str  # Input data format
+    extensions: Tuple[str] = ('*',)  # File extensions to work with (eg. json).
+    encoding_threshold: float = 0.9  # Encoding threshold if --encoding auto (ignored otherwise. If the encoding
+    # detector is not above this threshold, it assigns utf-8.
     encoding: str = 'auto'  # Input encoding format (eg. utf-8. If set to auto, the program tries to guess the
     # encoding).
-    encoding_error_policy: str = float  # Encoding error policy (same options as open()).
+    encoding_error_policy: str = 'ignore'  # Encoding error policy (same options as open()).
     url_doc: Optional[str] = None  # Path to a url list (plain text, one url per line) that should be filtered and
     # processed'.
     warc_warn: bool = False  # Enable warnings of WARC parser.

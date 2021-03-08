@@ -3,7 +3,6 @@ from corpus_cleaner.components.cleaner_component import CleanerComponent
 from corpus_cleaner.document import Document
 from typing import Iterable
 from typing import Tuple, Optional
-from cleaner import GlobalConfig
 import os
 
 
