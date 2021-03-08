@@ -1,11 +1,11 @@
-from .output_formatter import OutputFormatter
+from .output_formatter import OutputFormatter, OutputFormatterConfig
 from corpus_cleaner.document import Document, DiscardedDocument
 from corpus_cleaner.cleaner import GlobalConfig
 from corpus_cleaner.constants import ONION_START_P_TAG, ONION_START_DOC_TAG, ONION_END_P_TAG
 
 
 class OnionOutputFormatter(OutputFormatter):
-    def __init__(self, config: GlobalConfig):
+    def __init__(self, config: OutputFormatterConfig):
         super().__init__(config)
         self.start_doc_tag = ONION_START_DOC_TAG
         self.start_p_tag = ONION_START_P_TAG
@@ -48,3 +48,5 @@ class DebugOnionOutputFormatter(OutputFormatter):
 
     def _end_writing(self):
         self.fd.close()
+
+    min(2)

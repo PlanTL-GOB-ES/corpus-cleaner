@@ -4,9 +4,6 @@ from .onion_output_formatter import OnionOutputFormatter
 from .sentence_output_formatter import SentenceOutputFormatter
 from .output_formatter_mapper import OutputFormatterMapper
 from corpus_cleaner.cleaner import GlobalConfig
-from typing import Optional
-from dataclasses import dataclass
-import argparse
 from corpus_cleaner.components.i_output_formatter.output_formatter import OutputFormatterConfig
 
 
@@ -19,14 +16,14 @@ class OutputFormatterFactory:
     @staticmethod
     def get_output_formatter(config: OutputFormatterConfig) -> OutputFormatter:
         if config.output_format == 'fairseq-lm':
-            return FairseqLMOutputFormatter()
+            return FairseqLMOutputFormatter(config)
         elif config.output_format == 'sentence':
-            return SentenceOutputFormatter()
+            return SentenceOutputFormatter(config)
         elif config.output_format == 'onion':
-            return OnionOutputFormatter()
+            return OnionOutputFormatter(config)
+        else:
+            raise NotImplementedError(config.output_format)
 
     @staticmethod
-    def get_output_formatter_mapper(args: argparse.Namespace, output_format: Optional[str] = None,
-                                    output_path: Optional[str] = None, **kwargs) -> OutputFormatterMapper:
-        return OutputFormatterMapper(args, OutputFormatterFactory.get_output_formatter(args, output_format, output_path,
-                                                                                       **kwargs))
+    def get_output_formatter_mapper(config: OutputFormatterConfig) -> OutputFormatterMapper:
+        return OutputFormatterMapper(OutputFormatterFactory.get_output_formatter(config))

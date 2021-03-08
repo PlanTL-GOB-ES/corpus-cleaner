@@ -5,27 +5,25 @@ from typing import Iterable
 from typing import Tuple, Optional
 import os
 from corpus_cleaner.constants import CHECKPOINT_PATH_ESCAPE
+from typing import Set
 
 
 class OutputFormatterMapper(CleanerComponent):
-    def __int__(self, config: GlobalConfig, output_formatter: OutputFormatter):
-        self._config = config
+    def __init__(self, output_formatter: OutputFormatter):
         self.output_formatter = output_formatter
 
     def _write_checkpoint(self, e: str):
-        with open(os.path.join(self._config.write_checkpoint_path, e.replace('/', CHECKPOINT_PATH_ESCAPE)), 'w') as f:
-            pass
+        self.output_formatter.write_checkpoint(e)
 
-    def __call__(self, documents: Iterable[Document]) -> Tuple[int, Optional[Tuple], Optional[str]]:
+    def __call__(self, documents: Iterable[Document]):# -> Iterable[Document]
         self.output_formatter.init_writing()
         filename = None
         for document in documents:
-            self.output_formatter._write_document(document)
+            self.output_formatter.write_document(document)
             filename = document.filename
         self.output_formatter.end_writing()
 
-        if self._config.write_checkpoint_path:
-            self._write_checkpoint(filename)
+        self._write_checkpoint(filename)
 
-        return filename
+        #return filename
 

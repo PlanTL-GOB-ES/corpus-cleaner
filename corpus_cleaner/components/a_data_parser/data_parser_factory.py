@@ -33,7 +33,6 @@ class DataParserFactory:
         elif config.input_format == 'textfile':
             return TextfileParser(config, logger)
         elif config.input_format == 'onion':
-            config.encoding = 'utf-8'
             return OnionParser(config, logger, debug=debug)
         else:
             raise NotImplementedError(config.input_format)
