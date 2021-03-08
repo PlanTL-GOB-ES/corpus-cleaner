@@ -11,6 +11,7 @@ import os
 class OutputFormatterMapper(CleanerComponent):
     def __int__(self, config: GlobalConfig, output_formatter: OutputFormatter):
         self._config = config
+        self.output_formatter = output_formatter
 
     def _write_checkpoint(self, e: str):
         with open(os.path.join(self._config.write_checkpoint_path, e.replace('/', '!')), 'w') as f:
