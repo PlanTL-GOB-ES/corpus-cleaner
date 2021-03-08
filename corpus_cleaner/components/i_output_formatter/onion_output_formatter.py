@@ -1,14 +1,15 @@
 from .output_formatter import OutputFormatter
 from corpus_cleaner.document import Document, DiscardedDocument
-import argparse
+from corpus_cleaner.cleaner import GlobalConfig
+from corpus_cleaner.constants import ONION_START_P_TAG, ONION_START_DOC_TAG, ONION_END_P_TAG
 
 
 class OnionOutputFormatter(OutputFormatter):
-    def __init__(self, args: argparse.Namespace, output_path: str):
-        super().__init__(args, output_path)
-        self.start_doc_tag = '<doc '
-        self.start_p_tag = ' >\n<p>\n'
-        self.end_doc_tag = '\n</p>\n</doc>\n'
+    def __init__(self, config: GlobalConfig):
+        super().__init__(config)
+        self.start_doc_tag = ONION_START_DOC_TAG
+        self.start_p_tag = ONION_START_P_TAG
+        self.end_doc_tag = ONION_END_P_TAG
 
     def _init_writing(self):
         self.fd = open(self.path, 'a')
@@ -26,11 +27,11 @@ class OnionOutputFormatter(OutputFormatter):
 
 
 class DebugOnionOutputFormatter(OutputFormatter):
-    def __init__(self, args: argparse.Namespace, output_path: str, **kwargs):
-        super().__init__(args, output_path)
-        self.start_doc_tag = '<doc '
-        self.start_p_tag = ' >\n<p>\n'
-        self.end_doc_tag = '\n</p>\n</doc>\n'
+    def __init__(self, config: GlobalConfig):
+        super().__init__(config)
+        self.start_doc_tag = ONION_START_DOC_TAG
+        self.start_p_tag = ONION_START_P_TAG
+        self.end_doc_tag = ONION_END_P_TAG
 
     def _init_writing(self):
         self.fd = open(self.path, 'a')

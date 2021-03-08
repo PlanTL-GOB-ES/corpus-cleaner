@@ -25,3 +25,11 @@ ONION_OUTPUT_DEDUP_SENTENCES = 'output_deduplicate.onion.dedup.sentences'
 WARC_SKIP = ['mp4', 'mp3', 'jpg', 'png', 'svg', '.js']
 
 DEBUG_SEPARATOR = "|"
+
+ONION_START_DOC_TAG = '<doc '
+
+ONION_START_P_TAG = ' >\n<p>\n'
+
+ONION_END_P_TAG = '\n</p>\n</doc>\n'
+
+
