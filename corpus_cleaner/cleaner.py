@@ -91,16 +91,12 @@ class Cleaner:
         if not self._config.global_config.only_reduce:
             self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers + \
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                               args=self.args, output_format='onion',
-                               output_path=os.path.join(self.tmp_dir,
-                                                        os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
+                               self._config.output_formatter_config)]
         else:
 
             self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + [SentencePacker] + \
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                               args=self.args, output_format='onion',
-                               output_path=os.path.join(self.tmp_dir,
-                                                        os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
+                               self._config.output_formatter_config)]
         self.reducer = REDUCER if not self._config.global_config.debug else DummyReducer
         if self._config.components is not None and not self._config.global_config.debug:
             self.reducer = None
@@ -122,16 +118,16 @@ class Cleaner:
 
     def _get_documents(self) -> List[Iterable[Document]]:
         # self.logger.info('Parsing...')
-        parser = DataParserFactory.get_parser(self._config.parser_config, input_format=self._config)
+        parser = DataParserFactory.get_parser(self._config.parser_config)
         return parser.parse()
 
     def _get_paths(self) -> List[Tuple[int, str]]:
         # self.logger.info('Parsing...')
-        parser = DataParserFactory.get_parser(self.args, done_paths=self.checkpoint.get_done_paths())
+        parser = DataParserFactory.get_parser(self._config.parser_config)
         return parser.get_idx_relative_filepaths()
 
     def _create_pipeline_mappers(self) -> List[CleanerComponent]:
-        return [component(self.args) for component in self.mappers]
+        return [component(self._config) for component in self.mappers]
 
     def _output(self, documents: Iterable[Document]):
         # self.logger.info('Outputting...')
@@ -140,8 +136,8 @@ class Cleaner:
 
     def clean(self):
         if not self._config.global_config.only_reduce_output:
-            self.reducer = self.reducer(self.args)
-            components_str = self.args.input_format + ' -> '
+            self.reducer = self.reducer(self._config)
+            components_str = self._config.parser_config.input_format + ' -> '
             for idx, c in enumerate(self.mappers):
                 if idx not in [0, len(self.mappers) - 1]:
                     components_str += c.__name__ + ' -> '
@@ -149,17 +145,17 @@ class Cleaner:
             self.logger.logger.info(components_str)
             pipeline = MappingPipeline(streams=self._get_paths(),
                                        mappers_factory=self._create_pipeline_mappers,
-                                       parallel=self.args.parallel,
-                                       logger=self.logger if self.args.log_every_iter != -1 else None,
-                                       log_every_iter=self.args.log_every_iter,
-                                       backend=self.args.backend,
+                                       parallel=self._config.global_config.parallel,
+                                       logger=self.logger if self._config.global_config.log_every_iter != -1 else None,
+                                       log_every_iter=self._config.global_config.log_every_iter,
+                                       backend=self._config.global_config.backend,
                                        checkpoint_path=self.checkpoint.checkpoint_path)
             pipeline.run()
 
         if self.reducer is not None:
-            self.reducer = self.reducer(self.args, output_path=os.path.join(self.args.input_path))
+            self.reducer = self.reducer(self._config, output_path=os.path.join(self._config.parser_config.input_path))
             self.logger.logger.info(f'Reducing with {self.reducer.__class__.__name__}')
             self.reducer.reduce()
-            self.logger.logger.info(f'onion -> {self.args.output_format}')
+            self.logger.logger.info(f'onion -> {self._config.output_formatter_config.output_format}')
             self.logger.logger.info('Writing deduplicated documents')
             self._output(self.reducer.get_documents()[0])
