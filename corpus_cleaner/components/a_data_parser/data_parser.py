@@ -100,7 +100,7 @@ class DataParser:
             extension = os.path.splitext(relative_filepath)[1][1:].strip()
             if extension == 'gz':
                 gz = True
-            enc, confidence_ok = self._guess_encoding(abs_path, gz=gz) if self._config.encoding == 'auto' else\
+            enc, confidence_ok = self._guess_encoding(abs_path, gz=gz) if self._config.encoding == 'auto' else \
                 (self._config.encoding, True)
             if not gz:
                 with open(abs_path, 'r', encoding=enc, errors=self._config.encoding_error_policy) as f:
@@ -121,11 +121,11 @@ class DataParser:
             parse_iterables.append(self._treat_file(idx_filepath, relative_filepath))
         return parse_iterables
 
-    def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) ->\
+    def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> \
             List[Iterable[Document]]:
         raise NotImplementedError
 
-    def _parse_binary_file(self, fd: BinaryIO, relative_filepath: str, idx_filepath: int) ->\
+    def _parse_binary_file(self, fd: BinaryIO, relative_filepath: str, idx_filepath: int) -> \
             List[Iterable[Document]]:
         raise NotImplementedError
 

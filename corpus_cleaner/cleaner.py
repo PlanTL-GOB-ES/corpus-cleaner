@@ -43,7 +43,7 @@ class ParallelBackend(enum.Enum):
 @dataclass
 class GlobalConfig:
     name: str  # A name to identify the run
-    output_path: str  # Input data directory
+    output_path: str  # Output data directory
     write_checkpoint_path: Optional[str] = None  # Checkpoint path
     parallel: bool = False  # Run the cleaner in parallel. Only useful if there are multiple files.
     log_every_iter: int = -1  # Log the pipeline every N iterations (-1, silent)

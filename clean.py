@@ -6,6 +6,8 @@ import os
 import corpus_cleaner
 import datetime
 from corpus_cleaner.checkpoint import Checkpoint
+from corpus_cleaner.cleaner import CleanerConfig
+from simple_parsing import ArgumentParser
 
 
 # TODO: initialize simpleparsing: https://github.com/lebrice/SimpleParsing
@@ -45,19 +47,17 @@ def check_args(args: argparse.Namespace):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Clean raw text data.')
-    parser.add_argument('name', type=str, help='A name to identify the run')
-    parser.add_argument('--input-path', type=str, help='Input data directory')
-    parser.add_argument('--output-path', type=str, help='Output data directory', default='output')
-    parser.add_argument('--input-format', type=str, help='Input data format')
-    parser.add_argument('--output-format', type=str, help='Output data format')
-    parser.add_argument('--checkpoint-backend', choices=['shelve', 'file'], default='shelve',
-                        help='Shelve is more convenient but file is more robust. For distributed executions,'
-                             'we recommend file.')
+    parser = ArgumentParser(description='Clean raw text data.')
 
-    Cleaner.add_args(parser)
-    for component in Cleaner.get_components_classes():
-        component.add_args(parser)
+    parser.add_argument(CleanerConfig, dest='cleaner_config')
+    # parser.add_argument('name', type=str, help='A name to identify the run')
+    # parser.add_argument('--input-path', type=str, help='Input data directory')
+    # parser.add_argument('--output-path', type=str, help='Output data directory', default='output')
+    # parser.add_argument('--input-format', type=str, help='Input data format')
+    # parser.add_argument('--output-format', type=str, help='Output data format')
+    # parser.add_argument('--checkpoint-backend', choices=['shelve', 'file'], default='shelve',
+    #                     help='Shelve is more convenient but file is more robust. For distributed executions,'
+    #                          'we recommend file.')
 
     args = parser.parse_args()
 
