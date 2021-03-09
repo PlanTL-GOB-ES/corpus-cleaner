@@ -118,14 +118,10 @@ class Cleaner:
     def get_valid_input_output_formats() -> Tuple:
         return DataParserFactory.VALID_INPUT_FORMATS, OutputFormatterFactory.VALID_OUTPUT_FORMATS
 
-    def _get_documents(self) -> List[Iterable[Document]]:
-        # self.logger.info('Parsing...')
-        parser = DataParserFactory.get_parser(self._config.parser_config, self._config.global_config)
-        return parser.parse()
-
     def _get_paths(self) -> List[Tuple[int, str]]:
         # self.logger.info('Parsing...')
-        parser = DataParserFactory.get_parser(self._config.parser_config, self._config.global_config)
+        parser = DataParserFactory.get_parser(self._config.parser_config, self._config.global_config,
+                                              logger=self.logger)
         return parser.get_idx_relative_filepaths()
 
     def _create_pipeline_mappers(self) -> List[CleanerComponent]:
