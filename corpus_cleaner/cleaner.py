@@ -16,12 +16,10 @@ from corpus_cleaner.par_utils import MappingPipeline, PipelineLogger
 from corpus_cleaner.components.cleaner_component_reducer import DummyReducer
 import logging
 import os
-from . import __version__
 from typing import Optional
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 import enum
 from dataclasses import dataclass
-from corpus_cleaner.components.cleaner_component import CleanerComponentConfig
 from corpus_cleaner.components.a_data_parser.data_parser import DataParserConfig
 from corpus_cleaner.components.c_pre_filterer.pre_filterer import PreFiltererConfig
 from corpus_cleaner.components.d_sentence_splitter_component.sentence_splitter_component import SentenceSplitterConfig
@@ -89,15 +87,17 @@ class Cleaner:
             if comp.__name__ in self._config.global_config.components:
                 self.mappers.append(comp)
         if not self._config.global_config.only_reduce:
-            self.mappers = [lambda x: DataParserFactory.get_parser_mapper(self._config.parser_config,
-                                                                          self._config.global_config)] \
+            self.mappers = [lambda: DataParserFactory.get_parser_mapper(self._config.parser_config,
+                                                                        self._config.global_config)] \
                            + self.mappers + \
-                           [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
+                           [lambda: OutputFormatterFactory.get_output_formatter_mapper(
                                self._config.output_formatter_config)]
         else:
 
-            self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + [SentencePacker] + \
-                           [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
+            self.mappers = [lambda: DataParserFactory.get_parser_mapper(self._config.parser_config,
+                                                                        self._config.global_config)] \
+                           + [SentencePacker] + \
+                           [lambda: OutputFormatterFactory.get_output_formatter_mapper(
                                self._config.output_formatter_config)]
         self.reducer = REDUCER if not self._config.global_config.debug else DummyReducer
         if self._config.global_config.components is not None and not self._config.global_config.debug:
