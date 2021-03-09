@@ -1,14 +1,14 @@
 import argparse
 import logging
 import time
-import json
 from corpus_cleaner.cleaner import Cleaner
 import os
 import corpus_cleaner
-import sys
 import datetime
 from corpus_cleaner.checkpoint import Checkpoint
 
+
+# TODO: initialize simpleparsing: https://github.com/lebrice/SimpleParsing
 
 def clean(args: argparse.Namespace, logger: logging.Logger, checkpoint: Checkpoint):
     logger.info(args)
@@ -17,7 +17,7 @@ def clean(args: argparse.Namespace, logger: logging.Logger, checkpoint: Checkpoi
     cleaner.clean()
     checkpoint.declare_as_cleaned()
     t1 = datetime.datetime.now().timestamp()
-    logger.info(f'Elapsed {t1-t0}s')
+    logger.info(f'Elapsed {t1 - t0}s')
 
 
 def get_output_dir(name: str, output_path: str) -> str:
