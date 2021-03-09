@@ -10,9 +10,6 @@ from corpus_cleaner.components.i_output_formatter.output_formatter import Output
 class OutputFormatterFactory:
     VALID_OUTPUT_FORMATS = ['fairseq-lm', 'sentence']
 
-    def __init__(self, config: GlobalConfig):
-        self._config = config
-
     @staticmethod
     def get_output_formatter(config: OutputFormatterConfig) -> OutputFormatter:
         if config.output_format == 'fairseq-lm':
