@@ -98,9 +98,9 @@ class Cleaner:
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
                                self._config.output_formatter_config)]
         self.reducer = REDUCER if not self._config.global_config.debug else DummyReducer
-        if self._config.components is not None and not self._config.global_config.debug:
+        if self._config.global_config.components is not None and not self._config.global_config.debug:
             self.reducer = None
-            for comp in self._config.components.components:
+            for comp in self._config.global_config.components:
                 if comp == REDUCER.__name__:
                     self.reducer = REDUCER
                     break
@@ -148,7 +148,7 @@ class Cleaner:
                                        parallel=self._config.global_config.parallel,
                                        logger=self.logger if self._config.global_config.log_every_iter != -1 else None,
                                        log_every_iter=self._config.global_config.log_every_iter,
-                                       backend=self._config.global_config.backend,
+                                       backend=self._config.global_config.backend.value(),
                                        checkpoint_path=self.checkpoint.checkpoint_path)
             pipeline.run()
 
