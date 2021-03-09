@@ -89,7 +89,9 @@ class Cleaner:
             if comp.__name__ in self._config.global_config.components:
                 self.mappers.append(comp)
         if not self._config.global_config.only_reduce:
-            self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers + \
+            self.mappers = [lambda x: DataParserFactory.get_parser_mapper(self._config.parser_config,
+                                                                          self._config.global_config)] \
+                           + self.mappers + \
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
                                self._config.output_formatter_config)]
         else:
