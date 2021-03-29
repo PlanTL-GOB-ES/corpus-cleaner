@@ -50,12 +50,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, help='directory with data (processed recursively in case of subdirs)')
     parser.add_argument('--output_dir', type=str, help='output directory with processed data')
+    parser.add_argument('--filename', type=str, help='filename to search within the data_dir')
     args = parser.parse_args()
 
     p = Path(os.path.realpath(args.data_dir))
     os.makedirs(args.output_dir, exist_ok=True)
 
-    SUFFIX = ".txt"
+    SUFFIX = args.filename
 
     files = list(p.rglob(f"*{SUFFIX}"))
     for file in files:
