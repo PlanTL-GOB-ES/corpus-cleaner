@@ -1,10 +1,13 @@
 from .output_formatter import OutputFormatter
 from corpus_cleaner.document import Document
 import os
+from typing import Optional
 
 
 class FairseqLMOutputFormatter(OutputFormatter):
-    def __init__(self, args, output_path: str = 'output.txt'):
+    def __init__(self, args, output_path: Optional[str] = None):
+        if output_path is None:
+            output_path = os.path.join(args.output_path, 'output.txt')
         super().__init__(args, output_path)
 
     def _init_writing(self):
