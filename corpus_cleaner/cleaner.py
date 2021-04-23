@@ -179,6 +179,6 @@ class Cleaner:
                                            backend=self.args.backend,
                                            checkpoint_path=None)
                 pipeline.run()
-            else:
-                self._output(self.reducer.get_documents()[0])
+            # else:
+            self._output(self.reducer.get_documents()[0])
 
