@@ -20,8 +20,5 @@ class DataParserMapper(CleanerComponent):
 
     def __call__(self, path: Tuple[int, str]) -> Iterable[Document]:
         idx, path = path
-        print('hello', path)
-        if path.startswith('output/example-output-2021'):
-            print()
         return self.data_parser.treat_file(idx, path)
 

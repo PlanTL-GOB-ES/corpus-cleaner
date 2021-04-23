@@ -4,9 +4,11 @@ import os
 
 
 class FairseqLMOutputFormatter(OutputFormatter):
+    def __init__(self, args, output_path: str = 'output.txt'):
+        super().__init__(args, output_path)
 
     def _init_writing(self):
-        self.fd = open(os.path.join(self.path, 'output.txt'), 'a')
+        self.fd = open(self.path, 'a')
 
     def _write_document(self, document: Document):
         if len(document.sentences) > 0:
