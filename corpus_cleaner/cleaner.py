@@ -133,16 +133,13 @@ class Cleaner:
         output_formatter.apply(documents)
 
     def _create_pipeline_mappers_onion_ind(self) -> List[CleanerComponent]:
-        class SentencePacker(CleanerComponentMapper):
 
-            def apply(self, document: Optional[Document]) -> Optional[Document]:
-                document.sentences = [sen for sen in document.content.splitlines() if len(sen.split()) > 0]
-                return document
-        mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + [SentencePacker] + \
+        mappers = [lambda x: DataParserFactory.get_parser_mapper(x, input_format='onion')] + \
                        [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
                            args=self.args, output_format='fairseq-lm',
                            output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.txt'))]
-        return mappers
+
+        return [component(self.args) for component in mappers]
 
     def clean(self):
         if self.reducer is None:
@@ -174,13 +171,13 @@ class Cleaner:
             self.logger.logger.info(f'onion -> {self.args.output_format}')
             self.logger.logger.info('Writing deduplicated documents')
             if self.args.only_reduce_ind_onion:
-                pipeline = MappingPipeline(streams=self.reducer.get_documents()[0],
+                pipeline = MappingPipeline(streams=self.reducer.data_parser.get_idx_relative_filepaths(),
                                            mappers_factory=self._create_pipeline_mappers_onion_ind,
                                            parallel=self.args.parallel,
                                            logger=self.logger if self.args.log_every_iter != -1 else None,
                                            log_every_iter=self.args.log_every_iter,
                                            backend=self.args.backend,
-                                           checkpoint_path=self.checkpoint.checkpoint_path)
+                                           checkpoint_path=None)
                 pipeline.run()
             else:
                 self._output(self.reducer.get_documents()[0])

@@ -55,8 +55,8 @@ class DocumentFilter(CleanerComponentReducer):
         parser.add_argument('--remove-glob-rep-sen', type=int, default=5,
                             help='Whether to remove corpus-level repeated sentences (threshold of repetitions; -1'
                                  'to deactivate)')
-        parser.add_argument('--dedup-buffer', type=int, default=10000000000,
-                            help='Deduplication buffer size, in bytes (default: 100000000)')
+        parser.add_argument('--dedup-buffer', type=int, default=1000000000,
+                            help='Deduplication buffer size, in bytes (default: 1000000000)')
         parser.add_argument('--only-reduce-ind-onion', action='store_true', help='Individually apply reduction')
 
     @staticmethod
@@ -131,7 +131,7 @@ class DocumentFilter(CleanerComponentReducer):
                                     break
                                 case /0\t/:
                                     seen[$0]++
-                                    {if (seen[$0] <= ''' + str(self.threshold) + ''') {print} else {printf "1" "\t"; for (i=2; i<NF; i++) printf $i " "; print $NF}}
+                                    {if (seen[$0] <= ''' + str(threshold) + ''') {print} else {printf "1" "\t"; for (i=2; i<NF; i++) printf $i " "; print $NF}}
                                     break
                                 default:
                                     print
@@ -156,14 +156,14 @@ class DocumentFilter(CleanerComponentReducer):
     def _reduce(self):
         if self.only_reduce_ind_onion:
             self.get_onion_files_paths()
-            self.args.logger.info('Distributed reduce')
+            self.args.logger.logger.info('Distributed reduce')
             pipeline = MappingPipeline(streams=self.get_onion_files_paths(),
                                        mappers_factory=self.create_pipeline_reducer_mappers,
                                        parallel=self.args.parallel,
                                        logger=self.args.logger if self.args.log_every_iter != -1 else None,
                                        log_every_iter=self.args.log_every_iter,
                                        backend=self.args.backend,
-                                       checkpoint_path=self.args.checkpoint.checkpoint_path)
+                                       checkpoint_path=None)
             pipeline.run()
         else:
             self._run_onion()
