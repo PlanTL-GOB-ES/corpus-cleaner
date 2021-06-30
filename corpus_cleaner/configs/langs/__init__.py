@@ -9,7 +9,8 @@ from .kk import kk
 from .lv import lv
 from .no import no
 from .uk import uk
+from .oc import oc
 
-langs = dict(ca=ca, de=de, en=en, eu=eu, es=es, fi=fi, ka=ka, kk=kk, lv=lv, no=no, uk=uk)
+langs = dict(ca=ca, de=de, en=en, eu=eu, es=es, fi=fi, ka=ka, kk=kk, lv=lv, no=no, uk=uk, oc=oc)
 
 __all__ = ['langs']
