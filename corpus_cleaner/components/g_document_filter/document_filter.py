@@ -44,8 +44,8 @@ class DocumentFilter(CleanerComponentReducer):
         parser.add_argument('--document-deduplication-threshold', type=float,
                             help='Threshold for document de-duplication, expressed as the percentage of sentences'
                                  'overlap between documents',
-                            default=0.5)
-        parser.add_argument('--remove-glob-rep-sen', type=int, default=5,
+                            default=0.8)
+        parser.add_argument('--remove-glob-rep-sen', type=int, default=-1,
                             help='Whether to remove corpus-level repeated sentences (threshold of repetitions; -1'
                                  'to deactivate)')
         parser.add_argument('--dedup-buffer', type=int, default=100000000,
