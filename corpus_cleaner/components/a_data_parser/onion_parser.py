@@ -32,22 +32,20 @@ class OnionParser(DataParser):
                 else:
                     doc = Document(content='')
 
-            # if words in paragraph, merge words of paragraphs to create the sentence paragraph.
-            # Then, empty the list of words
-            elif line.startswith('</p>\n'):
+            # If words in paragraph, merge words of paragraphs to create the sentence paragraph
+            # based on \n as document boundary and empty the list of words.
+            # Empty the document sentences list when a new document is reached (</p> tag) and return the document object
+            elif line  in ['</doc>\n', '\n']:
                 if par_words:
                     par_sentence = ' '.join(par_words)
                     doc_sentences.append(par_sentence)
                     par_words = []
-
-            elif line.startswith('<p>\n'):
+                    if line == '</doc>\n':
+                        doc.sentences = doc_sentences
+                        yield doc
+                        doc_sentences = []
+            elif line in ['<corpora>\n', '</corpora>\n', '<doc>\n']:
                 continue
-
-            # empty the document sentences list when a new document is reached and return the document object
-            elif line.startswith('</doc>'):
-                doc.sentences = doc_sentences
-                yield doc
-                doc_sentences = []
 
             else:
                 if self.debug or line_index == '0':
