@@ -11,6 +11,7 @@ from .no import no
 from .uk import uk
 from .pt import pt
 from .gl import gl
+from .oc import oc
 
 langs = dict(ca=ca, de=de, en=en, eu=eu, es=es, fi=fi, ka=ka, kk=kk, lv=lv, no=no, uk=uk, pt=pt, gl=gl)
 

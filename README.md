@@ -6,8 +6,6 @@ Corpus Cleaner is a modular Python-based toolkit to clean raw text corpora throu
 
 It was mainly designed to clean text collected from web crawlers resulting in a specific data format. However, due to its modularity, it can be customized and adapted to any data format.
 
-*WARNING*: Corpus Cleaner is currently only intended for internal usage, and it is in alpha stage. Expect it to break and have bugs.
-
 ## Install and run
 
 We provide three ways of installing the Corpus Cleaner.
@@ -90,27 +88,40 @@ Currently, Corpus Cleaner has the following arguments:
 ```sh
 usage: clean.py [-h] [--input-path INPUT_PATH] [--output-path OUTPUT_PATH]
                 [--input-format INPUT_FORMAT] [--output-format OUTPUT_FORMAT]
-                [--components COMPONENTS [COMPONENTS ...]] [--parallel]
-                [--batch-size BATCH_SIZE] [--log-every-iter LOG_EVERY_ITER]
-                [--extensions EXTENSIONS [EXTENSIONS ...]]
-                [--encoding ENCODING]
-                [--encoding-threshold ENCODING_THRESHOLD]
-                [--encoding-error-policy ENCODING_ERROR_POLICY]
-                [--no-remove-tags] [--no-remove-extra-spaces]
-                [--no-replace-urls] [--char-length-filter CHAR_LENGTH_FILTER]
+                [--checkpoint-backend {shelve,file}] [--components COMPONENTS [COMPONENTS ...]]
+                [--parallel] [--log-every-iter LOG_EVERY_ITER]
+                [--backend BACKEND] [--only-reduce] [--only-reduce-output]
+                [--debug] [--extensions EXTENSIONS [EXTENSIONS ...]]
+                [--encoding ENCODING] [--encoding-threshold ENCODING_THRESHOLD]
+                [--encoding-error-policy ENCODING_ERROR_POLICY] [url-doc URL_DOC]
+                [--warc-warn] [--none_filter] 
+                [--no-lang-filter-document] [--no-language-normalization]
+                [--no-replace-emails] [--no-remove-hashtags-mentions]
+                [--no-remove-tags] [--no-space-normalization]
+                [--no-replace-urls] [--char-length-filter-document CHAR_LENGTH_FILTER_DOCUMENT]
                 [--no-head-filter] [--digits_filter DIGITS_FILTER]
+                [--remove-citations] [-lang-chars-filter LANG_CHARS_FILTER]
                 [--alphanum_filter ALPHANUM_FILTER]
                 [--uppercase_filter UPPERCASE_FILTER]
                 [--alphabet-filter ALPHABET_FILTER [ALPHABET_FILTER ...]]
                 [--lang-filter LANG_FILTER [LANG_FILTER ...]]
-                [--fast-lang-filter-threshold FAST_LANG_FILTER_THRESHOLD]
-                [--dictionary-filter DICTIONARY_FILTER]
+                [--initial-lang-filter-threshold INITIAL_LANG_FILTER_THRESHOLD]
+                [--dictionary-filter-doc DICTIONARY_FILTER_DOC] [--seg-sentences]
                 [--char-length-filter-sentence CHAR_LENGTH_FILTER_SENTENCE]
+                [--word-length-filter-sentence WORD_LENGTH_FILTER_SENTENCE]
+                [--digits-filter-sentence DIGITS_FILTER_SENTENCE]
                 [--profanity-check]
+                [--fast-lang-filter-threshold FAST_LANG_FILTER_THRESHOLD]
                 [--slow-lang-filter-threshold SLOW_LANG_FILTER_THRESHOLD]
+                [--no-lang-filter-sentence] [--no-lang-filter-sentence_src_tgt]
+                [--code-threshold CODE_THRESHOLD]
+                [--dictionary-filter-sen DICTIONARY_FILTER_SEN]
+                [--no-dedup-same-doc-sentences] [--no-src-tag-filter]
                 [--spell-check] [--terminology-norm TERMINOLOGY_NORM]
                 [--punctuation-norm]
                 [--document-deduplication-threshold DOCUMENT_DEDUPLICATION_THRESHOLD]
+                [--remove-glob-rep-sen REMOVE_GLOB_REP_SEN]
+                [--dedup-buffer DEDUP_BUFFER]
                 name
 ```
 
@@ -179,6 +190,7 @@ So far, Corpus Cleaner is only used internally and it is still being developed. 
 
 * [Jordi Armengol Estapé](https://github.com/jordiae)
 * [Casimiro Pio Carrino](https://github.com/ccasimiro88)
+* [Ona de Gibert](https://github.com/onadegibert)
 
 See also the full list of [contributors](https://github.com/TeMU-BSC/corpus-cleaner/graphs/contributors) who participated in this project.
 
