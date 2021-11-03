@@ -1,76 +1,73 @@
 import subprocess
-import argparse
 import os
 from ..cleaner_component_reducer import CleanerComponentReducer
 from typing import Optional
 from glob import glob
 from corpus_cleaner.par_utils import MappingPipeline, PipelineLogger
 
+from ..cleaner_component_reducer import CleanerComponentReducer, ReduceConfig
+from corpus_cleaner.constants import ONION_PATH, DEBUG_EXTENSION, DEDUP_EXTENSION, SENTENCES_EXTENSIONS, TMP_PATH,\
+    ONION_INPUT, ONION_OUTPUT, ONION_OUTPUT_DEDUP_SENTENCES
+from dataclasses import dataclass
+
+
+@dataclass
+class DocumentFilterConfig:
+    document_deduplication_threshold: float = 0.5  # Threshold for document de-duplication, expressed as the percentage
+    # of sentences overlap between documents
+    remove_glob_rep_sen: int = 5  # Whether to remove corpus-level repeated sentences (threshold of repetitions; -1
+    # to deactivate)
+    dedup_buffer: int = 100000000  # Deduplication buffer size, in bytes (default: 100000000)
+
+
+class DummyReducer(CleanerComponentReducer):
+    def __init__(self, output_path: str):
+        onion_input_file = os.path.join(output_path, 'input.onion.debug')
+        reduce_config = ReduceConfig(path=output_path, after_reduce_extension='debug')
+        super().__init__(reduce_config)
+        self.onion_final_file = onion_input_file
+        self.onion_tmp = os.path.join(output_path, 'tmp')
+
+    def _reduce(self):
+        cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_final_file
+        subprocess.run(cat_command, shell=True, check=True, universal_newlines=True)
+
 
 class DocumentFilter(CleanerComponentReducer):
-    def __init__(self, args: argparse.Namespace, document_deduplication_threshold: float = 0.5,
-                 dedup_buffer: int = 16777216,
-                 remove_glob_rep_sen: int = 5, output_path: Optional[str] = None):
-        # TODO: Modify "args.document_deduplication_threshold if args.document_deduplication_threshold is not None
-        # else..." pattern
-        self.only_reduce_ind_onion = args.only_reduce_ind_onion
-        out_path = output_path if output_path is not None else args.output_path
-        onion_input_file = os.path.join(out_path, 'input.onion')
-        onion_output_file = os.path.join(out_path, 'output_deduplicate.onion.dedup')
-        onion_output_dedup_sentences_file = os.path.join(out_path, 'output_deduplicate.onion.dedup.sentences')
-        remove_glob_rep_sen = args.remove_glob_rep_sen if args.remove_glob_rep_sen is not None else remove_glob_rep_sen
-        final_path = onion_output_file if remove_glob_rep_sen < 2 else onion_output_dedup_sentences_file
-        if args.debug:
-            extensions = '.debug'
+    def __init__(self, config: DocumentFilterConfig, output_path: str, debug: bool = False):
+        onion_input_file = os.path.join(output_path, ONION_INPUT)
+        onion_output_file = os.path.join(output_path, ONION_OUTPUT)
+        onion_output_dedup_sentences_file = os.path.join(output_path, ONION_OUTPUT_DEDUP_SENTENCES)
+        remove_glob_rep_sen = config.remove_glob_rep_sen
+        self.final_path = onion_output_file if remove_glob_rep_sen < 2 else onion_output_dedup_sentences_file
+        if debug:
+            extension = DEBUG_EXTENSION
         elif remove_glob_rep_sen < 2:
-            extensions = '.dedup'
+            extension = DEDUP_EXTENSION
         else:
-            extensions = '.sentences'
-        extensions = (extensions,)
-        super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path,
-                         input_path=out_path if not self.only_reduce_ind_onion else os.path.join(out_path, 'tmp'),
-                         extensions=extensions)
-        self.output_path = out_path
-        self.document_deduplication_threshold = args.document_deduplication_threshold \
-            if args.document_deduplication_threshold is not None else document_deduplication_threshold
-        self.remove_glob_rep_sen = args.remove_glob_rep_sen \
-            if args.remove_glob_rep_sen is not None else remove_glob_rep_sen
-        self.dedup_buffer = args.dedup_buffer \
-            if args.dedup_buffer is not None else dedup_buffer
+            extension = SENTENCES_EXTENSIONS
+        reduce_config = ReduceConfig(path=output_path, after_reduce_extension=extension)
+        super().__init__(reduce_config)
+        self.output_path = output_path
         self.onion_input_file = onion_input_file
         self.onion_output_file = onion_output_file
-        self.onion_path = os.path.join('lib', 'onion-1.2', 'bin', 'onion')
-        self.onion_tmp = os.path.join(out_path, 'tmp')
+        self.onion_path = ONION_PATH
+        self.onion_tmp = os.path.join(output_path, TMP_PATH)
         self.onion_output_dedup_sentences_file = onion_output_dedup_sentences_file
+        
+        self._config = config
 
 
-
-
-    @staticmethod
-    def add_args(parser: argparse.ArgumentParser):
-        parser.add_argument('--document-deduplication-threshold', type=float,
-                            help='Threshold for document de-duplication, expressed as the percentage of sentences'
-                                 'overlap between documents',
-                            default=0.5)
-        parser.add_argument('--remove-glob-rep-sen', type=int, default=-1,
-                            help='Whether to remove corpus-level repeated sentences (threshold of repetitions; -1'
-                                 'to deactivate)')
-        parser.add_argument('--dedup-buffer', type=int, default=1000000000,
-                            help='Deduplication buffer size, in bytes (default: 1000000000)')
-        parser.add_argument('--only-reduce-ind-onion', action='store_true', help='Individually apply reduction')
-
-    @staticmethod
-    def check_args(args: argparse.Namespace):
-        # TODO check custom args
-        pass
+    @property
+    def reduced_path(self) -> str:
+        return self.final_path
 
     def _run_onion(self):
         cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_input_file
         add_doc_tags = f"sed -i '1i <corpora>' {self.onion_input_file}; echo '</corpora>' >> {self.onion_input_file}"
         subprocess.run(cat_command, shell=True, check=True, universal_newlines=True)
-        subprocess.run(add_doc_tags, shell=True, check=True, universal_newlines=True)
-        onion_command = f'{self.onion_path} -d "corpora" -p "doc" -t {self.document_deduplication_threshold} -b {self.dedup_buffer} ' \
-                        f'{self.onion_input_file} > {self.onion_output_file}'
+        onion_command = f'{self.onion_path} -m -n 1 -t {self._config.document_deduplication_threshold} -b {self._config.dedup_buffer} ' \
+            f'{self.onion_input_file} > {self.onion_output_file}'
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
     def _remove_global_duplicate_sentences(self, threshold: int):
@@ -169,5 +166,5 @@ class DocumentFilter(CleanerComponentReducer):
             pipeline.run()
         else:
             self._run_onion()
-            if self.remove_glob_rep_sen != -1:
-                self._remove_global_duplicate_sentences(self.remove_glob_rep_sen)
+            if self._config.remove_glob_rep_sen != -1:
+                self._remove_global_duplicate_sentences(self._config.remove_glob_rep_sen)

@@ -1,17 +1,14 @@
-from .output_formatter import OutputFormatter
+from .output_formatter import OutputFormatter, OutputFormatterConfig
 from corpus_cleaner.document import Document
 import os
-from typing import Optional
-
+from corpus_cleaner.constants import TXT_OUTPUT_PATH
 
 class FairseqLMOutputFormatter(OutputFormatter):
-    def __init__(self, args, output_path: Optional[str] = None):
-        if output_path is None:
-            output_path = os.path.join(args.output_path, 'output.txt')
-        super().__init__(args, output_path)
+    def __init__(self, config: OutputFormatterConfig):
+        super().__init__(config)
 
     def _init_writing(self):
-        self.fd = open(self.path, 'a')
+        self.fd = open(os.path.join(self.path, TXT_OUTPUT_PATH), 'a')
 
     def _write_document(self, document: Document):
         if len(document.sentences) > 0:

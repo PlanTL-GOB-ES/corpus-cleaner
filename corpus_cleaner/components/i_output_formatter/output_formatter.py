@@ -1,37 +1,38 @@
 from corpus_cleaner.document import Document
 from typing import Iterable, Union
-from corpus_cleaner.components.cleaner_component import CleanerComponent
-import argparse
-from typing import TextIO
-from typing import Optional
-
-SEPARATOR = "|"
+from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
+from typing import TextIO, Optional
+from corpus_cleaner.constants import DEBUG_SEPARATOR, CHECKPOINT_PATH_ESCAPE
+import os
 
 
-class OutputFormatter(CleanerComponent):
-    def __init__(self, args: argparse.Namespace, output_path: Optional[str] = None):
-        super().__init__(args)
-        self.path = output_path if output_path is not None else args.output_path
-        self.fd: Union[TextIO, None] = None
-        self.separator = SEPARATOR
+class OutputFormatterConfig:
+    output_format: str
+    output_path: str
+    write_checkpoint_path: Optional[str] = None
 
-    @staticmethod
-    def add_args(parser: argparse.ArgumentParser):
-        pass
 
-    @staticmethod
-    def check_args(args: argparse.Namespace):
-        # TODO check custom args
-        pass
+class OutputFormatter(CleanerComponentMapper):
+    def __int__(self, config: OutputFormatterConfig):
+        self._config = config
+        self.path = config.output_path
+        self.fd: Optional[TextIO] = None
+        self.separator = DEBUG_SEPARATOR
+
+    def write_checkpoint(self, e: str):
+        if self._config.write_checkpoint_path:
+            with open(os.path.join(
+                    self._config.write_checkpoint_path, e.replace('/', CHECKPOINT_PATH_ESCAPE)), 'w') as f:
+                pass
 
     def _init_writing(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
-    def _write_document(self, document: Document):
-        raise NotImplementedError()
+    def write_document(self, document: Document):
+        raise NotImplementedError
 
     def _end_writing(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _output_format(self, documents: Iterable[Document]):
         if self.fd is None:
@@ -39,14 +40,11 @@ class OutputFormatter(CleanerComponent):
         for document in documents:
             if document is None:
                 continue
-            self._write_document(document)
+            self.write_document(document)
         self._end_writing()
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
+    def apply(self, documents: Optional[Iterable[Document]]) -> Optional[Iterable[Document]]:
         return self._output_format(documents)
-
-    #def __del__(self):
-    #    self._end_writing()
 
     def init_writing(self):
         self._init_writing()

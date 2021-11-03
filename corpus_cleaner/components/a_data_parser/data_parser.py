@@ -4,63 +4,60 @@ from typing import TextIO, BinaryIO
 import os
 from typing import Tuple
 import glob
-from corpus_cleaner.components.cleaner_component import CleanerComponent
-import argparse
-from typing import Iterable, List, Optional
+from typing import Iterable, Optional
 import gzip
 from urllib.parse import urlparse
 import re
-from typing import Dict
 import time
+from dataclasses import dataclass
+from typing import List
+from corpus_cleaner.par_utils.par_utils import PipelineLogger
 
-TIMEOUT_ENCODING_GUESSING = 5.0
+
+@dataclass
+class DataParserConfig:
+    input_path: str  # Directory path of the input data.
+    input_format: str  # Input data format
+    extensions: Tuple[str] = ('*',)  # File extensions to work with (eg. json).
+    encoding_threshold: float = 0.9  # Encoding threshold if --encoding auto (ignored otherwise. If the encoding
+    # detector is not above this threshold, it assigns utf-8.
+    encoding: str = 'auto'  # Input encoding format (eg. utf-8. If set to auto, the program tries to guess the
+    # encoding).
+    encoding_error_policy: str = 'ignore'  # Encoding error policy (same options as open()).
+    url_doc: Optional[str] = None  # Path to a url list (plain text, one url per line) that should be filtered and
+    # processed'.
+    warc_warn: bool = False  # Enable warnings of WARC parser.
+    bytes_: bool = False  # Whether input is compressed (GZIP).
+    done_paths: Iterable[str] = ()  # Already preprocessed paths (for checkpointing).
+    timeout_encoding_guessing: int = 5.0  # Timeout for encoding guessing (otherwise, UTF-8).
+    input_lang: Optional[str] = None  # Assume that input is in a given language (e.g., if we know fore sure that all
+    # input is in Spanish).
 
 
-class DataParser(CleanerComponent):
-    @staticmethod
-    def add_args(parser: argparse.ArgumentParser):
-        parser.add_argument('--extensions', type=str, help='File extensions to work with (eg. json)', nargs='+')
-        parser.add_argument('--encoding', type=str, help='Input encoding format (eg. utf-8. If set to auto, the program'
-                                                         'tries to guess the encoding', default='auto')
-        parser.add_argument('--encoding-threshold', type=float, help='Encoding threshold if --encoding auto (ignored'
-                            'otherwise. If the encoding detector is not above this threshold, it assigns utf-8.')
-        parser.add_argument('--encoding-error-policy', type=str, help='Encoding error policy (same options as open()',
-                            default='ignore')
-        parser.add_argument('--url-doc', type=str, help='Path to a url list (plain text, one url per line)'
-                                                        'that should be filtered and processed', default=None)
-        parser.add_argument('--warc-warn', action='store_true', help='Enable warnings of WARC parser')
-
-    @staticmethod
-    def check_args(args: argparse.Namespace):
-        # TODO check custom args
-        if args.url_doc is not None and args.input_format not in ['bsc-crawl-json', 'warc']:
-            raise RuntimeError('--url-doc can only be used with --input-format bsc-crawl-json or warc')
-
-    def __init__(self, args: argparse.Namespace, input_path: Optional[str] = None,
-                 extensions: Optional[Tuple[str]] = None,
-                 encoding: str = 'auto', encoding_threshold: float = 0.9, encoding_error_policy: str = 'ignore',
-                 bytes_: bool = False, url_filter: Optional[str] = None, done_paths: Iterable[str] = ()):
-        # TODO: Revisit defaults
-        super().__init__(args)
-        self.input_path = input_path if input_path is not None else args.input_path
-        self.extensions = extensions if extensions is not None else args.extensions
-        self.encoding = args.encoding if args.encoding is not None else encoding
-        self.encoding_threshold = args.encoding_threshold if args.encoding_threshold is not None else encoding_threshold
-        self.encoding_error_policy = args.encoding_error_policy if args.encoding_error_policy is not None else \
-            encoding_error_policy
-        self.detector = UniversalDetector() if self.encoding == 'auto' else None
-        self.info = []
-        self.logger = args.logger
-        self.bytes = bytes_
-        self.url_filter = args.url_doc if args.url_doc is not None else url_filter
-        if self.url_filter is not None:
-            with open(self.url_filter, 'r') as f:
-                self.url_filter = [re.sub("www\.", '', line.strip()) for line in f.readlines()]
-                for idx, url in enumerate(self.url_filter):
+class DataParser:
+    def __init__(self, config: DataParserConfig, logger: Optional[PipelineLogger] = None):
+        self._config = config
+        if self._config.url_doc is not None:
+            self._url_filter = self._config.url_doc
+            with open(self._config.url_doc, 'r') as f:
+                self._url_filter = [re.sub("www\.", '', line.strip()) for line in f.readlines()]
+                for idx, url in enumerate(self._url_filter):
                     if len(re.findall("\w://", url)) == 0:
-                        self.url_filter[idx] = 'http://' + url
-                self.url_filter = [urlparse(url) for url in self.url_filter]
-        self.done_paths = set(done_paths)
+                        self._url_filter[idx] = 'http://' + url
+                self._url_filter = [urlparse(url) for url in self._url_filter]
+        self._done_paths = set(self._config.done_paths)
+        self._detector = UniversalDetector() if self._config.encoding == 'auto' else None
+        self._logger = logger
+
+    def _log(self, text: str):
+        if self._logger is None:
+            raise RuntimeError("Logger is not defined in DataParser")
+        self._logger.logger.info(text)
+
+    def _warn(self, text: str):
+        if self._logger is None:
+            raise RuntimeError("Logger is not defined in DataParser")
+        self._logger.logger.warning(text)
 
     def _check_url(self, url: str) -> bool:
         def url_belongs_to(u1, u2):
@@ -82,17 +79,17 @@ class DataParser(CleanerComponent):
         if len(re.findall("\w://", url)) == 0:
             url = 'http://' + url
         url = urlparse(re.sub("www\.", '', url))
-        for url_to_keep in self.url_filter:
+        for url_to_keep in self._url_filter:
             if url_belongs_to(url, url_to_keep):
                 return True
         return False
 
     def _treat_file(self, idx_filepath: int, relative_filepath: str) -> Iterable[Document]:
         abs_path = os.path.join(relative_filepath)
-        if self.bytes:
+        if self._config.bytes_:
             with open(abs_path, 'rb') as f:
                 for idx, doc in enumerate(self._parse_binary_file(f, relative_filepath, idx_filepath)):
-                    if self.url_filter is not None:
+                    if self._url_filter is not None:
                         url = doc.url
                         if self._check_url(url):
                             yield doc
@@ -103,16 +100,16 @@ class DataParser(CleanerComponent):
             extension = os.path.splitext(relative_filepath)[1][1:].strip()
             if extension == 'gz':
                 gz = True
-            enc, confidence_ok = self._guess_encoding(abs_path, gz=gz) if self.encoding == 'auto' else (self.encoding,
-                                                                                                        True)
+            enc, confidence_ok = self._guess_encoding(abs_path, gz=gz) if self._config.encoding == 'auto' else \
+                (self._config.encoding, True)
             if not gz:
-                with open(abs_path, 'r', encoding=enc, errors=self.encoding_error_policy) as f:
+                with open(abs_path, 'r', encoding=enc, errors=self._config.encoding_error_policy) as f:
                     for idx, doc in enumerate(self._parse_file(f, relative_filepath, idx_filepath)):
                         if enc != 'utf-8':
                             pass  # TODO: Check possible problems when the original file was not utf-8
                         yield doc
             else:
-                with gzip.open(abs_path, 'rt', encoding=enc, errors=self.encoding_error_policy) as f:
+                with gzip.open(abs_path, 'rt', encoding=enc, errors=self._config.encoding_error_policy) as f:
                     for idx, doc in enumerate(self._parse_file(f, relative_filepath, idx_filepath)):
                         if enc != 'utf-8':
                             pass  # TODO: Check possible problems when the original file was not utf-8
@@ -124,57 +121,57 @@ class DataParser(CleanerComponent):
             parse_iterables.append(self._treat_file(idx_filepath, relative_filepath))
         return parse_iterables
 
-    def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) ->\
+    def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> \
             List[Iterable[Document]]:
-        raise NotImplementedError()
+        raise NotImplementedError
 
-    def _parse_binary_file(self, fd: BinaryIO, relative_filepath: str, idx_filepath: int) ->\
+    def _parse_binary_file(self, fd: BinaryIO, relative_filepath: str, idx_filepath: int) -> \
             List[Iterable[Document]]:
-        pass
+        raise NotImplementedError
 
     def _get_relative_filepaths(self) -> Iterable[str]:
-        self.logger.logger.info('Getting relative filepaths')
+        self._log('Getting relative filepaths')
         relative_paths = []
-        for extension in self.extensions:
+        for extension in self._config.extensions:
             for path in glob.glob(
-                    os.path.join(self.input_path, '**', f'*{extension}' if '*' not in extension else extension),
+                    os.path.join(self._config.input_path, '**', f'*{extension}' if '*' not in extension else extension),
                     recursive=True):
-                if os.path.isfile(path) and path not in self.done_paths:
+                if os.path.isfile(path) and path not in self._config.done_paths:
                     relative_paths.append(path)
         return sorted(relative_paths)
 
     def _guess_encoding(self, path: str, gz: bool):
         # https://stackoverflow.com/questions/46037058/using-chardet-to-find-encoding-of-very-large-file/49621821
-        self.detector.reset()
+        self._detector.reset()
         t0 = time.process_time()
         timeout = False
         if not gz:
             with open(path, 'rb') as f:
                 for row in f:
-                    self.detector.feed(row)
-                    if self.detector.done :
+                    self._detector.feed(row)
+                    if self._detector.done:
                         break
                     t1 = time.process_time()
-                    if t1 - t0 > TIMEOUT_ENCODING_GUESSING:
+                    if t1 - t0 > self._config.timeout_encoding_guessing:
                         timeout = True
                         break
         else:
             with gzip.open(path, 'rb') as f:
                 for row in f:
-                    self.detector.feed(row)
-                    if self.detector.done:
+                    self._detector.feed(row)
+                    if self._detector.done:
                         break
                     t1 = time.process_time()
-                    if t1 - t0 > TIMEOUT_ENCODING_GUESSING:
+                    if t1 - t0 > self._config.timeout_encoding_guessing:
                         timeout = True
                         break
-        self.detector.close()
+        self._detector.close()
         if timeout:
             encoding = 'utf-8'
             confidence_ok = 0.0
         else:
-            confidence_ok = self.detector.result['confidence'] > self.encoding_threshold
-            encoding = self.detector.result['encoding'] if confidence_ok else 'utf-8'
+            confidence_ok = self._detector.result['confidence'] > self._config.encoding_threshold
+            encoding = self._detector.result['encoding'] if confidence_ok else 'utf-8'
         return encoding, confidence_ok
 
     def parse(self) -> List[Iterable[Document]]:

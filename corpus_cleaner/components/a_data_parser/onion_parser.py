@@ -1,26 +1,27 @@
-from .data_parser import DataParser
+from .data_parser import DataParser, DataParserConfig
 from typing import Iterable
 from corpus_cleaner.document import Document
 from typing import TextIO
-from typing import Tuple
-import argparse
 from typing import Optional
+from corpus_cleaner.par_utils import PipelineLogger
+from corpus_cleaner.constants import DEDUP_EXTENSION
 
 
 class OnionParser(DataParser):
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('.dedup',),
-                 input_path: Optional[str] = None,
-                 **kwargs):
-        super(OnionParser, self).__init__(args, encoding='utf-8',
-                                          input_path=args.output_path if input_path is None else input_path,
-                                          extensions=extensions, **kwargs)
+    def __init__(self, config: DataParserConfig, logger: Optional[PipelineLogger] = None, debug: bool = False):
+        config.extensions = (DEDUP_EXTENSION,)
+        config.encoding = 'utf-8'
+        # Here, unlike in the other parsers, we don't warn about the hardcoding of extensions and encoding, because this
+        # parser is for internal usage.
+        super().__init__(config, logger)
+        self._debug = debug
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:
         doc_sentences = []
         par_words = []
         doc = Document(content='')
         for line in fd:
-            if not self.debug:
+            if not self._debug:
                 line_index = line.split('\t')[0]
                 line = '\t'.join(line.split('\t')[1:])
 
@@ -48,5 +49,5 @@ class OnionParser(DataParser):
                 continue
 
             else:
-                if self.debug or line_index == '0':
+                if self._debug or line_index == '0':
                     par_words.append(line.strip('\n'))
