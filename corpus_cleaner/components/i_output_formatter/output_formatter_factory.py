@@ -23,6 +23,8 @@ class OutputFormatterFactory:
         else:
             if output_format == 'onion':
                 return OnionOutputFormatter(args, output_path)
+            elif args.output_format == 'fairseq-lm':
+                return FairseqLMOutputFormatter(args, output_path)
             else:
                 raise NotImplementedError()
 
