@@ -7,8 +7,8 @@ class OnionOutputFormatter(OutputFormatter):
     def __init__(self, args: argparse.Namespace, output_path: str, **kwargs):
         super().__init__(args, output_path)
         self.start_doc_tag = '<doc '
-        self.start_p_tag = ' >\n<p>\n'
-        self.end_doc_tag = '\n</p>\n</doc>\n'
+        self.close_start_doc_tag = '>\n'
+        self.end_doc_tag = '</doc>\n'
         self.debug = args.debug
 
     def _init_writing(self):
@@ -24,10 +24,13 @@ class OnionOutputFormatter(OutputFormatter):
                                                                          operations)]
             else:
                 sentences = document.sentences
-            doc_onion = self.start_doc_tag + document.attr_str() + self.start_p_tag + '\n'.join(sentences) + \
-                        self.end_doc_tag
 
-            self.fd.writelines(doc_onion)
+            paragraphs = self.start_doc_tag + document.attr_str() + self.close_start_doc_tag + \
+                         "\n".join("".join(f"{word}\n" for word in sent.split())
+                                   for sent in sentences) + \
+                         self.end_doc_tag
+
+            self.fd.writelines(paragraphs)
 
     def _end_writing(self):
         self.fd.close()

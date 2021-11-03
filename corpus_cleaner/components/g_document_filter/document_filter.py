@@ -52,7 +52,7 @@ class DocumentFilter(CleanerComponentReducer):
                             help='Threshold for document de-duplication, expressed as the percentage of sentences'
                                  'overlap between documents',
                             default=0.5)
-        parser.add_argument('--remove-glob-rep-sen', type=int, default=5,
+        parser.add_argument('--remove-glob-rep-sen', type=int, default=-1,
                             help='Whether to remove corpus-level repeated sentences (threshold of repetitions; -1'
                                  'to deactivate)')
         parser.add_argument('--dedup-buffer', type=int, default=1000000000,
@@ -66,9 +66,11 @@ class DocumentFilter(CleanerComponentReducer):
 
     def _run_onion(self):
         cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_input_file
+        add_doc_tags = f"sed -i '1i <corpora>' {self.onion_input_file}; echo '</corpora>' >> {self.onion_input_file}"
         subprocess.run(cat_command, shell=True, check=True, universal_newlines=True)
-        onion_command = f'{self.onion_path} -m -n 1 -t {self.document_deduplication_threshold} -b {self.dedup_buffer} ' \
-            f'{self.onion_input_file} > {self.onion_output_file}'
+        subprocess.run(add_doc_tags, shell=True, check=True, universal_newlines=True)
+        onion_command = f'{self.onion_path} -d "corpora" -p "doc" -t {self.document_deduplication_threshold} -b {self.dedup_buffer} ' \
+                        f'{self.onion_input_file} > {self.onion_output_file}'
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
     def _remove_global_duplicate_sentences(self, threshold: int):
