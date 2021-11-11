@@ -64,7 +64,7 @@ class PipelineLogger:
         :param logger: Standard, initialized logger.
         """
         self.logger = logger
-        multiprocessing_logging.install_mp_handler()
+        # multiprocessing_logging.install_mp_handler()
 
 
 S = TypeVar('S')
