@@ -73,8 +73,9 @@ class Cleaner:
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
                             args=self.args, output_format='onion',
                             output_path=os.path.join(self.tmp_dir,  os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
-        self.reducer = REDUCER if not args.debug else DummyReducer
-        if args.components is not None and not args.debug:
+
+        self.reducer = DummyReducer if (args.debug or args.no_reduce) else REDUCER
+        if args.components is not None and not (args.debug or args.no_reduce):
             self.reducer = None
             for comp in args.components:
                 if comp == REDUCER.__name__:
@@ -102,6 +103,8 @@ class Cleaner:
         parser.add_argument('--only-reduce-output', action='store_true', help='Only document filter for output files')
         parser.add_argument('--debug', action='store_true',
                             help='Activate the debug error mode to compare the original and cleaned sentences')
+        parser.add_argument('--no-reduce', action='store_true',
+                            help='suppress document filter component')
 
     @staticmethod
     def check_args(args: argparse.Namespace):

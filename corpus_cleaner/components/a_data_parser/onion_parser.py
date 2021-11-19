@@ -20,7 +20,7 @@ class OnionParser(DataParser):
         par_words = []
         doc = Document(content='')
         for line in fd:
-            if not self.debug:
+            if not (self.debug or self.args.no_reduce):
                 line_index = line.split('\t')[0]
                 line = '\t'.join(line.split('\t')[1:])
 
@@ -48,5 +48,5 @@ class OnionParser(DataParser):
                 continue
 
             else:
-                if self.debug or line_index == '0':
+                if (self.debug or self.args.no_reduce) or line_index == '0':
                     par_words.append(line.strip('\n'))
