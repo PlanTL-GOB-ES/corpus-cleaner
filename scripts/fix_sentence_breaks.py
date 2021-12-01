@@ -24,7 +24,7 @@ def postprocess(file, data_dir, output_dir):
     # recover sentences split by preceded by numerical bullet points
     pattern_line_break_3 = re.compile(r"(?<=[0-9]\.)\n")
 
-    with open(os.path.join(data_dir, file)) as fn:
+    with open(file) as fn:
         content = fn.read()
 
     content_postproc = pattern_replace_trailing_spaces.sub('\n', content)
@@ -61,4 +61,4 @@ if __name__ == '__main__':
     files = list(p.rglob(f"*{SUFFIX}"))
     for file in files:
         logging.info(f"Processing file {file}")
-        postprocess(file, args.data_dir, args.output_dir)
+        postprocess(str(file), args.data_dir, args.output_dir)
