@@ -8,6 +8,9 @@ import corpus_cleaner
 import sys
 import datetime
 from corpus_cleaner.checkpoint import Checkpoint
+from multiprocessing import set_start_method
+# Necessary for preventing fork problem in python 3.7 in cluster
+set_start_method("spawn")
 
 
 def clean(args: argparse.Namespace, logger: logging.Logger, checkpoint: Checkpoint):
