@@ -64,4 +64,7 @@ class DummyReducer(CleanerComponentReducer):
 
     def _reduce(self):
         cat_command = "find " + self.onion_tmp + " -name '*.onion' -exec cat {} \; > " + self.onion_input_file
+        add_doc_tags = f"sed -i '1i <corpora>' {self.onion_input_file}; echo '</corpora>' >> {self.onion_input_file}"
         subprocess.run(cat_command, shell=True, check=True, universal_newlines=True)
+        subprocess.run(add_doc_tags, shell=True, check=True, universal_newlines=True)
+

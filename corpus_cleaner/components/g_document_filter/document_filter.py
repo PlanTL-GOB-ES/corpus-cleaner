@@ -69,7 +69,7 @@ class DocumentFilter(CleanerComponentReducer):
         add_doc_tags = f"sed -i '1i <corpora>' {self.onion_input_file}; echo '</corpora>' >> {self.onion_input_file}"
         subprocess.run(cat_command, shell=True, check=True, universal_newlines=True)
         subprocess.run(add_doc_tags, shell=True, check=True, universal_newlines=True)
-        onion_command = f'{self.onion_path} -d "corpora" -p "doc" -t {self.document_deduplication_threshold} -b {self.dedup_buffer} ' \
+        onion_command = f'{self.onion_path} -d "corpora" -p "doc" -t {self.document_deduplication_threshold} -n 5 -b {self.dedup_buffer} ' \
                         f'{self.onion_input_file} > {self.onion_output_file}'
         subprocess.run(onion_command, shell=True, check=True, universal_newlines=True)
 
