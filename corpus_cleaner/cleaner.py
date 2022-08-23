@@ -62,12 +62,12 @@ class Cleaner:
                 # set only mappers
                 self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
                                [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                                           args=self.args,
+                                           args=x,
                                            output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
             else:           
                 self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
                                [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                                args=self.args, output_format='onion',
+                                args=x, output_format='onion',
                                 output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
         else:
             class SentencePacker(CleanerComponentMapper):
