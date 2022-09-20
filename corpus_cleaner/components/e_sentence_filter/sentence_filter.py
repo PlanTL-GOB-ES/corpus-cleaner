@@ -76,7 +76,7 @@ class SentenceFilter(CleanerComponentMapper):
         self.lang_filter_sentence = not args.no_lang_filter_sentence \
             if args.no_lang_filter_sentence is not None else not no_lang_filter_sentence
         self.lang_filter_sentence_src_tgt = not args.no_lang_filter_sentence_src_tgt \
-            if args.no_lang_filter_sentence_src_tgt is not None else not no_lang_filter_sentence_src_tgt
+            if args.no_lang_filter_sentence_src_tgt is not None else not args.no_lang_filter_sentence_src_tgt
 
         self.code_threshold = args.code_threshold if args.code_threshold is not None else code_threshold
         self.dictionary_filter = \

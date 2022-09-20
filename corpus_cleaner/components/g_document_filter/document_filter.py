@@ -21,12 +21,11 @@ class DocumentFilter(CleanerComponentReducer):
         remove_glob_rep_sen = args.remove_glob_rep_sen if args.remove_glob_rep_sen is not None else remove_glob_rep_sen
         final_path = onion_output_file if remove_glob_rep_sen < 2 else onion_output_dedup_sentences_file
         if args.debug:
-            extensions = '.debug'
+            extensions = ['.debug']
         elif remove_glob_rep_sen < 2:
-            extensions = '.dedup'
+            extensions = ['.dedup']
         else:
-            extensions = '.sentences'
-        extensions = (extensions,)
+            extensions = ['.sentences']
         super().__init__(args, format_='onion', tmp_file=onion_input_file, final_path=final_path,
                          input_path=out_path if not self.only_reduce_ind_onion else os.path.join(out_path, 'tmp'),
                          extensions=extensions)

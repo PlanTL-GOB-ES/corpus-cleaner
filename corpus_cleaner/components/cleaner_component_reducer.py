@@ -12,7 +12,7 @@ from typing import Tuple
 class CleanerComponentReducer(CleanerComponent):
 
     def __init__(self, args: argparse.Namespace, format_: str, tmp_file: str, final_path: str,
-                 input_path: Optional[str], extensions: Tuple[str]):
+                 input_path: Optional[str], extensions: List[str]):
         super().__init__(args)
         self.format = format_
         self.tmp_file = tmp_file
@@ -48,7 +48,7 @@ class DummyReducer(CleanerComponentReducer):
         out_path = output_path if output_path is not None else args.output_path
         onion_input_file = os.path.join(out_path, 'input.onion.debug')
         super().__init__(args, format_='onion', tmp_file=onion_input_file, input_path=out_path,
-                         extensions=('.debug',), final_path='')
+                         extensions=['.debug'], final_path='')
         self.output_path = out_path
         self.onion_input_file = onion_input_file
         self.onion_output_file = onion_input_file

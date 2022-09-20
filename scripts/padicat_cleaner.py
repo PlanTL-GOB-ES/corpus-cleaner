@@ -113,16 +113,17 @@ MULTIPROCESSING_N = 128
 if __name__ == '__main__':
     os.makedirs(OUTPUT_PATH, exist_ok=True)
     files = [[os.path.join(root, file) for file in files] for root, dirs, files in os.walk(PATH)]
-    files = list(chain.from_iterable(files))
+    chained_files = list(chain.from_iterable(files))
     if MULTIPROCESSING:
         n_ok_total = list()
         with Pool(processes=MULTIPROCESSING_N) as p:
-            with tqdm(total=len(files)) as pbar:
-                for i, res in enumerate(p.imap_unordered(data_mapping, files)):
+            with tqdm(total=len(chained_files)) as pbar:
+                for i, res in enumerate(p.imap_unordered(data_mapping, chained_files)):
                     pbar.update()
                     n_ok_total.append(res)
+        print(sum(list(n_ok_total)))
 
-            #n_ok_total = p.map(data_mapping, files), total=len(files)
+            #n_ok_total = p.map(data_mapping, chained_files), total=len(chained_files)
     else:
-        n_ok_total = map(data_mapping, tqdm(files))
-    print(sum(list(n_ok_total)))
+        total = map(data_mapping, tqdm(chained_files))
+        print(sum(list(total)))

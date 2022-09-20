@@ -32,10 +32,9 @@ from typing import BinaryIO, List
 
 class WARCParser(DataParser):
 
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str]=('.warc', '.warc.gz'), warc_warn: bool = False,
+    def __init__(self, args: argparse.Namespace, extensions: List[str]=['.warc', '.warc.gz'], warc_warn: bool = False,
                  **kwargs):
         super(WARCParser, self).__init__(args, input_path=args.input_path, extensions=extensions, bytes_=True, **kwargs)
-        self.file_data = {}
         self.error_msgs = ['404. That’s an error.', 'was not found on this server', '400. That’s an error.',
                            'The document has moved here.', 'You don\'t have permission to access',
                            'The requested file could not be found.', 'You do not have permission to access']
@@ -50,7 +49,7 @@ class WARCParser(DataParser):
         raise RuntimeError('WARCParser should not parse plain text files')
 
     def _parse_binary_file(self, fd: BinaryIO, relative_filepath: str, idx_filepath: int) -> \
-            List[Iterable[Document]]:
+            Iterable[Document]:
 
         try:
             warc_file = fd

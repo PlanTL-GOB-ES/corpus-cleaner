@@ -1,5 +1,5 @@
 from .data_parser import DataParser
-from typing import Iterable
+from typing import Iterable, List
 from corpus_cleaner.document import Document
 import xml.etree.ElementTree as ET
 from typing import TextIO
@@ -8,13 +8,13 @@ import argparse
 
 
 class WikipediaParser(DataParser):
-    def __init__(self,  args: argparse.Namespace, extensions: Tuple[str] = ('*',),
+    def __init__(self,  args: argparse.Namespace, extensions: List[str] = ['*'],
                  encoding='utf-8', **kwargs):
         super(WikipediaParser, self).__init__(args, input_path=args.input_path, extensions=extensions,
                                               encoding=encoding, **kwargs)
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:
-        doc_lines = []
+        doc_lines : List[str] = []
         doc_id = ''
         url = ''
         title = ''

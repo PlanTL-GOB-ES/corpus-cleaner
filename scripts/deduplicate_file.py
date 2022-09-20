@@ -3,6 +3,7 @@ import sys
 import hashlib
 import pickle
 from datetime import datetime
+from typing import List
 
 start_time = datetime.now()
 
@@ -13,7 +14,7 @@ def get_hash(string_list):
 
 
 unique_sentences = set()
-sentences = []
+sentences : List[str] = []
 duplicated_docs_count = 0
 unique_docs_count = 0
 

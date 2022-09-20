@@ -19,6 +19,6 @@ class DataParserMapper(CleanerComponent):
         pass
 
     def __call__(self, path: Tuple[int, str]) -> Iterable[Document]:
-        idx, path = path
-        return self.data_parser.treat_file(idx, path)
+        idx, inner_path = path
+        return self.data_parser.treat_file(idx, inner_path)
 

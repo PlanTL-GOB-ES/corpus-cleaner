@@ -337,7 +337,7 @@ class PreFilterer(CleanerComponentMapper):
             return False, None
         return True, None
 
-    def _filter(self, document: Optional[Document]) -> Optional[Document]:
+    def _filter(self, document: Document) -> Optional[Document]:
         # TODO: 1. implement replace functions that receives as input the Document
         #       2. implement a decorator for the replace functions like the decorator for filters
         if self.language_normalization:
@@ -385,5 +385,5 @@ class PreFilterer(CleanerComponentMapper):
             return document
         return None
 
-    def apply(self, document: Optional[Document]) -> Optional[Document]:
+    def apply(self, document: Document) -> Optional[Document]:
         return self._filter(document)
