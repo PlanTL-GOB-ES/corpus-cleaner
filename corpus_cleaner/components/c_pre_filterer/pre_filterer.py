@@ -1,4 +1,4 @@
-from typing import Union, Tuple, Optional
+from typing import List, Set, Union, Tuple, Optional
 from corpus_cleaner.document import Document
 from alphabet_detector import AlphabetDetector
 from textnorm import normalize_space
@@ -34,19 +34,19 @@ class PreFilterer(CleanerComponentMapper):
     @staticmethod
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--none_filter', action='store_true', help='Apply no filters')
-        parser.add_argument('--no-lang-filter-document', action='store_true',
-                            help='Avoid applying language filter on documents')
-        parser.add_argument('--no-language-normalization', action='store_true',
-                            help='Avoid applying language-specific normalization')
-        parser.add_argument('--no-replace-emails', action='store_true',
-                            help='Avoid replacing email adresses with "[EMAIL]"')
-        parser.add_argument('--no-remove-hashtags-mentions', action='store_true', help='Remove hashtags and mentions.')
-        parser.add_argument('--no-remove-tags', action='store_true', help='Avoid removing XML/HTML tags')
-        parser.add_argument('--no-space-normalization', action='store_true', help='Avoid normalizing white spaces')
-        parser.add_argument('--no-replace-urls', action='store_true', help='Avoid replacing URLs with "[URL]"')
+        parser.add_argument('--lang-filter-document', action='store_true',
+                            help='Applying language filter on documents')
+        parser.add_argument('--language-normalization', action='store_true',
+                            help='Applying language-specific normalization')
+        parser.add_argument('--replace-emails', action='store_true',
+                            help='Replacing email adresses with "[EMAIL]"')
+        parser.add_argument('--remove-hashtags-mentions', action='store_true', help='Remove hashtags and mentions.')
+        parser.add_argument('--remove-tags', action='store_true', help='Remove XML/HTML tags')
+        parser.add_argument('--space-normalization', action='store_true', help='Normalize white spaces')
+        parser.add_argument('--replace-urls', action='store_true', help='Replacing URLs with "[URL]"')
         parser.add_argument('--char-length-filter-document', type=int,
                             help='Minimum char length per document. Set to 0 not to apply any filter.', default=40)
-        parser.add_argument('--no-head-filter', action='store_true', help='Avoid filtering documents coming from'
+        parser.add_argument('--head-filter', action='store_true', help='Filter documents coming from'
                                                                           'a crawler (having a "heads" attribute) with'
                                                                           'common HTTP errors.')
         parser.add_argument('--digits_filter', type=float, help='Maximum allowed proportion of digit characters',
@@ -81,37 +81,36 @@ class PreFilterer(CleanerComponentMapper):
         pass
 
     def __init__(self, args: argparse.Namespace,
-                 no_lang_filter_document: bool = False,
-                 no_language_normalization: bool = False,
-                 no_replace_emails: bool = False,
-                 no_remove_hashtags_mentions: bool = False, no_remove_tags: bool = False,
-                 no_space_normalization: bool = False, no_replace_urls: bool = False,
-                 char_length_filter_document: int = 40, no_head_filter: bool = False, digits_filter: float = 0.1,
-                 remove_citations: bool = False, lang_chars_filter: float = 0.1,
-                 alphanum_filter: float = 0.3, uppercase_filter: float = 0.4,
-                 alphabet_filter: Union[Tuple[str], None] = ('LATIN',), lang_filter: Union[Tuple[str], None] = None,
+                 lang_filter_document: bool = False,
+                 language_normalization: bool = False,
+                 replace_emails: bool = False,
+                 remove_hashtags_mentions: bool = False, 
+                 remove_tags: bool = False,
+                 space_normalization: bool = False,
+                 replace_urls: bool = False,
+                 char_length_filter_document: int = 40, 
+                 head_filter: bool = False, 
+                 digits_filter: float = 0.1,
+                 remove_citations: bool = False, 
+                 lang_chars_filter: float = 0.1,
+                 alphanum_filter: float = 0.3, 
+                 uppercase_filter: float = 0.4,
+                 alphabet_filter: Union[Tuple[str], None] = ('LATIN',), 
+                 lang_filter: Union[Tuple[str], None] = None,
                  initial_lang_filter_threshold: float = 0.3,
                  dictionary_filter: Optional[str] = None,
                  seg_sentences: bool = False,
                  none_filter: bool = False):
         super().__init__(args)
-        self.lang_filter_document = not args.no_lang_filter_document if args.no_lang_filter_document is not None else not no_lang_filter_document
-        self.language_normalization = not args.no_language_normalization if args.no_language_normalization is \
-                                                                            not None else not no_language_normalization
-        self.replace_emails = not args.no_replace_emails if args.no_replace_emails is not None else not no_replace_emails
-        self.emails_pattern = None
-        self.remove_hashtags_mentions = not args.no_remove_hashtags_mentions if args.no_remove_hashtags_mentions is \
-                                                                                not None else not no_remove_hashtags_mentions
-        self.remove_hashtags_pattern = None
-        self.remove_tags = not args.no_remove_tags if args.no_remove_tags is not None else not no_remove_tags
-        self.tags_pattern = None
-        self.space_normalization = not args.no_space_normalization if args.no_space_normalization is not None else not \
-            no_space_normalization
-        self.extra_spaces_pattern = None
-        self.replace_urls = not args.no_replace_urls if args.no_replace_urls is not None else not no_replace_urls
-        self.urls_pattern = None
+        self.lang_filter_document = args.lang_filter_document or lang_filter_document
+        self.language_normalization = args.language_normalization or language_normalization
+        self.replace_emails = args.replace_emails or replace_emails
+        self.remove_hashtags_mentions = args.remove_hashtags_mentions or remove_hashtags_mentions
+        self.remove_tags = args.remove_tags or remove_tags
+        self.space_normalization = args.space_normalization or space_normalization
+        self.replace_urls = args.replace_urls or replace_urls
         self.char_length_filter_document = args.char_length_filter_document if args.char_length_filter_document is not None else char_length_filter_document
-        self.head_filter = not args.no_head_filter if args.no_head_filter is not None else not no_head_filter
+        self.head_filter = args.head_filter or head_filter
         self.digits_filter = args.digits_filter if args.digits_filter is not None else digits_filter
         self.remove_citations = args.remove_citations if args.remove_citations else remove_citations
         self.alphanum_filter = args.alphanum_filter if args.alphanum_filter is not None else alphanum_filter
@@ -119,11 +118,10 @@ class PreFilterer(CleanerComponentMapper):
         self.uppercase_filter = args.uppercase_filter if args.uppercase_filter is not None else uppercase_filter
         self.alphabet_filter = args.alphabet_filter if args.alphabet_filter is not None else alphabet_filter
         self.lang_filter = args.lang_filter if args.lang_filter is not None else lang_filter
-        self.alphabet = set([])
+        self.alphabet : Set[str] = set([])
         for lang in self.lang_filter:
             self.alphabet.update(langs[lang]['alphabet'])
             self.lang_chars = ("".join(char for char in self.alphabet if char.isalpha()))
-        self.fasttext_lid = None
         self.initial_lang_filter_threshold = args.fast_lang_filter_threshold if args.initial_lang_filter_threshold is not \
                                                                                 None else initial_lang_filter_threshold
         self.dictionary_filter = \
@@ -132,7 +130,6 @@ class PreFilterer(CleanerComponentMapper):
             with open(self.dictionary_filter, 'r') as f:
                 self.dictionary_filter = f.readlines()
 
-        self.dictionary_filter_pattern = None
         self.seg_sentences = args.seg_sentences if args.seg_sentences is not None else seg_sentences
         self.input_format = args.input_format
         self.filters = []
