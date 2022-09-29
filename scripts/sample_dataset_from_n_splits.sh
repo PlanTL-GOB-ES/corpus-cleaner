@@ -18,7 +18,7 @@ equal_splits_path="/gpfs/scratch/bsc88/bsc88437/corpora/bne_short/equal_splits"
 target_path="/gpfs/scratch/bsc88/bsc88437/corpora/bne_short"
 tokenizer="/gpfs/projects/bsc88/BERTs/models/biomedical_and_clinical_models/v2/roberta-base-es-biomedical-clinical-swm-vocab-50k/converted_hf"
 
-python process_dataset.py \
+python sample_dataset_from_n_splits.py \
  --splits_path=$equal_splits_path \
  --target_path=$target_path \
  --tokenizer_path=$tokenizer

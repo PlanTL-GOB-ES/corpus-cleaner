@@ -65,8 +65,7 @@ def read_write_split(split_filepath, output_txt_filepath, tokenizer, num_short_f
     """
 
 
-    num_large_files = 0
-    num_short_files = 0
+    num_included_files_ini = num_short_files + num_large_files
     num_files = 0
 
     logger.info("Processing first batch...")
@@ -120,22 +119,28 @@ def read_write_split(split_filepath, output_txt_filepath, tokenizer, num_short_f
         logger.info(f"Split processed")
         logger.info(f'Num short files {num_short_files}')
         logger.info(f'Num large files {num_large_files}')
-        logger.info(f'Num included files {num_short_files + num_large_files}')
+        logger.info(f'Num included files {num_short_files + num_large_files - num_included_files_ini}')
         logger.info(f'Num files in the dataset {num_files}')
 
         return num_short_files, num_large_files
 
 def build_train_dataset(splits_filenames, splits_path, target_path, tokenizer):
 
+    num_short_files = 0
+    num_large_files = 0
     for f in splits_filenames:
-        read_write_split(join(splits_path, f), join(target_path, 'train.txt'), tokenizer)
+        num_short_files, num_large_files = read_write_split(join(splits_path, f), join(target_path, 'train.txt'), 
+            tokenizer, num_short_files, num_large_files)
 
 
 
 def build_dev_or_test_dataset(splits_filenames, splits_path, target_path, tokenizer, split_name, num_documents_per_split):
 
+    num_short_files = 0
+    num_large_files = 0
     for f in splits_filenames:
-        read_write_split(join(splits_path, f), join(target_path, split_name), tokenizer, num_documents_per_split)
+        num_short_files, num_large_files = read_write_split(join(splits_path, f), join(target_path, split_name), tokenizer,
+            num_short_files, num_large_files, num_documents_per_split)
 
 
 def main(splits_path, target_path, tokenizer_path, force_overwrite):
