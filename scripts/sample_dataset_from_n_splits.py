@@ -22,6 +22,18 @@ parser.add_argument('--force_overwrite', action="store_true",
 parser.add_argument('--tokenizer_path', type=str,
                     help='tokenizer path for target files') 
 
+parser.add_argument('--num_train_splits', type=int,
+                    help='number splits for training') 
+parser.add_argument('--num_dev_splits', type=int,
+                    help='number splits for dev') 
+parser.add_argument('--num_test_splits', type=int,
+                    help='number splits for test') 
+parser.add_argument('--num_dev_documents_per_split', type=int,
+                    help='documents to retrieve per each dev split') 
+parser.add_argument('--num_test_documents_per_split', type=int,
+                    help='documents to retrieve per each test split') 
+
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)                 
 logger.setLevel(logging.INFO)
@@ -120,7 +132,7 @@ def read_write_split(split_filepath, output_txt_filepath, tokenizer, num_short_f
         logger.info(f'Num short files {num_short_files}')
         logger.info(f'Num large files {num_large_files}')
         logger.info(f'Num included files {num_short_files + num_large_files - num_included_files_ini}')
-        logger.info(f'Num files in the dataset {num_files}')
+        logger.info(f'Num files in the dataset {num_files}\n')
 
         return num_short_files, num_large_files
 
@@ -139,11 +151,14 @@ def build_dev_or_test_dataset(splits_filenames, splits_path, target_path, tokeni
     num_short_files = 0
     num_large_files = 0
     for f in splits_filenames:
-        num_short_files, num_large_files = read_write_split(join(splits_path, f), join(target_path, split_name), tokenizer,
-            num_short_files, num_large_files, num_documents_per_split)
+        num_short_files, num_large_files = read_write_split(join(splits_path, f), join(target_path, split_name),
+            tokenizer, num_short_files, num_large_files, num_documents_per_split)
 
 
 def main(splits_path, target_path, tokenizer_path, force_overwrite):
+    """
+    'splits_path' path must only contain files with plain text
+    """
     files = [f for f in listdir(splits_path) if isfile(join(splits_path, f))]
 
     seed = 1
@@ -162,20 +177,13 @@ def main(splits_path, target_path, tokenizer_path, force_overwrite):
     # num_dev_documents_per_split = 200
     # num_test_documents_per_split = 200
 
-    num_train_splits = 2
-    num_dev_splits = 2
-    num_test_splits = 2
-   
-    num_dev_documents_per_split = 100
-    num_test_documents_per_split = 100
 
     # Get the train splits from the beginning of the list
     train_files = files[:num_train_splits]
     # Get the dev-test files from the end of the list. We make sure that with the same seed, enlarging the train
     # split will not collide with dev-test.
     dev_files = files[-num_dev_splits:]
-    test_files = files[num_dev_splits-num_test_splits:-num_dev_splits]
-
+    test_files = files[-num_dev_splits-num_test_splits:-num_dev_splits]
 
     train_name = 'train.txt'
     dev_name = 'dev.txt'
@@ -186,9 +194,12 @@ def main(splits_path, target_path, tokenizer_path, force_overwrite):
     # Check if the files exist so as no to overwrite
     check_files(target_path, train_name, dev_name, test_name, force_overwrite)
 
+    logger.info("CREATING TRAIN SPLIT...")
     build_train_dataset(train_files, splits_path, target_path, tokenizer)
-    build_dev_or_test_dataset(dev_files, splits_path, target_path, tokenizer, 'dev', num_dev_documents_per_split)
-    build_dev_or_test_dataset(test_files, splits_path, target_path, tokenizer, 'test', num_test_documents_per_split)
+    logger.info("\n\nCREATING DEV SPLIT...")
+    build_dev_or_test_dataset(dev_files, splits_path, target_path, tokenizer, dev_name, num_dev_documents_per_split)
+    logger.info("\n\nCREATING TEST SPLIT...")
+    build_dev_or_test_dataset(test_files, splits_path, target_path, tokenizer, test_name, num_test_documents_per_split)
 
 
 if __name__ == "__main__":
@@ -198,6 +209,14 @@ if __name__ == "__main__":
     target_path = args.target_path
     tokenizer_path = args.tokenizer_path
     force_overwrite = args.force_overwrite
+
+
+    num_train_splits = args.num_train_splits
+    num_dev_splits = args.num_dev_splits
+    num_test_splits = args.num_test_splits
+   
+    num_dev_documents_per_split = args.num_dev_documents_per_split
+    num_test_documents_per_split = args.num_test_documents_per_split
 
     main(splits_path, target_path, tokenizer_path, force_overwrite)
 
