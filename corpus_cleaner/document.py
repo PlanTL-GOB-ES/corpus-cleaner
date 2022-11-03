@@ -1,5 +1,6 @@
 from typing import List
 from typing import Optional
+from typing import Dict
 
 
 class Document:
@@ -14,7 +15,8 @@ class Document:
                  keywords: Optional[str] = None,
                  heads: Optional[str] = None,
                  language: Optional[str] = None,
-                 operations: List = []):
+                 operations: List = [],
+                 sentence_to_paragraph_idx: Optional[Dict] = None):
         self.content = content
         self.content_orig = content
         self.sentences = sentences
@@ -27,6 +29,7 @@ class Document:
         self.filename = filename
         self.language = language
         self.operations = operations
+        self.sentence_to_paragraph_idx = sentence_to_paragraph_idx
 
     def attr_str(self) -> str:
         res = []

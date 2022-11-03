@@ -18,6 +18,7 @@ class SentenceSplitterComponent(CleanerComponentMapper):
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)
         self.splitter_dict : Dict[str,sentence_splitter.SentenceSplitter]= {}
+        self.paragraph_delimiter = "<p>"
 
     def _split(self, document: Document) -> Optional[Document]:
         if document.language in self.splitter_dict:
@@ -73,7 +74,20 @@ class SentenceSplitterComponent(CleanerComponentMapper):
             # add operations for each sentence in the document
             document.operations = [document.operations.copy() for _ in range(len(document.sentences))]
         else:
-            document.sentences = [sent for sent in splitter.split(document.content)]
+            # If the <p> tag is present, infer the sentence to paragraph index map to later recontruct paragraphs. 
+            # Otherwise, assume exists one paragraph containing all the document sentences
+            paragraph_to_sentences_idxs = {}
+            paragraphs = [splitter.split(paragraph) for paragraph in document.content.split(self.paragraph_delimiter) if paragraph]
+            sentences = [sentence for paragraph in paragraphs for sentence in paragraph]
+            for paragraph_idx, paragraph in enumerate(paragraphs):
+                if paragraph_idx == 0:
+                    start = paragraph_idx
+                else:
+                    start = paragraph_to_sentences_idxs[paragraph_idx-1][-1] + 1
+                end = start + len(paragraph)
+                paragraph_to_sentences_idxs[paragraph_idx] = list(range(start, end))
+
+            document.sentences = sentences
         return document
 
     def apply(self, document: Document) -> Optional[Document]:
