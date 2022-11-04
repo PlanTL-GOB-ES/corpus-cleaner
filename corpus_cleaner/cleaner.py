@@ -129,9 +129,9 @@ class Cleaner:
                 raise Exception('Unknown component', comp)
         assert args.log_every_iter == -1 or args.log_every_iter >= 1
         # TODO: add more checks (eg. sentence splitting requirement for other components
-        # if args.output_format == 'paragraph':
-        #     assert args.no_reduce, ValueError(
-        #         'the argument "--output-format=paragraph" does not support deduplication. Set "--no-reduce" argument to use it.')
+        if args.output_format == 'paragraph':
+            assert args.no_reduce, ValueError(
+                'the argument "--output-format=paragraph" does not support deduplication. Set "--no-reduce" argument to use it.')
 
     def _get_documents(self) -> List[Iterable[Document]]:
         # self.logger.info('Parsing...')
