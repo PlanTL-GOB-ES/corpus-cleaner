@@ -3,12 +3,13 @@ from .fairseq_lm_output_formatter import FairseqLMOutputFormatter
 from .onion_output_formatter import OnionOutputFormatter
 from .sentence_output_formatter import SentenceOutputFormatter
 from .output_formatter_mapper import OutputFormatterMapper
+from .paragraph_output_formatter import ParagraphOutputFormatter
 from typing import Optional
 import argparse
 
 
 class OutputFormatterFactory:
-    VALID_OUTPUT_FORMATS = ['fairseq-lm', 'sentence']
+    VALID_OUTPUT_FORMATS = ['fairseq-lm', 'sentence', 'paragraph']
 
     @staticmethod
     def get_output_formatter(args: argparse.Namespace, output_format: Optional[str] = None,
@@ -18,6 +19,8 @@ class OutputFormatterFactory:
                 return FairseqLMOutputFormatter(args, **kwargs)
             elif args.output_format == 'sentence':
                 return SentenceOutputFormatter(args, **kwargs)
+            elif args.output_format == 'paragraph':
+                return ParagraphOutputFormatter(args, **kwargs)
             else:
                 raise NotImplementedError()
         else:
@@ -25,6 +28,8 @@ class OutputFormatterFactory:
                 return OnionOutputFormatter(args, output_path)
             elif args.output_format == 'fairseq-lm':
                 return FairseqLMOutputFormatter(args, output_path)
+            elif args.output_format == 'paragraph':
+                return ParagraphOutputFormatter(args, **kwargs)
             else:
                 raise NotImplementedError()
 
