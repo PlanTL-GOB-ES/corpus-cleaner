@@ -163,7 +163,7 @@ class PreFilterer(CleanerComponentMapper):
         text, subs = self.tags_pattern.subn(' ', text)
         # do not remove paragraph tag information if we want use it for the final format
         if not self.args.output_format == 'paragraph':
-            text, subs = self.p_tags_pattern.sub('\n', text)
+            text, subs = self.p_tags_pattern.subn('\n', text)
         return text, bool(subs)
 
     def _space_normalization(self, text):
@@ -171,13 +171,13 @@ class PreFilterer(CleanerComponentMapper):
         subs_all = []
         text, subs = self.punc_space_pattern.subn('\\2', text)
         subs_all.append(subs)
-        text = self.zero_width_space_pattern.sub('', text)
+        text, subs = self.zero_width_space_pattern.subn('', text)
         subs_all.append(subs)
-        text = self.punc_no_space_pattern.sub('\\1\\2 \\3', text)
+        text, subs = self.punc_no_space_pattern.subn('\\1\\2 \\3', text)
         subs_all.append(subs)
-        text = self.quote_no_space_pattern1.sub('\\1 \\2\\3\\5', text)
+        text, subs = self.quote_no_space_pattern1.subn('\\1 \\2\\3\\5', text)
         subs_all.append(subs)
-        text = self.quote_no_space_pattern2.sub('\\1\\2\\4 \\5', text)
+        text, subs = self.quote_no_space_pattern2.subn('\\1\\2\\4 \\5', text)
         subs_all.append(subs)
         return text, any(subs_all)
 
@@ -191,7 +191,7 @@ class PreFilterer(CleanerComponentMapper):
 
     def _replace_urls(self, text):
         replace = ' [URL] '
-        text, subs = self.urls_pattern2.subn(replace, self.urls_pattern.sub(replace, text))
+        text, subs = self.urls_pattern2.subn(replace, self.urls_pattern.subn(replace, text))
         return text, bool(subs)
 
     def _build_filters(self):
