@@ -75,7 +75,8 @@ class SentenceSplitterComponent(CleanerComponentMapper):
             document.operations = [document.operations.copy() for _ in range(len(document.sentences))]
         else:
             # If the <p> tag is present, infer the sentence to paragraph index map to later recontruct paragraphs. 
-            # Otherwise, assume exists one paragraph containing all the document sentences
+            # Otherwise, assume exists one paragraph containing all the document sentences.
+            # We also create a mapping between the paragraph and sentences indexes
             paragraph_to_sentences_idxs = {}
             paragraphs = [splitter.split(paragraph) for paragraph in document.content.split(self.paragraph_delimiter) if paragraph]
             sentences = [sentence for paragraph in paragraphs for sentence in paragraph]
@@ -87,6 +88,11 @@ class SentenceSplitterComponent(CleanerComponentMapper):
                 end = start + len(paragraph)
                 paragraph_to_sentences_idxs[paragraph_idx] = list(range(start, end))
 
+            # revert mapping
+            document.sentence_to_paragraph_idx = {}
+            for par_idx, sent_idxs in paragraph_to_sentences_idxs.items():
+                for sent_idx in sent_idxs:
+                    document.sentence_to_paragraph_idx[sent_idx] = par_idx
             document.sentences = sentences
         return document
 

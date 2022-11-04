@@ -46,32 +46,32 @@ class SentenceFilter(CleanerComponentMapper):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace, 
+    def __init__(self, args: argparse.Namespace,
                  char_length_filter_sentence: int = 30,
                  word_length_filter_sentence: int = 3,
                  digits_filter_sentence: float = 0.1,
-                 lang_filter: Union[Tuple[str], None] = None, 
+                 lang_filter: Union[Tuple[str], None] = None,
                  slow_lang_filter_threshold: float = 0.90,
                  fast_lang_filter_threshold: float = 0.9,
                  lang_filter_sentence: bool = False,
                  code_threshold: float = 0.25,
-                 profanity_check: bool = False, 
+                 profanity_check: bool = False,
                  dictionary_filter: Optional[str] = None,
                  dedup_same_doc_sentences: bool = False,
                  src_tag_filter: bool = False):
         # TODO: Review way of setting defaults, thresholds will never be None!
         super().__init__(args)
         self.char_length_filter_sentence = args.char_length_filter_sentence if args.char_length_filter_sentence is not \
-                                                                               None else char_length_filter_sentence
+            None else char_length_filter_sentence
         self.word_length_filter_sentence = args.word_length_filter_sentence if args.word_length_filter_sentence is not \
-                                                                               None else word_length_filter_sentence
+            None else word_length_filter_sentence
         self.digits_filter_sentence = args.digits_filter_sentence if args.digits_filter_sentence is not None else digits_filter_sentence
         self.profanity_check = args.profanity_check if args.profanity_check is not None else profanity_check
         self.lang_filter = args.lang_filter if args.lang_filter is not None else lang_filter
         self.slow_lang_filter_threshold = args.slow_lang_filter_threshold if args.slow_lang_filter_threshold is not \
-                                                                             None else slow_lang_filter_threshold
+            None else slow_lang_filter_threshold
         self.fast_lang_filter_threshold = args.fast_lang_filter_threshold if args.fast_lang_filter_threshold is not \
-                                                                             None else fast_lang_filter_threshold
+            None else fast_lang_filter_threshold
         self.lang_filter_sentence = args.lang_filter_sentence or lang_filter_sentence
         self.lang_filter_sentence_src_tgt = args.lang_filter_sentence_src_tgt or src_tag_filter
 
@@ -80,9 +80,11 @@ class SentenceFilter(CleanerComponentMapper):
             args.dictionary_filter_sen if args.dictionary_filter_sen is not None else dictionary_filter
         if self.dictionary_filter is not None:
             with open(self.dictionary_filter, 'r') as f:
-                self.dictionary_filter = [line.strip() for line in f.readlines()]
+                self.dictionary_filter = [line.strip()
+                                          for line in f.readlines()]
         self.filters = []
-        self.code_keywords_pattern = re.compile('\\b(var|function|const|if|else|script)\\b')
+        self.code_keywords_pattern = re.compile(
+            '\\b(var|function|const|if|else|script)\\b')
         self.code_chars_pattern = re.compile('[;=&\[\](){}/\\\\]')
         self.dedup_same_doc_sentences = args.dedup_same_doc_sentences or dedup_same_doc_sentences
         self.debug = args.debug
@@ -97,12 +99,15 @@ class SentenceFilter(CleanerComponentMapper):
         if self.digits_filter_sentence > 0:
             self.filters.append(self._filter_by_digits)
         if self.lang_filter is not None and self.lang_filter_sentence:
-            self.fasttext_lid = fasttext.load_model(os.path.join('lib', 'lid.176.bin'))
-            self.lang_id = LanguageIdentifier.from_modelstring(model, norm_probs=True)
+            self.fasttext_lid = fasttext.load_model(
+                os.path.join('lib', 'lid.176.bin'))
+            self.lang_id = LanguageIdentifier.from_modelstring(
+                model, norm_probs=True)
             _ = self.lang_id.classify('')  # force init
             self.filters.append(self._filter_by_lang)
         if self.dictionary_filter is not None:
-            self.dictionary_filter_pattern = re.compile("|".join(self.dictionary_filter))
+            self.dictionary_filter_pattern = re.compile(
+                "|".join(self.dictionary_filter))
             self.filters.append(self._filter_by_dict)
         if self.dedup_same_doc_sentences:
             self.filters.append(self._filter_by_duplicate)
@@ -120,7 +125,7 @@ class SentenceFilter(CleanerComponentMapper):
 
     def _filter_by_code(self, sentence: str):
         value = (len(re.findall(self.code_keywords_pattern, sentence)) / len(sentence.split())) \
-                + len(re.findall(self.code_chars_pattern, sentence)) / len(sentence)
+            + len(re.findall(self.code_chars_pattern, sentence)) / len(sentence)
         if value > self.code_threshold:
             return False, round(value, 2)
         return True, None
@@ -169,9 +174,7 @@ class SentenceFilter(CleanerComponentMapper):
     # TODO: add decorators to register the filters
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
         sentences = []
-        # For each document, get the set of duplicate sentences to remove
-        self.sentences_duplicate = set(sentence for sentence in document.sentences
-                                       if document.sentences.count(sentence) > 1)
+
         for sentence_idx, sentence in enumerate(document.sentences):
             keep = True
             for filter_ in self.filters:
@@ -183,17 +186,30 @@ class SentenceFilter(CleanerComponentMapper):
                         if sentence:
                             class_name = self.__class__.__name__
                             filter_name = filter_.__name__
-                            document.operations[sentence_idx].append(f"{class_name}-{filter_name}:{value}")
+                            document.operations[sentence_idx].append(
+                                f"{class_name}-{filter_name}:{value}")
                         sentences.append('')
+
+                    # remove sentence idx from paragraph map
+                    document.sentence_to_paragraph_idx.pop(sentence_idx)
                     break
             if keep:
                 sentences.append(sentence)
+
+        # build new sentence indices after filtering
+        sentence_idx_keep_to_idx = {idx_keep: idx for idx_keep, idx in zip(document.sentence_to_paragraph_idx.keys(), range(len(sentences)))}
+        idxs_keep = [idx for idx in document.sentence_to_paragraph_idx.keys()]
+
+        # remapping keys of sentence to paragraph indices
+        for idx_keep in idxs_keep:
+            document.sentence_to_paragraph_idx[sentence_idx_keep_to_idx[idx_keep]] = document.sentence_to_paragraph_idx.pop(idx_keep)
+
         # In normal model, return the document only when all the sentences are not empty
         if not '' in sentences and len(sentences) > 0:
             document.sentences = sentences
             return document
         else:
-            # if debug mode is on, return also document with
+            # if debug mode is on, return also document with empty sentences
             if self.debug:
                 document.sentences = sentences
                 return document
