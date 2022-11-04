@@ -315,6 +315,8 @@ See also the full list of [contributors](https://github.com/TeMU-BSC/corpus-clea
 
 This project is licensed under the [MIT License](LICENSE).
 
+Copyright (c) 2021 Secretaría de Estado de Digitalización e Inteligencia Artificial (SEDIA)
+
 ## Acknowledgments
 
 Some of the filters of this project are inspired by: <https://github.com/spyysalo/wiki-bert-pipeline>.
