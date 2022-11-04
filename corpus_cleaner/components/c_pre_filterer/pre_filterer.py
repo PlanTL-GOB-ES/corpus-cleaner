@@ -160,7 +160,10 @@ class PreFilterer(CleanerComponentMapper):
         return text, bool(subs)
 
     def _remove_tags(self, text):
-        text, subs = self.tags_pattern.subn(' ', self.p_tags_pattern.sub('\n', text))
+        text, subs = self.tags_pattern.subn(' ', text)
+        # do not remove paragraph tag information if we want use it for the final format
+        if not self.args.output_format == 'paragraph':
+            text, subs = self.p_tags_pattern.sub('\n', text)
         return text, bool(subs)
 
     def _space_normalization(self, text):
@@ -206,7 +209,7 @@ class PreFilterer(CleanerComponentMapper):
         if self.remove_hashtags_mentions:
             self.remove_hashtags_pattern = re.compile('(@[A-Za-z0-9_]+)|(#[\w_]+)')
         if self.remove_tags:
-            self.tags_pattern = re.compile(' *(<.*?> ?)+ *')
+            self.tags_pattern = re.compile(' *(<[^p.*]?> ?)+ *')  # exclude <p> tag
             self.p_tags_pattern = re.compile('(\s*)(<p>)+')
         if self.replace_urls:
             # slightly modified from:

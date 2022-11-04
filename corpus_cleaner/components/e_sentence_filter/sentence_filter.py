@@ -175,6 +175,10 @@ class SentenceFilter(CleanerComponentMapper):
     def _filter(self, document: Optional[Document]) -> Optional[Document]:
         sentences = []
 
+        # For each document, get the set of duplicate sentences to remove
+        self.sentences_duplicate = set(sentence for sentence in document.sentences
+                                       if document.sentences.count(sentence) > 1)
+                                       
         for sentence_idx, sentence in enumerate(document.sentences):
             keep = True
             for filter_ in self.filters:
