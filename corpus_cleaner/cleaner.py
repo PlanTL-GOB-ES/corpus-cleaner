@@ -62,9 +62,9 @@ class Cleaner:
                 # set only mappers
                 self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
                                [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                                           args=x,
-                                           output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
-            else:           
+                                   args=x,
+                                   output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
+            else:
                 self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
                                [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
                                 args=x, output_format='onion',
@@ -73,7 +73,8 @@ class Cleaner:
             class SentencePacker(CleanerComponentMapper):
 
                 def apply(self, document: Optional[Document]) -> Optional[Document]:
-                    document.sentences = [sen for sen in document.content.splitlines() if len(sen.split()) > 0]
+                    document.sentences = [
+                        sen for sen in document.content.splitlines() if len(sen.split()) > 0]
                     return document
 
             self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + [SentencePacker] + \
@@ -81,7 +82,8 @@ class Cleaner:
                             args=self.args, output_format='onion',
                             output_path=os.path.join(self.tmp_dir,  os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
 
-        self.reducer = DummyReducer if (args.debug or args.no_reduce) else REDUCER
+        self.reducer = DummyReducer if (
+            args.debug or args.no_reduce) else REDUCER
 
         # Make sure that the reducer is used in the default case
         if args.components is not None and not self.args.debug:
@@ -90,7 +92,7 @@ class Cleaner:
                 if comp == REDUCER.__name__:
                     self.reducer = REDUCER
                     break
-                
+
         self.postmappers = POSTMAPPERS
         if args.components is not None:
             self.postmappers = []
@@ -105,12 +107,16 @@ class Cleaner:
     def add_args(parser: argparse.ArgumentParser):
         parser.add_argument('--components', type=str, help='Elements of the pipeline', nargs='+',
                             default=list(map(lambda x: x.__name__, MAPPERS + [REDUCER] + POSTMAPPERS)))
-        parser.add_argument('--parallel', action='store_true', help='Run the cleaner in parallel')
+        parser.add_argument('--parallel', action='store_true',
+                            help='Run the cleaner in parallel')
         parser.add_argument('--log-every-iter', type=int, default=-1, help='Log the pipeline every N iterations'
                                                                            '(-1, silent)')
-        parser.add_argument('--backend', type=str, default='mp', help='Parallel backend (mp or ray)')
-        parser.add_argument('--only-reduce', action='store_true', help='Only document filter')
-        parser.add_argument('--only-reduce-output', action='store_true', help='Only document filter for output files')
+        parser.add_argument('--backend', type=str, default='mp',
+                            help='Parallel backend (mp or ray)')
+        parser.add_argument(
+            '--only-reduce', action='store_true', help='Only document filter')
+        parser.add_argument('--only-reduce-output', action='store_true',
+                            help='Only document filter for output files')
         parser.add_argument('--debug', action='store_true',
                             help='Activate the debug error mode to compare the original and cleaned sentences')
         parser.add_argument('--no-reduce', action='store_true',
@@ -123,6 +129,9 @@ class Cleaner:
                 raise Exception('Unknown component', comp)
         assert args.log_every_iter == -1 or args.log_every_iter >= 1
         # TODO: add more checks (eg. sentence splitting requirement for other components
+        # if args.output_format == 'paragraph':
+        #     assert args.no_reduce, ValueError(
+        #         'the argument "--output-format=paragraph" does not support deduplication. Set "--no-reduce" argument to use it.')
 
     def _get_documents(self) -> List[Iterable[Document]]:
         # self.logger.info('Parsing...')
@@ -131,7 +140,8 @@ class Cleaner:
 
     def _get_paths(self) -> List[Tuple[int, str]]:
         # self.logger.info('Parsing...')
-        parser = DataParserFactory.get_parser(self.args, done_paths=self.checkpoint.get_done_paths())
+        parser = DataParserFactory.get_parser(
+            self.args, done_paths=self.checkpoint.get_done_paths())
         return parser.get_idx_relative_filepaths()
 
     def _create_pipeline_mappers(self) -> List[CleanerComponent]:
@@ -142,15 +152,16 @@ class Cleaner:
 
     def _output(self, documents: Iterable[Document]):
         # self.logger.info('Outputting...')
-        output_formatter = OutputFormatterFactory.get_output_formatter(self.args)
+        output_formatter = OutputFormatterFactory.get_output_formatter(
+            self.args)
         output_formatter.apply(documents)
 
     def _create_pipeline_mappers_onion_ind(self) -> List[CleanerComponent]:
 
         mappers = [lambda x: DataParserFactory.get_parser_mapper(x, input_format='onion')] + \
-                       [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                           args=self.args, output_format='fairseq-lm',
-                           output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.txt'))]
+            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
+                args=self.args, output_format='fairseq-lm',
+                output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.txt'))]
 
         return [component(self.args) for component in mappers]
 
@@ -176,7 +187,6 @@ class Cleaner:
                                        checkpoint_path=self.checkpoint.checkpoint_path)
             pipeline.run()
 
-
         else:
             if not self.args.only_reduce_output:
                 self.reducer = self.reducer(self.args)
@@ -196,9 +206,11 @@ class Cleaner:
                 pipeline.run()
 
             else:
-                self.reducer = self.reducer(self.args, output_path=os.path.join(self.args.input_path))
+                self.reducer = self.reducer(
+                    self.args, output_path=os.path.join(self.args.input_path))
 
-            self.logger.logger.info(f'Reducing with {self.reducer.__class__.__name__}')
+            self.logger.logger.info(
+                f'Reducing with {self.reducer.__class__.__name__}')
             self.reducer.reduce()
 
             self.logger.logger.info(f'onion -> {self.args.output_format}')
@@ -214,4 +226,3 @@ class Cleaner:
                 pipeline.run()
             else:
                 self._output(self.reducer.get_documents()[0])
-
