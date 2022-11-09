@@ -20,7 +20,7 @@ RUN  apt-get update \
   && apt-get install -y apt-utils \
   && apt-get install -y wget \
   && apt-get install -y git \
-  && apt-get install -y python3 \
+  && apt-get install -y python3.8 \
   && apt-get install -y python3-dev \
   && apt-get install -y python3-pip \
   && apt-get install -y libjudy-dev \
