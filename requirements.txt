@@ -7,7 +7,7 @@ beautifulsoup4==4.11.1
 chardet==3.0.4
 charset-normalizer==2.1.1
 click==7.1.1
-colorama==0.4.6
+colorama
 docopt==0.6.2
 exceptiongroup==1.0.0
 fasttext==0.9.1
