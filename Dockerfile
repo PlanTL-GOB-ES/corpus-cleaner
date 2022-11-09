@@ -25,6 +25,7 @@ RUN  apt-get update \
   && apt-get install -y python3.8 \
   && apt-get install -y python3-dev \
   && apt-get install -y python3-pip \
+  && pip3 install --upgrade pip \
   && apt-get install -y libjudy-dev \
   && apt-get install -y rsync \
   && apt-get install -y gawk \
