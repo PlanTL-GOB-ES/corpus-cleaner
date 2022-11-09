@@ -39,7 +39,7 @@ RUN rm -rf /cc/corpus-cleaner/data/
 
 RUN rm -rf /cc/corpus-cleaner/output/
 
-RUN python3 -m pip install -r /cc/corpus-cleaner/requirements.txt
+RUN pip3 install -r /cc/corpus-cleaner/requirements.txt
 
 RUN bash /cc/corpus-cleaner/get-third-party-docker.sh
 
