@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-docker build -t corpuscleaner .
+docker build -no-cache -t corpuscleaner .

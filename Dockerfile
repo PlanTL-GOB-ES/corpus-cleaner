@@ -22,15 +22,11 @@ RUN  apt-get update \
   && apt-get install -y build-essential \
   && rm -rf /var/lib/apt/lists/*
 
-# RUN git clone --single-branch --branch $GITBRANCH https://github.com/TeMU-BSC/corpus-cleaner.git
+RUN git clone --single-branch --branch $GITBRANCH https://github.com/TeMU-BSC/corpus-cleaner.git
 
+RUN mkdir  /cc
 
-
-RUN mkdir -p /cc/corpus-cleaner
-
-COPY . /cc/corpus-cleaner
-
-# RUN mv /corpus-cleaner /cc
+RUN mv /corpus-cleaner /cc
 
 RUN rm -rf /cc/corpus-cleaner/data/
 
