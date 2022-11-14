@@ -9,10 +9,16 @@
 #SBATCH --wait-all-nodes=1
 
 # --parallel & --backend ray are needed to execute in distributed mode!
-PARAMETERS="example-output --input-path data/toy_wiki --input-format wikipedia --output-format fairseq-lm --parallel --backend ray --lang-filter ca"
+PARAMETERS="example-output \
+        --input-path data/toy_wiki  \
+        --input-format wikipedia \
+        --output-format fairseq-lm \
+        --lang-filter ca \
+        --parallel \
+        --backend ray"
 
 
-module load singularity/3.5.2
+module load singularity/3.6.4
 
 hostlist=$(scontrol show hostname $SLURM_JOB_NODELIST)
 master=$(echo "${hostlist}" | head -n 1)
@@ -31,11 +37,11 @@ do
   j=$(($i + 1))
   host=$(echo "${hostlist}" | sed "${j}q;d")
   echo $master  ${SLURM_JOB_NUM_NODES} ${i}
-  ssh -n "$host" "module load singularity/3.5.2; cd ${work_dir}; singularity instance start --writable-tmpfs --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output corpuscleaner-singularity.sif cc; singularity exec instance://cc bash -c \"ray start --address=${master}:6379\"" &
+  ssh -n "$host" "module load singularity/3.6.4; cd ${work_dir}; singularity instance start --writable-tmpfs --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output corpuscleaner-singularity.sif cc; singularity exec instance://cc bash -c \"ray start --address=${master}:6379\"" &
   ((i++))
 done
 sleep 30
-singularity exec instance://cc bash -c "cd /cc/corpus-cleaner && RAY_ADDRESS=auto python3.6 clean.py ${PARAMETERS}"
+singularity exec instance://cc bash -c "cd /cc/corpus-cleaner && RAY_ADDRESS=auto python3 clean.py ${PARAMETERS}"
 
 
 wait
