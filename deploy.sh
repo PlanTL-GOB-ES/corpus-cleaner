@@ -8,7 +8,7 @@ NAME=$4
 VERSION=$(date +"%d-%m-%Y")-${NAME}
 
 # First, create release note for the current version
-RELEASE_NOTE="release-note-deploy.txt"
+RELEASE_NOTE="release-note-container.txt"
 start=$(git log | grep -n commit | sed -n "1p" | cut -d ":" -f 1)
 end=$(git log | grep -n commit | sed -n "2p" | cut -d ":" -f 1)
 end=$(echo ${end} - 1 | bc)

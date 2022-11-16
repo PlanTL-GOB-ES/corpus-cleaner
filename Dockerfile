@@ -2,8 +2,6 @@ FROM ubuntu:20.04
 
 ENV LANG C.UTF-8
 
-ARG GITBRANCH=paragraph-info
-
 RUN  apt-get update \
   && apt-get -y install software-properties-common \
   && add-apt-repository ppa:deadsnakes/ppa \
@@ -22,7 +20,8 @@ RUN  apt-get update \
   && apt-get install -y build-essential \
   && rm -rf /var/lib/apt/lists/*
 
-RUN git clone --single-branch --branch $GITBRANCH https://github.com/TeMU-BSC/corpus-cleaner.git
+ARG BRANCH=paragraph-info
+RUN git clone https://github.com/PlanTL-GOB-ES/corpus-cleaner.git && cd /corpus-cleaner && git checkout $BRANCH
 
 RUN mkdir  /cc
 

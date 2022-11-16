@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
+branch=$1
 
-docker build --no-cache -t corpuscleaner .
+docker build  -t corpuscleaner --build-arg BRANCH=$branch .

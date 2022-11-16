@@ -12,11 +12,9 @@ We provide three ways of installing the Corpus Cleaner.
 
 ### Method 1: Virtual environment
 
-Corpus Cleaner was built and tested with Python3.7. It should work for Python >= 3.6 but it has not been tested with other versions than 3.7.
+Corpus Cleaner is not supposed to be run in Windows, specially the parallel implementation. Instead, a Unix system is assumed.
 
-In addition, some parts are not supposed to be run in Windows, specially the parallel implementation. Instead, a Unix system is assumed.
-
-For creating the virtual environment and installing the dependencies (from `requirements.txt`), run:
+First create the Python virtualenv with python3.8 and install the dependencies (from `requirements.txt`), run:
 
 ```sh
 bash setup.sh
@@ -29,7 +27,7 @@ bash get-third-party.sh
 ```
 
 Currently, the non-Python dependencies are:
-  - FastText language identifier (<https://fasttext.cc/docs/en/language-identification.html>).
+  - FastText language identifier (<https://fasttext.docs/en/language-identification.html>).
   - Onion (<http://corpus.tools/wiki/Onion>).
   
 > Notice that installing a library required by Onion implies a system-wise installation of a library.
