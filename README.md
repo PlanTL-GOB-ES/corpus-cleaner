@@ -44,10 +44,10 @@ With the virtual environment activated (`source venv/bin/activate`), run the fol
 
 Make sure docker is installed in your system: https://docs.docker.com/engine/install/
 
-Build the docker image:
+Build the docker image from a specific branch:
 
 ```sh
-bash build-docker.sh
+bash build-docker.sh [BRANCH]
 ```
 
 Run the docker container:
@@ -55,6 +55,8 @@ Run the docker container:
 ```sh
 bash run-docker.sh [ARGS]
 ```
+
+The script will create a `release-note-container.txt` with the GitHub info of the container
 
 > To know the available arguments `[ARGS]`, see [Usage section](#usage) below.
 
@@ -71,6 +73,13 @@ bash run-singularity.sh [ARGS]
 ```
 
 > To know the available arguments `[ARGS]`, see [Usage section](#usage) below.
+
+
+#### **Optional**: remote deployment
+To deploy the Singulariry container on a remote server, run the command:
+```sh
+bash deploy.sh [USER] [HOSTNAME] [DEPLOY_DIR] [NAME]
+```
 
 ## Usage
 
