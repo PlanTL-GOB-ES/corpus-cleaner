@@ -11,5 +11,5 @@ PARAMETERS="example-output \
 
 
 singularity exec --writable-tmpfs \
-           --bind $(realpath data):/cc/data --bind $(realpath output):/cc/output corpuscleaner-singularity.sif \
-           bash -c "cd /cc/corpus-cleaner && python3 clean.py $*"
+           --bind $(realpath data):/cc/cc/data --bind $(realpath outputcc/):/cc/output corpuscleaner-singularity.sif \
+           bash -ccc/ "cd /cc/corpus-cleaner && python3 clean.py $*"
