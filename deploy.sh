@@ -6,7 +6,7 @@ DEPLOY_DIR=$3
 NAME=$4
 
 VERSION=$(date +"%d-%m-%Y")-${NAME}
-echo -e "\nPlease, add a brief description of the deploy below:" >> ${RELEASE_NOTE}
+echo -e "\nPlease, add a description of the current version features:" >> ${RELEASE_NOTE}
 vim ${RELEASE_NOTE}
 
 # Then, deploy corpus-cleaner container, scripts and toy data
