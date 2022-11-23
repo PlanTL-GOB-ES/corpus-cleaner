@@ -12,11 +12,9 @@ We provide three ways of installing the Corpus Cleaner.
 
 ### Method 1: Virtual environment
 
-Corpus Cleaner was built and tested with Python3.7. It should work for Python >= 3.6 but it has not been tested with other versions than 3.7.
+Corpus Cleaner is not supposed to be run in Windows, specially the parallel implementation. Instead, a Unix system is assumed.
 
-In addition, some parts are not supposed to be run in Windows, specially the parallel implementation. Instead, a Unix system is assumed.
-
-For creating the virtual environment and installing the dependencies (from `requirements.txt`), run:
+First create the Python virtualenv with python3.8 and install the dependencies (from `requirements.txt`), run:
 
 ```sh
 bash setup.sh
@@ -29,7 +27,7 @@ bash get-third-party.sh
 ```
 
 Currently, the non-Python dependencies are:
-  - FastText language identifier (<https://fasttext.cc/docs/en/language-identification.html>).
+  - FastText language identifier (<https://fasttext.docs/en/language-identification.html>).
   - Onion (<http://corpus.tools/wiki/Onion>).
   
 > Notice that installing a library required by Onion implies a system-wise installation of a library.
@@ -46,10 +44,10 @@ With the virtual environment activated (`source venv/bin/activate`), run the fol
 
 Make sure docker is installed in your system: https://docs.docker.com/engine/install/
 
-Build the docker image:
+Build the docker image from a specific branch:
 
 ```sh
-bash build-docker.sh
+bash build-docker.sh [BRANCH]
 ```
 
 Run the docker container:
@@ -57,6 +55,8 @@ Run the docker container:
 ```sh
 bash run-docker.sh [ARGS]
 ```
+
+The script will create a `release-note-container.txt` with the GitHub info of the container
 
 > To know the available arguments `[ARGS]`, see [Usage section](#usage) below.
 
@@ -73,6 +73,13 @@ bash run-singularity.sh [ARGS]
 ```
 
 > To know the available arguments `[ARGS]`, see [Usage section](#usage) below.
+
+
+#### **Optional**: remote deployment
+To deploy the Singulariry container on a remote server, run the command:
+```sh
+bash deploy.sh [USER] [HOSTNAME] [DEPLOY_DIR] [NAME]
+```
 
 ## Usage
 
@@ -301,7 +308,7 @@ First, try to change the default arguments. If it still doesn't fit your use cas
 
 ## Versioning
 
-The current version is 0.1.
+The current version is 0.2.
 
 ## Authors
 
@@ -314,8 +321,6 @@ See also the full list of [contributors](https://github.com/TeMU-BSC/corpus-clea
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
-Copyright (c) 2021 Secretaría de Estado de Digitalización e Inteligencia Artificial (SEDIA)
 
 ## Acknowledgments
 
