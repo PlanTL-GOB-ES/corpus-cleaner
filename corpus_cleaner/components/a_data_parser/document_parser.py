@@ -1,5 +1,5 @@
 from .data_parser import DataParser
-from typing import Iterable
+from typing import Iterable, List
 from corpus_cleaner.document import Document
 from typing import TextIO
 from typing import Tuple
@@ -10,7 +10,7 @@ import re
 
 
 class DocumentParser(DataParser):
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('*',), **kwargs):
+    def __init__(self, args: argparse.Namespace, extensions: List[str] = ['*'], **kwargs):
         super(DocumentParser, self).__init__(args, input_path=args.input_path, extensions=extensions, **kwargs)
         self.url = re.compile('(url=\")(.*)(\"\s)')
         self.tags = re.compile('<.*?>')

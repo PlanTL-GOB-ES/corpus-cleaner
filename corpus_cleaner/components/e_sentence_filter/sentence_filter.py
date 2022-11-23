@@ -1,5 +1,5 @@
 from corpus_cleaner.document import Document
-from typing import Union, Tuple, Optional
+from typing import Callable, Union, Tuple, Optional
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 from langid.langid import LanguageIdentifier, model
 import argparse
@@ -26,10 +26,10 @@ class SentenceFilter(CleanerComponentMapper):
         parser.add_argument('--slow-lang-filter-threshold', type=float, help='If --lang-filter is set, minimum'
                                                                              'threshold for the slower lang identifier',
                             default=0.9)
-        parser.add_argument('--no-lang-filter-sentence', action='store_true',
-                            help='Avoid applying language filter on sentences')
-        parser.add_argument('--no-lang-filter-sentence_src_tgt', action='store_true',
-                            help='Avoid applying language filter on sentences with "src=" pattern')
+        parser.add_argument('--lang-filter-sentence', action='store_true',
+                            help='Applying language filter on sentences')
+        parser.add_argument('--lang-filter-sentence_src_tgt', action='store_true',
+                            help='Applying language filter on sentences with "src=" pattern')
 
         parser.add_argument('--code-threshold', type=float, help='Threshold (percentage) of code-like chars and tokens'
                                                                  'to filter a sentence (-1 to deactivate)',
@@ -38,26 +38,27 @@ class SentenceFilter(CleanerComponentMapper):
                                                                       'line of terms that should not appear in a'
                                                                       'sentence',
                             default=None)
-        parser.add_argument('--no-dedup-same-doc-sentences', action='store_true',
-                            help='Do not deduplicate sentences in the same document.')
-        parser.add_argument('--no-src-tag-filter', action='store_true',
-                            help='Do not remvoe sentences with the pattern "src=".')
+        parser.add_argument('--dedup-same-doc-sentences', action='store_true',
+                            help='Deduplicate sentences inside the same document.')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
         # TODO check custom args
         pass
 
-    def __init__(self, args: argparse.Namespace, char_length_filter_sentence: int = 30,
+    def __init__(self, args: argparse.Namespace, 
+                 char_length_filter_sentence: int = 30,
                  word_length_filter_sentence: int = 3,
                  digits_filter_sentence: float = 0.1,
-                 lang_filter: Union[Tuple[str], None] = None, slow_lang_filter_threshold: float = 0.90,
+                 lang_filter: Union[Tuple[str], None] = None, 
+                 slow_lang_filter_threshold: float = 0.90,
                  fast_lang_filter_threshold: float = 0.9,
-                 no_lang_filter_sentence: bool = False,
+                 lang_filter_sentence: bool = False,
                  code_threshold: float = 0.25,
-                 profanity_check: bool = False, dictionary_filter: Optional[str] = None,
-                 dedup_same_doc_sentences: bool = True,
-                 src_tag_filter: bool = True):
+                 profanity_check: bool = False, 
+                 dictionary_filter: Optional[str] = None,
+                 dedup_same_doc_sentences: bool = False,
+                 src_tag_filter: bool = False):
         # TODO: Review way of setting defaults, thresholds will never be None!
         super().__init__(args)
         self.char_length_filter_sentence = args.char_length_filter_sentence if args.char_length_filter_sentence is not \
@@ -67,16 +68,12 @@ class SentenceFilter(CleanerComponentMapper):
         self.digits_filter_sentence = args.digits_filter_sentence if args.digits_filter_sentence is not None else digits_filter_sentence
         self.profanity_check = args.profanity_check if args.profanity_check is not None else profanity_check
         self.lang_filter = args.lang_filter if args.lang_filter is not None else lang_filter
-        self.lang_id = None
-        self.fasttext_lid = None
         self.slow_lang_filter_threshold = args.slow_lang_filter_threshold if args.slow_lang_filter_threshold is not \
                                                                              None else slow_lang_filter_threshold
         self.fast_lang_filter_threshold = args.fast_lang_filter_threshold if args.fast_lang_filter_threshold is not \
                                                                              None else fast_lang_filter_threshold
-        self.lang_filter_sentence = not args.no_lang_filter_sentence \
-            if args.no_lang_filter_sentence is not None else not no_lang_filter_sentence
-        self.lang_filter_sentence_src_tgt = not args.no_lang_filter_sentence_src_tgt \
-            if args.no_lang_filter_sentence_src_tgt is not None else not no_lang_filter_sentence_src_tgt
+        self.lang_filter_sentence = args.lang_filter_sentence or lang_filter_sentence
+        self.lang_filter_sentence_src_tgt = args.lang_filter_sentence_src_tgt or src_tag_filter
 
         self.code_threshold = args.code_threshold if args.code_threshold is not None else code_threshold
         self.dictionary_filter = \
@@ -84,16 +81,11 @@ class SentenceFilter(CleanerComponentMapper):
         if self.dictionary_filter is not None:
             with open(self.dictionary_filter, 'r') as f:
                 self.dictionary_filter = [line.strip() for line in f.readlines()]
-        self.dictionary_filter_pattern = None
         self.filters = []
         self.code_keywords_pattern = re.compile('\\b(var|function|const|if|else|script)\\b')
         self.code_chars_pattern = re.compile('[;=&\[\](){}/\\\\]')
-        self.dedup_same_doc_sentences = \
-            not args.no_dedup_same_doc_sentences if args.no_dedup_same_doc_sentences is not None else dedup_same_doc_sentences
+        self.dedup_same_doc_sentences = args.dedup_same_doc_sentences or dedup_same_doc_sentences
         self.debug = args.debug
-        self.sentences_duplicate = None
-        self.lang_filter_sentence_src_tgt = not args.no_src_tag_filter if args.no_lang_filter_sentence is not None else src_tag_filter
-        self.src_tag_pattern = None
 
         self._get_filters()
 

@@ -42,7 +42,7 @@ class OutputFormatter(CleanerComponent):
             self._write_document(document)
         self._end_writing()
 
-    def apply(self, documents: Union[Iterable[Document], None]) -> Union[Iterable[Document], None]:
+    def apply(self, documents: Iterable[Document]) -> Union[Iterable[Document], None]:
         return self._output_format(documents)
 
     #def __del__(self):

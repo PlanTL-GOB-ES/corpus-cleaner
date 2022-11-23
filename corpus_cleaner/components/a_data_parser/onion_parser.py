@@ -1,5 +1,5 @@
 from .data_parser import DataParser
-from typing import Iterable
+from typing import Iterable, List
 from corpus_cleaner.document import Document
 from typing import TextIO
 from typing import Tuple
@@ -8,7 +8,7 @@ from typing import Optional
 
 
 class OnionParser(DataParser):
-    def __init__(self, args: argparse.Namespace, extensions: Tuple[str] = ('.dedup',),
+    def __init__(self, args: argparse.Namespace, extensions: List[str] = ['.dedup'],
                  input_path: Optional[str] = None,
                  **kwargs):
         super(OnionParser, self).__init__(args, encoding='utf-8',
@@ -17,7 +17,7 @@ class OnionParser(DataParser):
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) -> Iterable[Document]:
         doc_sentences = []
-        par_words = []
+        par_words : List[str] = []
         doc = Document(content='')
         for line in fd:
             if not self.debug:

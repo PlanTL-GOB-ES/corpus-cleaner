@@ -53,7 +53,7 @@ class Checkpoint:
                             datefmt='%Y-%m-%d %H:%M:%S')
         logger = logging.getLogger(__name__)
         h = logging.StreamHandler(sys.stderr)
-        h.flush = sys.stderr.flush
+        # h.flush = sys.stderr.flush
         logger.addHandler(h)
         return logger
 

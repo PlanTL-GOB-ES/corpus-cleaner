@@ -1,3 +1,4 @@
+from typing import Dict
 from .ca import ca
 from .de import de
 from .en import en
@@ -13,6 +14,6 @@ from .pt import pt
 from .gl import gl
 from .oc import oc
 
-langs = dict(ca=ca, de=de, en=en, eu=eu, es=es, fi=fi, ka=ka, kk=kk, lv=lv, no=no, uk=uk, pt=pt, gl=gl)
+langs : Dict[str,Dict]= dict(ca=ca, de=de, en=en, eu=eu, es=es, fi=fi, ka=ka, kk=kk, lv=lv, no=no, uk=uk, pt=pt, gl=gl)
 
 __all__ = ['langs']

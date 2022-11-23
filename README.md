@@ -12,11 +12,9 @@ We provide three ways of installing the Corpus Cleaner.
 
 ### Method 1: Virtual environment
 
-Corpus Cleaner was built and tested with Python3.7. It should work for Python >= 3.6 but it has not been tested with other versions than 3.7.
+Corpus Cleaner is not supposed to be run in Windows, specially the parallel implementation. Instead, a Unix system is assumed.
 
-In addition, some parts are not supposed to be run in Windows, specially the parallel implementation. Instead, a Unix system is assumed.
-
-For creating the virtual environment and installing the dependencies (from `requirements.txt`), run:
+First create the Python virtualenv with python3.8 and install the dependencies (from `requirements.txt`), run:
 
 ```sh
 bash setup.sh
@@ -29,7 +27,7 @@ bash get-third-party.sh
 ```
 
 Currently, the non-Python dependencies are:
-  - FastText language identifier (<https://fasttext.cc/docs/en/language-identification.html>).
+  - FastText language identifier (<https://fasttext.docs/en/language-identification.html>).
   - Onion (<http://corpus.tools/wiki/Onion>).
   
 > Notice that installing a library required by Onion implies a system-wise installation of a library.
@@ -46,10 +44,10 @@ With the virtual environment activated (`source venv/bin/activate`), run the fol
 
 Make sure docker is installed in your system: https://docs.docker.com/engine/install/
 
-Build the docker image:
+Build the docker image from a specific branch:
 
 ```sh
-bash build-docker.sh
+bash build-docker.sh [BRANCH]
 ```
 
 Run the docker container:
@@ -57,6 +55,8 @@ Run the docker container:
 ```sh
 bash run-docker.sh [ARGS]
 ```
+
+The script will create a `release-note-container.txt` with the GitHub info of the container
 
 > To know the available arguments `[ARGS]`, see [Usage section](#usage) below.
 
@@ -74,6 +74,13 @@ bash run-singularity.sh [ARGS]
 
 > To know the available arguments `[ARGS]`, see [Usage section](#usage) below.
 
+
+#### **Optional**: remote deployment
+To deploy the Singulariry container on a remote server, run the command:
+```sh
+bash deploy.sh [USER] [HOSTNAME] [DEPLOY_DIR] [NAME]
+```
+
 ## Usage
 
 ### Data
@@ -85,44 +92,161 @@ In the case of the virtual environment, data could be placed in other directorie
 ### Arguments
 
 Currently, Corpus Cleaner has the following arguments:
-```sh
-usage: clean.py [-h] [--input-path INPUT_PATH] [--output-path OUTPUT_PATH]
-                [--input-format INPUT_FORMAT] [--output-format OUTPUT_FORMAT]
-                [--checkpoint-backend {shelve,file}] [--components COMPONENTS [COMPONENTS ...]]
-                [--parallel] [--log-every-iter LOG_EVERY_ITER]
-                [--backend BACKEND] [--only-reduce] [--only-reduce-output]
-                [--debug] [--extensions EXTENSIONS [EXTENSIONS ...]]
-                [--encoding ENCODING] [--encoding-threshold ENCODING_THRESHOLD]
-                [--encoding-error-policy ENCODING_ERROR_POLICY] [url-doc URL_DOC]
-                [--warc-warn] [--none_filter] 
-                [--no-lang-filter-document] [--no-language-normalization]
-                [--no-replace-emails] [--no-remove-hashtags-mentions]
-                [--no-remove-tags] [--no-space-normalization]
-                [--no-replace-urls] [--char-length-filter-document CHAR_LENGTH_FILTER_DOCUMENT]
-                [--no-head-filter] [--digits_filter DIGITS_FILTER]
-                [--remove-citations] [-lang-chars-filter LANG_CHARS_FILTER]
-                [--alphanum_filter ALPHANUM_FILTER]
-                [--uppercase_filter UPPERCASE_FILTER]
-                [--alphabet-filter ALPHABET_FILTER [ALPHABET_FILTER ...]]
-                [--lang-filter LANG_FILTER [LANG_FILTER ...]]
-                [--initial-lang-filter-threshold INITIAL_LANG_FILTER_THRESHOLD]
-                [--dictionary-filter-doc DICTIONARY_FILTER_DOC] [--seg-sentences]
-                [--char-length-filter-sentence CHAR_LENGTH_FILTER_SENTENCE]
-                [--word-length-filter-sentence WORD_LENGTH_FILTER_SENTENCE]
-                [--digits-filter-sentence DIGITS_FILTER_SENTENCE]
-                [--profanity-check]
-                [--fast-lang-filter-threshold FAST_LANG_FILTER_THRESHOLD]
-                [--slow-lang-filter-threshold SLOW_LANG_FILTER_THRESHOLD]
-                [--no-lang-filter-sentence] [--no-lang-filter-sentence_src_tgt]
-                [--code-threshold CODE_THRESHOLD]
-                [--dictionary-filter-sen DICTIONARY_FILTER_SEN]
-                [--no-dedup-same-doc-sentences] [--no-src-tag-filter]
-                [--spell-check] [--terminology-norm TERMINOLOGY_NORM]
-                [--punctuation-norm]
-                [--document-deduplication-threshold DOCUMENT_DEDUPLICATION_THRESHOLD]
-                [--remove-glob-rep-sen REMOVE_GLOB_REP_SEN]
-                [--dedup-buffer DEDUP_BUFFER]
-                name
+```python
+usage: clean.py [-h] [--input-path INPUT_PATH]
+                     [--output-path OUTPUT_PATH]
+                     [--input-format INPUT_FORMAT] 
+                     [--output-format OUTPUT_FORMAT] 
+                     [--checkpoint-backend {shelve,file}]                
+                     [--components COMPONENTS [COMPONENTS ...]] 
+                     [--parallel] 
+                     [--log-every-iter LOG_EVERY_ITER]
+                     [--backend BACKEND] 
+                     [--only-reduce]
+                     [--only-reduce-output]
+                     [--debug] [--no-reduce]
+                     [--extensions EXTENSIONS [EXTENSIONS ...]]
+                     [--encoding ENCODING] 
+                     [--encoding-threshold ENCODING_THRESHOLD]     
+                     [--encoding-error-policy ENCODING_ERROR_POLICY]     
+                     [--url-doc URL_DOC]
+                     [--warc-warn] 
+                     [--none_filter] 
+                     [--lang-filter-document] 
+                     [--language-normalization] 
+                     [--replace-emails] 
+                     [--remove-hashtags-mentions]
+                     [--remove-tags]
+                     [--space-normalization]
+                     [--replace-urls] 
+                     [--char-length-filter-document CHAR_LENGTH_FILTER_DOCUMENT]
+                     [--head-filter]
+                     [--digits_filter DIGITS_FILTER] 
+                     [--remove-citations]
+                     [--lang-chars-filter LANG_CHARS_FILTER] 
+                     [--alphanum-filter ALPHANUM_FILTER]
+                     [--uppercase-filter UPPERCASE_FILTER]
+                     [--alphabet-filter ALPHABET_FILTER [ALPHABET_FILTER ...]]
+                     [--lang-filter LANG_FILTER [LANG_FILTER ...]]      [--initial-lang-filter-threshold INITIAL_LANG_FILTER_THRESHOLD] 
+                     [--dictionary-filter-doc DICTIONARY_FILTER_DOC] [--seg-sentences]
+                     [--char-length-filter-sentence CHAR_LENGTH_FILTER_SENTENCE]      [--word-length-filter-sentence WORD_LENGTH_FILTER_SENTENCE] 
+                     [--digits-filter-sentence DIGITS_FILTER_SENTENCE]
+                     [--profanity-check] 
+                     [--fast-lang-filter-threshold FAST_LANG_FILTER_THRESHOLD]      [--slow-lang-filter-threshold SLOW_LANG_FILTER_THRESHOLD]      [--lang-filter-sentence]
+                     [--lang-filter-sentence_src_tgt] 
+                     [--code-threshold CODE_THRESHOLD] 
+                     [--dictionary-filter-sen DICTIONARY_FILTER_SEN] [--dedup-same-doc-sentences] 
+                     [--spell-check]
+                     [--terminology-norm TERMINOLOGY_NORM]
+                     [--punctuation-norm]
+                     [--document-deduplication-threshold DOCUMENT_DEDUPLICATION_THRESHOLD]
+                     [--remove-glob-rep-sen REMOVE_GLOB_REP_SEN]
+                     [--dedup-buffer DEDUP_BUFFER] 
+                     [--only-reduce-ind-onion]
+                     name
+
+Clean raw text data.
+
+positional arguments:
+  name                  A name to identify the run
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-path INPUT_PATH
+                        Input data directory
+  --output-path OUTPUT_PATH
+                        Output data directory
+  --input-format INPUT_FORMAT
+                        Input data format
+  --output-format OUTPUT_FORMAT
+                        Output data format
+  --checkpoint-backend {shelve,file}
+                        Shelve is more convenient but file is more robust. For distributed executions,we recommend file.
+  --components COMPONENTS [COMPONENTS ...]
+                        Elements of the pipeline
+  --parallel            Run the cleaner in parallel
+  --log-every-iter LOG_EVERY_ITER
+                        Log the pipeline every N iterations(-1, silent)
+  --backend BACKEND     Parallel backend (mp or ray)
+  --only-reduce         Only document filter
+  --only-reduce-output  Only document filter for output files
+  --debug               Activate the debug error mode to compare the original and cleaned sentences
+  --no-reduce           suppress document filter component
+  --extensions EXTENSIONS [EXTENSIONS ...]
+                        File extensions to work with (eg. json)
+  --encoding ENCODING   Input encoding format (eg. utf-8. If set to auto, the programtries to guess the encoding
+  --encoding-threshold ENCODING_THRESHOLD
+                        Encoding threshold if --encoding auto (ignoredotherwise. If the encoding detector is not above this threshold, it assigns utf-8.
+  --encoding-error-policy ENCODING_ERROR_POLICY
+                        Encoding error policy (same options as open()
+  --url-doc URL_DOC     Path to a url list (plain text, one url per line)that should be filtered and processed
+  --warc-warn           Enable warnings of WARC parser
+  --none_filter         Apply no filters
+  --lang-filter-document
+                        Applying language filter on documents
+  --language-normalization
+                        Applying language-specific normalization
+  --replace-emails      Replacing email adresses with "[EMAIL]"
+  --remove-hashtags-mentions
+                        Remove hashtags and mentions.
+  --remove-tags         Remove XML/HTML tags
+  --space-normalization
+                        Normalize white spaces
+  --replace-urls        Replacing URLs with "[URL]"
+  --char-length-filter-document CHAR_LENGTH_FILTER_DOCUMENT
+                        Minimum char length per document. Set to 0 not to apply any filter.
+  --head-filter         Filter documents coming froma crawler (having a "heads" attribute) withcommon HTTP errors.
+  --digits_filter DIGITS_FILTER
+                        Maximum allowed proportion of digit characters
+  --remove-citations    If used, remove citations in the common square brackets format, e.g [34]
+  --lang-chars-filter LANG_CHARS_FILTER
+                        Maximum allowed proportion of characters notbelonging to the alphabet of the language
+  --alphanum-filter ALPHANUM_FILTER
+                        Maximum allowed proportion of non-alphanumericcharacters
+  --uppercase-filter UPPERCASE_FILTER
+                        Maximum allowed proportion of uppercase characters
+  --alphabet-filter ALPHABET_FILTER [ALPHABET_FILTER ...]
+                        Alphabets that should be present (eg. LATIN)
+  --lang-filter LANG_FILTER [LANG_FILTER ...]
+                        List of languages that should allowed when filtering bylang. If not set, no filtering is applied.
+  --initial-lang-filter-threshold INITIAL_LANG_FILTER_THRESHOLD
+                        If --lang-filter is set, minimumthreshold for the initial langidentifier
+  --dictionary-filter-doc DICTIONARY_FILTER_DOC
+                        Path to dictionary (plain text, one term perline of terms that should not appear in adocument
+  --seg-sentences       Segment wrongfully concatenated sentences.
+  --char-length-filter-sentence CHAR_LENGTH_FILTER_SENTENCE
+                        filter sentences shorter than a given minimum character length
+  --word-length-filter-sentence WORD_LENGTH_FILTER_SENTENCE
+                        filter sentences shorter than a given minimum word length
+  --digits-filter-sentence DIGITS_FILTER_SENTENCE
+                        Maximum allowed proportion of digit characters in the sentence
+  --profanity-check     filter sentences with sensible content
+  --fast-lang-filter-threshold FAST_LANG_FILTER_THRESHOLD
+                        If --lang-filter is set, minimumthreshold for the faster lang identifier
+  --slow-lang-filter-threshold SLOW_LANG_FILTER_THRESHOLD
+                        If --lang-filter is set, minimumthreshold for the slower lang identifier
+  --lang-filter-sentence
+                        Applying language filter on sentences
+  --lang-filter-sentence_src_tgt
+                        Applying language filter on sentences with "src=" pattern
+  --code-threshold CODE_THRESHOLD
+                        Threshold (percentage) of code-like chars and tokensto filter a sentence (-1 to deactivate)
+  --dictionary-filter-sen DICTIONARY_FILTER_SEN
+                        Path to dictionary (plain text, one term perline of terms that should not appear in asentence
+  --dedup-same-doc-sentences
+                        Deduplicate sentences inside the same document.
+  --spell-check         Apply spell checking.
+  --terminology-norm TERMINOLOGY_NORM
+                        Path to a terminology dictionary to appliynormalization
+  --punctuation-norm    Apply punctuation normalization.
+  --document-deduplication-threshold DOCUMENT_DEDUPLICATION_THRESHOLD
+                        Threshold for document de-duplication, expressed as the percentage of sentencesoverlap between documents
+  --remove-glob-rep-sen REMOVE_GLOB_REP_SEN
+                        Whether to remove corpus-level repeated sentences (threshold of repetitions; -1to deactivate)
+  --dedup-buffer DEDUP_BUFFER
+                        Deduplication buffer size, in bytes (default: 1000000000)
+  --only-reduce-ind-onion
+                        Individually apply reduction
 ```
 
 The options will be detailed if you run the program with the `--help` argument.
@@ -169,7 +293,7 @@ Corpus Cleaner applies the following components (in order):
 
 ## Contributing
 
-Pull requests are welcome! TeMU members, please do not directly push to the master branch.
+Pull requests are welcome!
 
 ### My input format (eg. PubMed XML) is not supported
 
@@ -184,7 +308,7 @@ First, try to change the default arguments. If it still doesn't fit your use cas
 
 ## Versioning
 
-So far, Corpus Cleaner is only used internally and it is still being developed. The current version is 0.1 but we don't have a proper versioning scheme yet.
+The current version is 0.2.
 
 ## Authors
 

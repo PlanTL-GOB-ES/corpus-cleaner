@@ -1,5 +1,5 @@
 from corpus_cleaner.document import Document
-from typing import Optional
+from typing import Dict, Optional
 import sentence_splitter
 from corpus_cleaner.components.cleaner_component_mapper import CleanerComponentMapper
 import argparse
@@ -17,9 +17,9 @@ class SentenceSplitterComponent(CleanerComponentMapper):
 
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)
-        self.splitter_dict = {}
+        self.splitter_dict : Dict[str,sentence_splitter.SentenceSplitter]= {}
 
-    def _split(self, document: Optional[Document]) -> Optional[Document]:
+    def _split(self, document: Document) -> Optional[Document]:
         if document.language in self.splitter_dict:
             splitter = self.splitter_dict[document.language]
         elif document.language is None:
@@ -76,5 +76,5 @@ class SentenceSplitterComponent(CleanerComponentMapper):
             document.sentences = [sent for sent in splitter.split(document.content)]
         return document
 
-    def apply(self, document: Optional[Document]) -> Optional[Document]:
+    def apply(self, document: Document) -> Optional[Document]:
         return self._split(document)

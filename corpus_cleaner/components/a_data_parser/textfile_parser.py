@@ -1,5 +1,5 @@
 from .data_parser import DataParser
-from typing import Iterable
+from typing import Iterable, List
 from corpus_cleaner.document import Document
 from typing import TextIO
 from typing import Tuple
@@ -7,7 +7,7 @@ import argparse
 
 
 class TextfileParser(DataParser):
-    def __init__(self,  args: argparse.Namespace, extensions: Tuple[str] = ('txt',),
+    def __init__(self,  args: argparse.Namespace, extensions: List[str] = ['txt'],
                  encoding='utf-8', **kwargs):
         super(TextfileParser, self).__init__(args, input_path=args.input_path, extensions=extensions,
                                              encoding=encoding, **kwargs)

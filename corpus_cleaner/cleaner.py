@@ -58,10 +58,17 @@ class Cleaner:
                 if comp.__name__ in args.components:
                     self.mappers.append(comp)
         if not self.args.only_reduce:
-            self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
-                           [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
-                            args=self.args, output_format='onion',
-                            output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
+            if self.args.no_reduce:
+                # set only mappers
+                self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
+                               [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
+                                           args=x,
+                                           output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
+            else:           
+                self.mappers = [lambda x: DataParserFactory.get_parser_mapper(x)] + self.mappers +\
+                               [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
+                                args=x, output_format='onion',
+                                output_path=os.path.join(self.tmp_dir, os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
         else:
             class SentencePacker(CleanerComponentMapper):
 
@@ -73,13 +80,17 @@ class Cleaner:
                            [lambda x: OutputFormatterFactory.get_output_formatter_mapper(
                             args=self.args, output_format='onion',
                             output_path=os.path.join(self.tmp_dir,  os.uname()[1] + '-' + str(os.getpid()) + '.onion'))]
-        self.reducer = REDUCER if not args.debug else DummyReducer
-        if args.components is not None and not args.debug:
+
+        self.reducer = DummyReducer if (args.debug or args.no_reduce) else REDUCER
+
+        # Make sure that the reducer is used in the default case
+        if args.components is not None and not self.args.debug:
             self.reducer = None
             for comp in args.components:
                 if comp == REDUCER.__name__:
                     self.reducer = REDUCER
                     break
+                
         self.postmappers = POSTMAPPERS
         if args.components is not None:
             self.postmappers = []
@@ -102,6 +113,8 @@ class Cleaner:
         parser.add_argument('--only-reduce-output', action='store_true', help='Only document filter for output files')
         parser.add_argument('--debug', action='store_true',
                             help='Activate the debug error mode to compare the original and cleaned sentences')
+        parser.add_argument('--no-reduce', action='store_true',
+                            help='suppress document filter component')
 
     @staticmethod
     def check_args(args: argparse.Namespace):
@@ -144,6 +157,26 @@ class Cleaner:
     def clean(self):
         if self.reducer is None:
             raise NotImplementedError()
+
+        elif self.args.no_reduce:
+            # apply only mappers
+            components_str = self.args.input_format + ' -> '
+            for idx, c in enumerate(self.mappers):
+                if idx not in [0, len(self.mappers) - 1]:
+                    components_str += c.__name__ + ' -> '
+            components_str += self.args.output_format
+
+            self.logger.logger.info(components_str)
+            pipeline = MappingPipeline(streams=self._get_paths(),
+                                       mappers_factory=self._create_pipeline_mappers,
+                                       parallel=self.args.parallel,
+                                       logger=self.logger if self.args.log_every_iter != -1 else None,
+                                       log_every_iter=self.args.log_every_iter,
+                                       backend=self.args.backend,
+                                       checkpoint_path=self.checkpoint.checkpoint_path)
+            pipeline.run()
+
+
         else:
             if not self.args.only_reduce_output:
                 self.reducer = self.reducer(self.args)

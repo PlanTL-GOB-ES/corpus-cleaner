@@ -15,7 +15,7 @@ class EncodingFixer(CleanerComponentMapper):
         # TODO check custom args
         pass
 
-    def _fix_encoding(self, document: Optional[Document]) -> Optional[Document]:
+    def _fix_encoding(self, document: Document) -> Document:
         # TODO: Study defaults
         # https://ftfy.readthedocs.io/en/latest/
         # ftfy.fix_text(text, *, fix_entities='auto', remove_terminal_escapes=True, fix_encoding=True,
@@ -30,6 +30,6 @@ class EncodingFixer(CleanerComponentMapper):
             document.operations.append(f'{self.__class__.__name__}-_fix_encoding')
         return document
 
-    def apply(self, document: Optional[Document]) -> Optional[Document]:
+    def apply(self, document: Document) -> Document:
         return self._fix_encoding(document)
 

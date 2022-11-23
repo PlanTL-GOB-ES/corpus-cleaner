@@ -37,7 +37,7 @@ class DataParser(CleanerComponent):
             raise RuntimeError('--url-doc can only be used with --input-format bsc-crawl-json or warc')
 
     def __init__(self, args: argparse.Namespace, input_path: Optional[str] = None,
-                 extensions: Optional[Tuple[str]] = None,
+                 extensions: Optional[List[str]] = None,
                  encoding: str = 'auto', encoding_threshold: float = 0.9, encoding_error_policy: str = 'ignore',
                  bytes_: bool = False, url_filter: Optional[str] = None, done_paths: Iterable[str] = ()):
         # TODO: Revisit defaults
@@ -49,7 +49,7 @@ class DataParser(CleanerComponent):
         self.encoding_error_policy = args.encoding_error_policy if args.encoding_error_policy is not None else \
             encoding_error_policy
         self.detector = UniversalDetector() if self.encoding == 'auto' else None
-        self.info = []
+        # self.info = []
         self.logger = args.logger
         self.bytes = bytes_
         self.url_filter = args.url_doc if args.url_doc is not None else url_filter
@@ -62,7 +62,7 @@ class DataParser(CleanerComponent):
                 self.url_filter = [urlparse(url) for url in self.url_filter]
         self.done_paths = set(done_paths)
 
-    def _check_url(self, url: str) -> bool:
+    def _check_url(self, url: Optional[str]) -> bool:
         def url_belongs_to(u1, u2):
             if u1.hostname != u2.hostname:
                 return False
@@ -79,11 +79,13 @@ class DataParser(CleanerComponent):
                 i += 1
             return True
 
+        if not url:
+            return False 
         if len(re.findall("\w://", url)) == 0:
             url = 'http://' + url
-        url = urlparse(re.sub("www\.", '', url))
+        parsed_url = urlparse(re.sub("www\.", '', url))
         for url_to_keep in self.url_filter:
-            if url_belongs_to(url, url_to_keep):
+            if url_belongs_to(parsed_url, url_to_keep):
                 return True
         return False
 
@@ -125,11 +127,11 @@ class DataParser(CleanerComponent):
         return parse_iterables
 
     def _parse_file(self, fd: TextIO, relative_filepath: str, idx_filepath: int) ->\
-            List[Iterable[Document]]:
+            Iterable[Document]:
         raise NotImplementedError()
 
     def _parse_binary_file(self, fd: BinaryIO, relative_filepath: str, idx_filepath: int) ->\
-            List[Iterable[Document]]:
+            Iterable[Document]:
         pass
 
     def _get_relative_filepaths(self) -> Iterable[str]:
