@@ -42,7 +42,7 @@ pyrsistent==0.19.1
 pytest==7.2.0
 PyYAML==6.0
 ray==0.8.6
-redis==3.4.1
+redis==4.5.3
 regex==2020.2.20
 sacremoses==0.0.38
 selectolax==0.2.4
